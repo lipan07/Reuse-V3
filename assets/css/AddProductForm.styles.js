@@ -9,7 +9,7 @@ const normalizeVertical = (size) => Math.round(verticalScale * size);
 export default StyleSheet.create({
     container: { flex: 1 },
     formHeader: { fontSize: normalize(18), fontWeight: 'bold', marginBottom: normalizeVertical(16) },
-    scrollViewContent: { padding: normalize(14), flexGrow: 1 },
+    scrollViewContent: { padding: normalize(16), flexGrow: 1 },
     label: { fontSize: normalize(13), fontWeight: 'bold', marginBottom: normalizeVertical(7) },
     input: {
         borderWidth: 1,
@@ -106,5 +106,23 @@ export default StyleSheet.create({
         marginTop: normalizeVertical(8),
         fontSize: normalize(12),
         color: '#333',
+    },
+    formHeaderContainer: {
+        paddingHorizontal: 24,
+        paddingTop: 24,
+        paddingBottom: 12,
+        backgroundColor: '#fff',
+        borderBottomWidth: 1,
+        borderBottomColor: '#EEEEEE',
+    },
+    formHeaderTitle: {
+        fontSize: 20,
+        fontWeight: '600',
+        color: '#333333',
+        marginBottom: 4,
+    },
+    formSubHeader: {
+        fontSize: 14,
+        color: '#888888',
     },
 });

@@ -36,37 +36,25 @@ const Header = () => {
       }
    };
 
+   // Fetch address from AsyncStorage
    useEffect(() => {
       const fetchAddress = async () => {
-         const savedAddress = await AsyncStorage.getItem('defaultAddress');
-         if (savedAddress) {
-            setAddress(JSON.parse(savedAddress).addressText || "Set Location");
+         try {
+            const savedLocation = await AsyncStorage.getItem('defaultLocation');
+            if (savedLocation) {
+               const parsed = JSON.parse(savedLocation);
+               setAddress(parsed.address || "Set Location");
+            } else {
+               setAddress("Set Location");
+            }
+         } catch (error) {
+            console.error('Failed to load saved location:', error);
+            setAddress("Set Location");
          }
       };
+
       fetchAddress();
    }, []);
-
-   // Fetch address from AsyncStorage
-   const fetchAddress = async () => {
-      const savedAddress = await AsyncStorage.getItem('defaultAddress');
-      if (savedAddress) {
-         const parsed = JSON.parse(savedAddress);
-         setAddress(parsed.addressText || "Set Location");
-      } else {
-         setAddress("Set Location");
-      }
-   };
-
-   useEffect(() => {
-      fetchAddress();
-   }, []);
-
-   // Refresh address when screen comes into focus
-   useFocusEffect(
-      React.useCallback(() => {
-         fetchAddress();
-      }, [])
-   );
 
 
    return (

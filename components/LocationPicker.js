@@ -16,6 +16,7 @@ import 'react-native-get-random-values';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MapView, { Marker } from 'react-native-maps';
 import { AlertNotificationRoot, Toast, ALERT_TYPE } from 'react-native-alert-notification';
+import ModalScreen from '../components/SupportElement/ModalScreen';
 
 const { width, height } = Dimensions.get('window');
 const scale = width / 375;
@@ -36,6 +37,7 @@ const LocationPicker = ({ navigation }) => {
     const [predictions, setPredictions] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const skipNextApiCallRef = useRef(false); // Add this ref
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     const API_KEY = process.env.GOOGLE_MAP_API_KEY;
     const DEBOUNCE_TIME = 300;
@@ -97,18 +99,51 @@ const LocationPicker = ({ navigation }) => {
     };
 
     const handleConfirmLocation = async () => {
+        if (!location.addressText || location.addressText.trim() === '' || searchQuery.trim() === '') {
+            setShowErrorModal(true);
+            return;
+        }
+
         try {
+            await AsyncStorage.setItem('defaultLocation', JSON.stringify({
+                address: location.addressText,
+                latitude: location.latitude,
+                longitude: location.longitude
+            }));
+
+            // Optionally: Store defaultAddress separately if needed
             await AsyncStorage.setItem('defaultAddress', JSON.stringify(location));
-            Toast.show({
-                type: ALERT_TYPE.SUCCESS,
-                title: 'Location Saved',
-                textBody: 'This address has been set as your default.',
-            });
+
             setTimeout(() => navigation.navigate('Home'), 2000);
         } catch (error) {
             console.error('Error saving address:', error);
         }
     };
+
+
+    useEffect(() => {
+        const loadSavedLocation = async () => {
+            try {
+                const saved = await AsyncStorage.getItem('defaultLocation');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    setLocation({
+                        latitude: parsed.latitude,
+                        longitude: parsed.longitude,
+                        latitudeDelta: 0.01,
+                        longitudeDelta: 0.01,
+                        addressText: parsed.address,
+                    });
+                    setSearchQuery(parsed.address); // 👈 Pre-fill the search input
+                }
+            } catch (error) {
+                console.error('Failed to load saved location:', error);
+            }
+        };
+
+        loadSavedLocation();
+    }, []);
+
 
     return (
         <AlertNotificationRoot>
@@ -144,16 +179,31 @@ const LocationPicker = ({ navigation }) => {
                 </MapView>
 
                 <View style={styles.searchContainer}>
-                    <TextInput
-                        style={styles.searchInput}
-                        placeholder="Search location"
-                        value={searchQuery}
-                        onChangeText={(text) => {
-                            setSearchQuery(text);
-                            if (predictions.length > 0) setPredictions([]);
-                        }}
-                        placeholderTextColor="#666"
-                    />
+                    <View style={styles.inputWrapper}>
+                        <TextInput
+                            style={styles.searchInput}
+                            placeholder="Search location"
+                            value={searchQuery}
+                            onChangeText={(text) => {
+                                setSearchQuery(text);
+                                if (predictions.length > 0) setPredictions([]);
+                            }}
+                            placeholderTextColor="#666"
+                        />
+
+                        {searchQuery.length > 0 && (
+                            <TouchableOpacity
+                                onPress={() => {
+                                    setSearchQuery('');
+                                    setPredictions([]);
+                                }}
+                                style={styles.clearIcon}
+                            >
+                                <Text style={styles.clearIconText}>✕</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+
 
                     {isLoading && <ActivityIndicator style={styles.loader} />}
 
@@ -183,6 +233,13 @@ const LocationPicker = ({ navigation }) => {
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
+            <ModalScreen
+                visible={showErrorModal}
+                type="error"
+                title="Invalid Address"
+                message="Please search and select a valid location before confirming."
+                onClose={() => setShowErrorModal(false)}
+            />
         </AlertNotificationRoot>
     );
 };
@@ -258,6 +315,29 @@ const styles = StyleSheet.create({
         fontSize: normalize(12),
         textAlign: 'center',
     },
+    inputWrapper: {
+        position: 'relative',
+        justifyContent: 'center',
+    },
+
+    clearIcon: {
+        position: 'absolute',
+        right: normalize(10),
+        top: normalizeVertical(14),
+        zIndex: 2,
+        backgroundColor: '#ccc',
+        borderRadius: normalize(10),
+        paddingHorizontal: normalize(4),
+        paddingVertical: normalizeVertical(1),
+    },
+
+    clearIconText: {
+        fontSize: normalize(10),
+        color: '#fff',
+        fontWeight: 'bold',
+        padding: normalize(2),
+    },
+
 });
 
 export default LocationPicker;

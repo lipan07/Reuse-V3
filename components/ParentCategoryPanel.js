@@ -12,7 +12,10 @@ const iconMapping = {
   fashion: { name: 'tshirt-crew', type: 'MC' },
   furniture: { name: 'sofa', type: 'MC' },
   cars: { name: 'car', type: 'MC' },
-  bikes: { name: 'motorbike', type: 'MC' },
+  bikes: {
+    name: 'motorbike',
+    type: 'MC'
+  },
   mobiles: { name: 'mobile-alt', type: 'Fontisto' },
   services: { name: 'tools', type: 'MC' },
   commercial_vehicle_spare_part: { name: 'tow-truck', type: 'MC' },
@@ -77,12 +80,8 @@ const ParentCategoryPanel = memo(({ categories, onSelectCategory, isLoading, isE
           />
         </View>
       </TouchableHighlight>
-
     );
   };
-
-
-
 
   const renderFooter = () => {
     if (!isLoading || isRefreshing) return null;
@@ -90,27 +89,35 @@ const ParentCategoryPanel = memo(({ categories, onSelectCategory, isLoading, isE
   };
 
   return (
-    <FlatList
-      data={categories}
-      renderItem={({ item, index }) => renderItem({ item, index })}
-      keyExtractor={(item) => item.id.toString()}
-      contentContainerStyle={styles.listContent}
-      ListFooterComponent={renderFooter}
-      refreshing={isRefreshing}
-      onRefresh={() => { }} // implement if needed
-      ListEmptyComponent={
-        !isLoading && (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>
-              {isError ? 'Failed to load categories.' : 'No categories available'}
-            </Text>
-          </View>
-        )
-      }
-    />
+    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+      {/* ✅ Header like SubCategoryPanel */}
+      <View style={styles.header}>
+        <Text style={styles.headerText}>All Categories</Text>
+        <Text style={styles.subHeaderText}>Select a parent category</Text>
+      </View>
 
+      <FlatList
+        data={categories}
+        renderItem={({ item, index }) => renderItem({ item, index })}
+        keyExtractor={(item) => item.id.toString()}
+        contentContainerStyle={styles.listContent}
+        ListFooterComponent={renderFooter}
+        refreshing={isRefreshing}
+        onRefresh={() => { }} // implement if needed
+        ListEmptyComponent={
+          !isLoading && (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>
+                {isError ? 'Failed to load categories.' : 'No categories available'}
+              </Text>
+            </View>
+          )
+        }
+      />
+    </View>
   );
 });
+
 
 const styles = StyleSheet.create({
   listContent: {
@@ -135,6 +142,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
+  itemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+  },
   icon: {
     marginRight: 16,
   },
@@ -151,12 +163,6 @@ const styles = StyleSheet.create({
     color: '#888888',
     fontSize: 16,
   },
-  itemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
 
   iconWrapper: {
     width: 32, // enough space for icons to align consistently
@@ -170,6 +176,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333333',
     fontWeight: '500',
+  },
+
+  header: {
+    padding: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEEEEE',
+  },
+
+  headerText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 4,
+  },
+
+  subHeaderText: {
+    fontSize: 14,
+    color: '#888888',
   },
 
 });

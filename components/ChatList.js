@@ -6,6 +6,7 @@ import BottomNavBar from './BottomNavBar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import moment from 'moment';
 import { createEcho } from '../service/echo';
+import { useNotification } from '../context/NotificationContext';
 
 const { width, height } = Dimensions.get('window');
 const scale = width / 375;
@@ -19,6 +20,14 @@ const ChatList = ({ navigation }) => {
   const [isError, setIsError] = useState(false);
   const [loggedInUserId, setLoggedInUserId] = useState(null);
   const [onlineStatuses, setOnlineStatuses] = useState({});
+
+  const { resetNotificationCount } = useNotification();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      resetNotificationCount(); // clear badge when user enters chat screen
+    }, [])
+  );
 
   useEffect(() => {
     AsyncStorage.getItem('userId').then(setLoggedInUserId);

@@ -2,61 +2,30 @@ import React, { useEffect, useRef } from 'react';
 import { Alert, AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer } from '@react-navigation/native';
-import { getApp } from '@react-native-firebase/app';
-// import { getMessaging, getToken, onMessage, onTokenRefresh } from '@react-native-firebase/messaging';
+import messaging from '@react-native-firebase/messaging';
 import AppNavigator from './components/AppNavigator';
-
+import { NotificationProvider, useNotification } from './context/NotificationContext';
 import notifee, { AndroidImportance, EventType } from '@notifee/react-native';
 
-const HomeScreen = () => {
+// ✅ This is the component that will live inside the Provider
+const AppInner = () => {
     const heartbeatRef = useRef(null);
+    const { incrementNotificationCount } = useNotification();
 
-    // Initialize Firebase Messaging with modular API
-    // useEffect(() => {
-    //     const setupFirebase = async () => {
-    //         try {
-    //             const app = getApp();
-    //             const messaging = getMessaging(app);
+    useEffect(() => {
+        const unsubscribe = messaging().onMessage(async remoteMessage => {
+            console.log('📬 [FCM] Foreground message received:', remoteMessage);
+            incrementNotificationCount();
+        });
 
-    //             // Request notification permissions (iOS only)
-    //             if (Platform.OS === 'ios') {
-    //                 await messaging.requestPermission();
-    //             }
-
-    //             // Get FCM token
-    //             const token = await getToken(messaging);
-    //             console.log('FCM Token:', token);
-    //             await AsyncStorage.setItem('fcmToken', token);
-
-    //             // Handle incoming foreground messages
-    //             const unsubscribeMessage = onMessage(messaging, remoteMessage => {
-    //                 Alert.alert(
-    //                     remoteMessage.notification?.title || 'Notification',
-    //                     remoteMessage.notification?.body || 'New message'
-    //                 );
-    //             });
-
-    //             // Handle token refreshes
-    //             const unsubscribeTokenRefresh = onTokenRefresh(messaging, async (newToken) => {
-    //                 console.log('New FCM token:', newToken);
-    //                 await AsyncStorage.setItem('fcmToken', newToken);
-    //             });
-
-    //             // Cleanup on unmount
-    //             return () => {
-    //                 unsubscribeMessage();
-    //                 unsubscribeTokenRefresh();
-    //             };
-    //         } catch (error) {
-    //             console.error('Firebase setup error:', error);
-    //         }
-    //     };
-
-    //     setupFirebase();
-    // }, []);
+        return unsubscribe;
+    }, []);
 
     useEffect(() => {
         const unsubscribe = notifee.onForegroundEvent(({ type, detail }) => {
+            console.log('🔥 [Notifee] Foreground event triggered!');
+            console.log('👉 Type:', type);
+            console.log('👉 Detail:', detail);
             if (type === EventType.ACTION_PRESS) {
                 console.log('👆 Notification tapped in foreground:', detail.notification);
             }
@@ -101,7 +70,6 @@ const HomeScreen = () => {
             }
         };
 
-        // Handle app state changes
         const handleAppStateChange = async (nextState) => {
             console.log('App state changed to:', nextState);
 
@@ -116,7 +84,6 @@ const HomeScreen = () => {
 
         const subscription = AppState.addEventListener('change', handleAppStateChange);
 
-        // Initial status update
         updateStatus('online');
         startHeartbeat();
 
@@ -127,7 +94,6 @@ const HomeScreen = () => {
         };
     }, []);
 
-    // Heartbeat to maintain online status
     const startHeartbeat = () => {
         stopHeartbeat();
 
@@ -149,7 +115,7 @@ const HomeScreen = () => {
             } catch (error) {
                 console.error('Heartbeat error:', error);
             }
-        }, 30000); // Every 30 seconds
+        }, 30000);
     };
 
     const stopHeartbeat = () => {
@@ -166,4 +132,13 @@ const HomeScreen = () => {
     );
 };
 
-export default HomeScreen;
+// ✅ Wrap AppInner with NotificationProvider
+const App = () => {
+    return (
+        <NotificationProvider>
+            <AppInner />
+        </NotificationProvider>
+    );
+};
+
+export default App;

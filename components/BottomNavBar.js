@@ -2,6 +2,7 @@ import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
+import { useNotification } from '../context/NotificationContext'; // adjust this path if needed
 
 // Responsive utility
 const { width, height } = Dimensions.get('window');
@@ -12,6 +13,7 @@ const normalizeVertical = (size) => Math.round(verticalScale * size);
 
 const BottomNavBar = () => {
   const navigation = useNavigation();
+  const { notificationCount } = useNotification(); // 👈 use context
 
   const handleNavigation = (screen) => {
     navigation.navigate(screen);
@@ -31,12 +33,19 @@ const BottomNavBar = () => {
         <TouchableOpacity
           key={key}
           onPress={() => handleNavigation(route)}
-          style={[
-            styles.navItem,
-            bump && styles.bump
-          ]}
+          style={[styles.navItem, bump && styles.bump]}
         >
-          <Icon name={icon} size={size} color={color} />
+          <View style={styles.iconWrapper}>
+            <Icon name={icon} size={size} color={color} />
+
+            {key === 'Chat' && notificationCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>
+                  {notificationCount > 99 ? '99+' : notificationCount}
+                </Text>
+              </View>
+            )}
+          </View>
           {showText && <Text style={styles.navText}>{key}</Text>}
         </TouchableOpacity>
       ))}
@@ -54,7 +63,11 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
     paddingHorizontal: normalize(4),
-    marginBottom: normalizeVertical(6), // Add this line for consistent bottom margin
+    marginBottom: normalizeVertical(6),
+  },
+  navItem: {
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   navText: {
     fontSize: normalize(8),
@@ -74,10 +87,26 @@ const styles = StyleSheet.create({
     shadowRadius: normalize(2),
     elevation: 3,
   },
-  navItem: {
+  iconWrapper: {
+    position: 'relative',
+  },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -8,
+    backgroundColor: 'red',
+    borderRadius: 10,
+    minWidth: 16,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
     alignItems: 'center',
-    justifyContent: 'center'
-  }
+    justifyContent: 'center',
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
 });
 
 export default BottomNavBar;

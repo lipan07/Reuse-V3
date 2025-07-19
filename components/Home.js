@@ -1,8 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  View, Text, StyleSheet, TouchableOpacity, Image, TextInput, FlatList, ActivityIndicator, DeviceEventEmitter,
-  Animated, RefreshControl, TouchableWithoutFeedback, Keyboard, Dimensions
-} from 'react-native';
+import { Alert, View, Text, StyleSheet, TouchableOpacity, Image, TextInput, FlatList, ActivityIndicator, DeviceEventEmitter, Animated, RefreshControl, TouchableWithoutFeedback, Keyboard, Dimensions } from 'react-native';
 import Swiper from 'react-native-swiper';
 import CategoryMenu from './CategoryMenu';
 import BottomNavBar from './BottomNavBar';
@@ -51,6 +48,10 @@ const Home = () => {
   const [showRecentSearches, setShowRecentSearches] = useState(false);
   const searchRef = useRef(search);
   const selectedCategoryRef = useRef(selectedCategory);
+
+  const [showLocationPopup, setShowLocationPopup] = useState(false);
+  const [hasShownInitialPopup, setHasShownInitialPopup] = useState(false);
+  const locationCheckTimeout = useRef(null);
 
   const lastScrollY = useRef(0);
 
@@ -340,88 +341,148 @@ const Home = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const checkLocation = async () => {
+      try {
+        const location = await AsyncStorage.getItem('defaultLocation');
+        const hasShownPopup = await AsyncStorage.getItem('hasShownLocationPopup');
+
+        if (!location) {
+          // Show immediately on first launch
+          if (!hasShownPopup) {
+            setShowLocationPopup(true);
+            await AsyncStorage.setItem('hasShownLocationPopup', 'true');
+            setHasShownInitialPopup(true);
+          }
+          // Show again after 5 seconds if still no location
+          else {
+            locationCheckTimeout.current = setTimeout(() => {
+              setShowLocationPopup(true);
+            }, 5000);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking location:', error);
+      }
+    };
+
+    checkLocation();
+
+    return () => {
+      if (locationCheckTimeout.current) {
+        clearTimeout(locationCheckTimeout.current);
+      }
+    };
+  }, []);
+
+  const handleLocationPopupConfirm = () => {
+    setShowLocationPopup(false);
+    navigation.navigate('LocationPicker');
+  };
+
 
   return (
+
     <TouchableWithoutFeedback onPress={handleOutsidePress}>
       <View style={styles.container}>
-        {/* Banner Ad */}
-        {/* <View style={styles.bannerAdContainer}>
+        <TouchableWithoutFeedback onPress={handleOutsidePress}>
+          <View style={styles.container}>
+            {/* Banner Ad */}
+            {/* <View style={styles.bannerAdContainer}>
           <BannerAd
             unitId={adUnitId}
             size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
             style={styles.bannerAd}
           />
         </View> */}
-        <View style={styles.searchBar}>
-          <TextInput
-            style={styles.searchInput}
-            onChangeText={handleInputChange}
-            value={search}
-            placeholder="Search..."
-            onFocus={() => setShowRecentSearches(true)}
-          />
-          {search.length > 0 && (
-            <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-              <Icon name="close" size={normalize(13)} color="#888" />
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            style={styles.filterButton}
-            onPress={() => navigation.navigate('FilterScreen', {
-              initialFilters: { ...activeFilters, search, category: selectedCategory }
-            })}
-          >
-            <Icon name="filter-list" size={normalize(20)} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.searchButton} onPress={handleSearchPress}>
-            <Icon name="search" size={normalize(20)} color="#fff" />
-          </TouchableOpacity>
-        </View>
-        {/* {isLoading && products.length === 0 && (
+            <View style={styles.searchBar}>
+              <TextInput
+                style={styles.searchInput}
+                onChangeText={handleInputChange}
+                value={search}
+                placeholder="Search..."
+                onFocus={() => setShowRecentSearches(true)}
+              />
+              {search.length > 0 && (
+                <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+                  <Icon name="close" size={normalize(13)} color="#888" />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                style={styles.filterButton}
+                onPress={() => navigation.navigate('FilterScreen', {
+                  initialFilters: { ...activeFilters, search, category: selectedCategory }
+                })}
+              >
+                <Icon name="filter-list" size={normalize(20)} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.searchButton} onPress={handleSearchPress}>
+                <Icon name="search" size={normalize(20)} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            {/* {isLoading && products.length === 0 && (
           <ActivityIndicator size="large" color="#007bff" style={styles.loaderTop} />
         )} */}
-        <FlatList
-          data={products}
-          renderItem={renderProductItem}
-          keyExtractor={(item) => `${item.id}_${currentPage}`}
-          numColumns={2}
-          contentContainerStyle={styles.productList}
-          ListHeaderComponent={
-            <>
-              {/* Banner Ad if needed */}
-              <CategoryMenu
-                onCategorySelect={handleCategorySelect}
-                selectedCategory={selectedCategory}
-              />
-              <Text style={styles.recommendedText}>Recommended</Text>
-            </>
-          }
-          ListEmptyComponent={() => (
-            !isLoading && <Text style={styles.noProductsText}>No products found</Text>
-          )}
-          ListFooterComponent={
-            hasMore && (
-              <ActivityIndicator
-                size="large"
-                color="#007bff"
-                style={styles.loaderBottom}
-              />
-            )
-          }
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
+            <FlatList
+              data={products}
+              renderItem={renderProductItem}
+              keyExtractor={(item) => `${item.id}_${currentPage}`}
+              numColumns={2}
+              contentContainerStyle={styles.productList}
+              ListHeaderComponent={
+                <>
+                  {/* Banner Ad if needed */}
+                  <CategoryMenu
+                    onCategorySelect={handleCategorySelect}
+                    selectedCategory={selectedCategory}
+                  />
+                  <Text style={styles.recommendedText}>Recommended</Text>
+                </>
+              }
+              ListEmptyComponent={() => (
+                !isLoading && <Text style={styles.noProductsText}>No products found</Text>
+              )}
+              ListFooterComponent={
+                hasMore && (
+                  <ActivityIndicator
+                    size="large"
+                    color="#007bff"
+                    style={styles.loaderBottom}
+                  />
+                )
+              }
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={handleRefresh}
+                />
+              }
+              onEndReached={handleScrollEndReached}
+              onEndReachedThreshold={0.5}
+              removeClippedSubviews={true}
+              initialNumToRender={10}
+              maxToRenderPerBatch={10}
+              windowSize={21}
             />
-          }
-          onEndReached={handleScrollEndReached}
-          onEndReachedThreshold={0.5}
-          removeClippedSubviews={true}
-          initialNumToRender={10}
-          maxToRenderPerBatch={10}
-          windowSize={21}
-        />
-        <BottomNavBar navigation={navigation} />
+            <BottomNavBar navigation={navigation} />
+          </View>
+        </TouchableWithoutFeedback>
+        {showLocationPopup && (
+          <View style={styles.popupOverlay}>
+            <View style={styles.popupContainer}>
+              <Text style={styles.popupTitle}>Location Required</Text>
+              <Text style={styles.popupMessage}>
+                Please set your location to find products near you
+              </Text>
+              <TouchableOpacity
+                style={styles.popupButton}
+                onPress={handleLocationPopupConfirm}
+              >
+                <Text style={styles.popupButtonText}>Set Location</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
       </View>
     </TouchableWithoutFeedback>
   );

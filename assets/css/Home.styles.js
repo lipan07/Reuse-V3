@@ -7,7 +7,7 @@ const normalize = (size) => Math.round(scale * size);
 const normalizeVertical = (size) => Math.round(verticalScale * size);
 
 export default StyleSheet.create({
-     container: { flex: 1, backgroundColor: '#FFFFFF' },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
   bannerAdContainer: {
     marginHorizontal: -normalize(8),
     marginBottom: normalize(8),
@@ -132,7 +132,7 @@ export default StyleSheet.create({
     backgroundColor: '#e0e0e0',
     padding: normalize(6),
   },
-   productItem: {
+  productItem: {
     flex: 1,
     margin: normalize(4),
     borderRadius: normalize(4),
@@ -144,26 +144,26 @@ export default StyleSheet.create({
     shadowRadius: normalize(4),
     elevation: 4,
   },
-  
-  imageContainer: { 
+
+  imageContainer: {
     height: normalizeVertical(100), // Reduced height
-    width: '100%', 
-    borderRadius: normalize(4), 
-    overflow: 'hidden', 
+    width: '100%',
+    borderRadius: normalize(4),
+    overflow: 'hidden',
     marginBottom: normalize(4) // Reduced margin
   },
-  
+
   textContainer: {
     paddingHorizontal: normalize(4),
   },
-  
+
   productName: {
     fontWeight: '600',
     fontSize: normalize(14), // Smaller font
     marginTop: normalizeVertical(2),
     color: '#333',
   },
-  
+
   details: {
     fontSize: normalize(12), // Smaller font
     marginTop: normalizeVertical(2),
@@ -171,20 +171,20 @@ export default StyleSheet.create({
     color: '#666',
     lineHeight: normalize(14),
   },
-  
+
   priceAddressContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: normalizeVertical(2),
   },
-  
+
   price: {
     fontSize: normalize(13), // Smaller font
     fontWeight: 'bold',
     color: '#007bff',
   },
-  
+
   address: {
     fontSize: normalize(10),
     color: '#888',
@@ -193,9 +193,48 @@ export default StyleSheet.create({
     fontStyle: 'italic',
   },
 
-  
+
   placeholderText: {
     fontSize: normalize(11), // Smaller font
     color: '#555',
   },
+  popupOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  popupContainer: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+  },
+  popupTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  popupMessage: {
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  popupButton: {
+    backgroundColor: '#007bff',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  popupButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+
 });

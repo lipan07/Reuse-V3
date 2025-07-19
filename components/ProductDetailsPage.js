@@ -56,7 +56,7 @@ const adUnitId = __DEV__ ? TestIds.ADAPTIVE_BANNER : process.env.G_BANNER_AD_UNI
 
 const ProductDetails = () => {
     const [buyerId, setBuyerId] = useState(null);
-    const [isFollowed, setIsFollowed] = useState(false);
+    const [userFollowed, setUserFollowed] = useState(false);
     const [product, setProduct] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [currentImageIndex, setCurrentImageIndex] = useState(0); // ✅ added for auto-scroll
@@ -85,7 +85,11 @@ const ProductDetails = () => {
 
                 if (response.ok) {
                     const data = await response.json();
-                    setProduct(data.data);
+                    const product = data.data;
+
+                    console.log('Product Details:', product);
+                    setUserFollowed(data.is_following_post_user === true);
+                    setProduct(product);
                 }
             } catch (error) {
                 console.error('Error fetching product details:', error);
@@ -109,12 +113,6 @@ const ProductDetails = () => {
 
         loadBuyerId();
     }, []);
-
-    useEffect(() => {
-        if (product) {
-            setIsFollowed(product.is_following_post_user);
-        }
-    }, [product]);
 
     // ✅ Auto-scroll logic
     useEffect(() => {
@@ -151,7 +149,7 @@ const ProductDetails = () => {
         );
     }
 
-    const toggleFollow = async () => {
+    const toggleUserFollow = async () => {
         try {
             const token = await AsyncStorage.getItem('authToken');
             const response = await fetch(`${process.env.BASE_URL}/follow-user`, {
@@ -166,16 +164,17 @@ const ProductDetails = () => {
             const result = await response.json();
 
             if (response.ok) {
-                setIsFollowed((prev) => !prev);
-                setModalType('success');
-                setModalTitle(isFollowed ? 'Unfollowed' : 'Followed');
-                setModalText(result.message);
-                setModalVisible(true);
+                // Update based on API response if available, otherwise toggle
+                const newStatus = result.data?.is_following ?? !userFollowed;
+                setUserFollowed(newStatus);
+
+                // Also update the product object to keep consistency
+                setProduct(prev => ({
+                    ...prev,
+                    is_following_post_user: newStatus
+                }));
             } else {
-                setModalType('warning');
-                setModalTitle('Warning');
-                setModalText(result.message || 'Something went wrong.');
-                setModalVisible(true);
+                throw new Error(result.message || 'Failed to toggle follow status');
             }
         } catch (error) {
             console.error('Error in toggleFollow:', error);
@@ -359,13 +358,13 @@ const ProductDetails = () => {
                                     <Text style={styles.postedText}>Posted 2 days ago</Text>
                                 </View>
                                 <TouchableOpacity
-                                    onPress={toggleFollow}
+                                    onPress={toggleUserFollow}
                                     style={styles.followButton}
                                 >
                                     <Icon
-                                        name={isFollowed ? 'heart' : 'heart-outline'}
+                                        name={userFollowed ? 'heart' : 'heart-outline'}
                                         size={28}
-                                        color={isFollowed ? '#e74c3c' : '#7f8c8d'}
+                                        color={userFollowed ? '#e74c3c' : '#7f8c8d'}
                                     />
                                 </TouchableOpacity>
                             </View>

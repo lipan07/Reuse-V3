@@ -4,7 +4,7 @@ import { Picker } from '@react-native-picker/picker';
 import { submitForm } from '../../service/apiService';
 import ImagePickerComponent from './SubComponent/ImagePickerComponent';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import AddressAutocomplete from '../AddressAutocomplete'; // Add this import
+import AddressAutocomplete from '../AddressAutocomplete.js'; // Add this import
 import styles from '../../assets/css/AddProductForm.styles.js';
 import CustomPicker from './SubComponent/CustomPicker';
 import ModalScreen from '../SupportElement/ModalScreen.js';

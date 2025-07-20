@@ -114,7 +114,7 @@ const LocationPicker = ({ navigation }) => {
             // Optionally: Store defaultAddress separately if needed
             await AsyncStorage.setItem('defaultAddress', JSON.stringify(location));
 
-            setTimeout(() => navigation.navigate('Home'), 2000);
+            navigation.navigate('Home');
         } catch (error) {
             console.error('Error saving address:', error);
         }

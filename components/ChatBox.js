@@ -182,7 +182,7 @@ const ChatBox = ({ route }) => {
       });
 
       const data = await response.json();
-      // console.log("Message sent:", data);
+      console.log("Message sent:", data);
 
       if (!chatId && data.chat_id) {
         // console.log("First message sent, new chat created with ID:", data.chat_id);

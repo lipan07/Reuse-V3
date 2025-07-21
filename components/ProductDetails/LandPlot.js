@@ -4,7 +4,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import styles from '../../assets/css/productDetailsCard.styles';
 import useFollowPost from '../../hooks/useFollowPost';
 
-const LandPlot = ({ product }) => {
+const LandPlot = ({ product, buyerId }) => {
     const { isFollowed, toggleFollow } = useFollowPost(product); // Use the hook
 
     return (
@@ -12,13 +12,15 @@ const LandPlot = ({ product }) => {
             {/* Header with Title and Follow Icon */}
             <View style={styles.header}>
                 <Text style={styles.productTitle}>{product.title || 'No Title'}</Text>
-                <TouchableOpacity onPress={toggleFollow}>
-                    <Icon
-                        name={isFollowed ? 'heart' : 'heart-outline'}
-                        size={30}
-                        color={isFollowed ? 'red' : 'gray'}
-                    />
-                </TouchableOpacity>
+                {buyerId !== product.user?.id && (
+                    <TouchableOpacity onPress={toggleFollow}>
+                        <Icon
+                            name={isFollowed ? 'heart' : 'heart-outline'}
+                            size={30}
+                            color={isFollowed ? 'red' : 'gray'}
+                        />
+                    </TouchableOpacity>
+                )}
             </View>
 
             {/* Property Details in a bordered box */}

@@ -91,13 +91,15 @@ const FilterScreen = ({ navigation }) => {
             sortBy: selectedPriceRange,
             priceRange: [minBudget, maxBudget],
             distance: selectedDistance,
-            location: {
-                coordinates: [formData.longitude, formData.latitude],
-                address: formData.address,
-                city,
-                state,
-                country
-            }
+            longitude: formData.longitude,
+            latitude: formData.latitude,
+            // location: {
+            //     coordinates: [formData.longitude, formData.latitude],
+            //     address: formData.address,
+            //     city,
+            //     state,
+            //     country
+            // }
         };
 
         const token = await AsyncStorage.getItem('authToken');
@@ -105,9 +107,12 @@ const FilterScreen = ({ navigation }) => {
             search: filters.search || '',
             category: filters.category || '',
             sortBy: filters.sortBy || '',
-            minPrice: filters.priceRange[0],
-            maxPrice: filters.priceRange[1],
+            distance: selectedDistance,
+            longitude: formData.longitude,
+            latitude: formData.latitude,
         }).toString();
+        console.log('Query Params:', queryParams);
+        console.log('Advanced Filter API URL:', `${process.env.BASE_URL}/posts?${queryParams}`);
         try {
             const response = await fetch(`${process.env.BASE_URL}/posts?${queryParams}`, {
                 method: 'GET',
@@ -116,6 +121,7 @@ const FilterScreen = ({ navigation }) => {
 
             if (response.ok) {
                 const jsonResponse = await response.json();
+                // console.log('Filtered Products:', jsonResponse.data);
                 navigation.navigate('Home', {
                     filters,
                     products: jsonResponse.data

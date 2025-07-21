@@ -61,24 +61,9 @@ const Home = () => {
     priceRange: route.params?.filters?.priceRange || [],
     sortBy: route.params?.filters?.sortBy || 'Recently Added',
     distance: route.params?.filters?.distance || 5,
-    location: route.params?.filters?.location || null
+    latitude: route.params?.filters?.latitude || null,
+    longitude: route.params?.filters?.longitude || null,
   });
-
-  const handleClearFilter = (filterKey) => {
-    setActiveFilters(prev => {
-      const updated = { ...prev };
-      if (filterKey === 'priceRange') {
-        updated[filterKey] = [];
-      } else if (filterKey === 'sortBy') {
-        updated[filterKey] = 'Recently Added';
-      } else {
-        updated[filterKey] = null;
-      }
-      return updated;
-    });
-
-    fetchProducts(true, { ...activeFilters, [filterKey]: null });
-  };
 
   useEffect(() => {
     if (route.params?.filters) {
@@ -125,14 +110,29 @@ const Home = () => {
     setIsLoading(true);
     let apiURL = `${process.env.BASE_URL}/posts`;
 
-    // Build query parameters with pagination
+    // Get location only if needed
+    const location = param?.latitude ? null : await getStoredLocation();
+
+    // Build base parameters
     const baseParams = {
       page: reset ? 1 : currentPage,
       limit: PAGE_SIZE,
-      ...cleanParams(param || {}) // Clean the parameters
+      ...cleanParams(param || {})
     };
 
-    const queryParams = new URLSearchParams(baseParams).toString();
+    // Only add location if it exists and wasn't already in params
+    if (location && !param?.latitude) {
+      baseParams.latitude = location.latitude;
+      baseParams.longitude = location.longitude;
+      baseParams.distance = activeFilters.distance || 5;
+    }
+
+    const queryParams = new URLSearchParams(
+      Object.fromEntries(
+        Object.entries(baseParams).filter(([_, v]) => v != null)
+      )
+    ).toString();
+
     apiURL += `?${queryParams}`;
 
     console.log('apiUrl- ', apiURL);
@@ -174,7 +174,7 @@ const Home = () => {
       setIsLoading(false);
       setRefreshing(false);
     }
-  }, [isLoading, currentPage, hasMore, products]);
+  }, [isLoading, currentPage, hasMore, products, activeFilters.distance]);
 
   const cleanParams = (params) => {
     return Object.entries(params).reduce((acc, [key, value]) => {
@@ -207,34 +207,17 @@ const Home = () => {
       if (!token) {
         setIsLoggedIn(false);
         navigation.navigate('Login');
+        return;
+      }
+
+      // No need to manually check location here
+      if (!route.params?.products) {
+        fetchProducts(true); // Location will be added automatically if exists
       }
     };
+
     checkLoginStatus();
   }, []);
-
-  // const handleScrollEndReached = () => {
-  //   if (!isLoading && hasMore) {
-  //     console.log('Scrollend call');
-  //     const param = { page: currentPage + 1 };
-  //     fetchProducts(false, param);
-  //   }
-  // };
-
-  const handleRefresh = () => {
-    setRefreshing(true);
-    console.log('Refresh call');
-    fetchProducts(true, { ...activeFilters, page: 1 });
-  };
-
-  const handleScroll = (event) => {
-    const currentScrollY = event.nativeEvent.contentOffset.y;
-    if (currentScrollY > lastScrollY.current && currentScrollY > 10) {
-      setShowMenu(false);
-    } else if (currentScrollY <= 0) {
-      setShowMenu(true);
-    }
-    lastScrollY.current = currentScrollY;
-  };
 
   const handleInputChange = (text) => {
     setSearch(text);
@@ -251,29 +234,41 @@ const Home = () => {
     fetchProducts(true, cleanParams(param));
   };
 
-  const handleSearchPress = () => {
-    console.log('Search button pressed');
-    const param = {};
-    if (search) {
-      param.search = search.trim();
-    }
-    if (selectedCategory) {
-      param.category = selectedCategory;
-    }
-    console.log('Search Button Enter-', param);
-    fetchProducts(true, cleanParams(param));
+  const handleSearchPress = async () => {
+    const searchTerm = search.trim();
+    // Update activeFilters with the current search term
+    setActiveFilters(prev => ({
+      ...prev,
+      search: searchTerm
+    }));
+
+    const params = {
+      search: searchTerm,
+      ...(selectedCategory && { category: selectedCategory })
+    };
+
+    fetchProducts(true, params); // Location will be added automatically if exists
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    fetchProducts(true, {
+      ...activeFilters,
+      page: 1
+      // No need to manually add location here
+    });
   };
 
   const clearSearch = () => {
     setSearch('');
-    setActiveFilters(prevState => ({
-      ...prevState,
+    // Also clear the search in activeFilters
+    setActiveFilters(prev => ({
+      ...prev,
       search: ''
     }));
     searchRef.current = '';
     const param = selectedCategory ? { category: selectedCategory } : {};
-    console.log('Clear search called with params:', param);
-    fetchProducts(true, cleanParams(param)); // Add cleanParams here
+    fetchProducts(true, cleanParams(param));
   };
 
   const renderProductItem = ({ item }) => (
@@ -380,6 +375,22 @@ const Home = () => {
     navigation.navigate('LocationPicker');
   };
 
+  const getStoredLocation = async () => {
+    try {
+      const locationString = await AsyncStorage.getItem('defaultLocation');
+      if (!locationString) return null;
+
+      const location = JSON.parse(locationString);
+      // Only return if we have valid coordinates
+      if (location?.latitude && location?.longitude) {
+        return location;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting location:', error);
+      return null;
+    }
+  };
 
   return (
 

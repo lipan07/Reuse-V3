@@ -4,7 +4,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import styles from '../../assets/css/productDetailsCard.styles';
 import useFollowPost from '../../hooks/useFollowPost';
 
-const EducationClasses = ({ product }) => {
+const EducationClasses = ({ product, buyerId }) => {
     const { isFollowed, toggleFollow } = useFollowPost(product); // Use the hook
 
     if (!product?.post_details) {
@@ -16,14 +16,16 @@ const EducationClasses = ({ product }) => {
             {/* Header with Title & Follow Icon */}
             <View style={styles.header}>
                 <Text style={styles.productTitle}>{product.title || 'No Title'}</Text>
-                <TouchableOpacity onPress={toggleFollow}>
-                    <Icon
-                        name={isFollowed ? 'heart' : 'heart-outline'}
-                        size={28}
-                        color={isFollowed ? 'red' : 'gray'}
-                        style={styles.heartIcon}
-                    />
-                </TouchableOpacity>
+                {buyerId !== product.user?.id && (
+                    <TouchableOpacity onPress={toggleFollow}>
+                        <Icon
+                            name={isFollowed ? 'heart' : 'heart-outline'}
+                            size={28}
+                            color={isFollowed ? 'red' : 'gray'}
+                            style={styles.heartIcon}
+                        />
+                    </TouchableOpacity>
+                )}
             </View>
 
             {/* Type of Education Class */}

@@ -246,17 +246,17 @@ const ProductDetails = () => {
 
     const renderDetails = () => {
         switch (product.category_id) {
-            case 1: return <Car product={product} />
-            case 3: return <HouseApartment product={product} />
-            case 4: return <LandPlot product={product} />
-            case 5: return <PgGuestHouse product={product} />
-            case 7: return <Mobile product={product} />
-            case 27: return <Bycycle product={product} />
-            case 72: return <CleaningPestControl product={product} />
-            case 43: return <CommercialHeavyMachinery product={product} />
-            case 67: return <EducationClasses product={product} />
-            case 69: return <Electronics product={product} />
-            case 71: return <HomeRenovation product={product} />
+            case 1: return <Car product={product} buyerId={buyerId} />
+            case 3: return <HouseApartment product={product} buyerId={buyerId} />
+            case 4: return <LandPlot product={product} buyerId={buyerId} />
+            case 5: return <PgGuestHouse product={product} buyerId={buyerId} />
+            case 7: return <Mobile product={product} buyerId={buyerId} />
+            case 27: return <Bycycle product={product} buyerId={buyerId} />
+            case 72: return <CleaningPestControl product={product} buyerId={buyerId} />
+            case 43: return <CommercialHeavyMachinery product={product} buyerId={buyerId} />
+            case 67: return <EducationClasses product={product} buyerId={buyerId} />
+            case 69: return <Electronics product={product} buyerId={buyerId} />
+            case 71: return <HomeRenovation product={product} buyerId={buyerId} />
             case 9:
             case 10:
             case 11:
@@ -271,13 +271,13 @@ const ProductDetails = () => {
             case 20:
             case 21:
             case 22:
-            case 23: return <Job product={product} />
-            case 73: return <LegalService product={product} />
-            case 25: return <Motorcycle product={product} />
-            case 26: return <Scooter product={product} />
-            case 68: return <ToursTravel product={product} />
-            case 41: return <VehicleSparePart product={product} />
-            default: return <Others product={product} />
+            case 23: return <Job product={product} buyerId={buyerId} />
+            case 73: return <LegalService product={product} buyerId={buyerId} />
+            case 25: return <Motorcycle product={product} buyerId={buyerId} />
+            case 26: return <Scooter product={product} buyerId={buyerId} />
+            case 68: return <ToursTravel product={product} buyerId={buyerId} />
+            case 41: return <VehicleSparePart product={product} buyerId={buyerId} />
+            default: return <Others product={product} buyerId={buyerId} />
         }
     };
 
@@ -357,16 +357,18 @@ const ProductDetails = () => {
                                     </Text>
                                     <Text style={styles.postedText}>Posted 2 days ago</Text>
                                 </View>
-                                <TouchableOpacity
-                                    onPress={toggleUserFollow}
-                                    style={styles.followButton}
-                                >
-                                    <Icon
-                                        name={userFollowed ? 'heart' : 'heart-outline'}
-                                        size={28}
-                                        color={userFollowed ? '#e74c3c' : '#7f8c8d'}
-                                    />
-                                </TouchableOpacity>
+                                {buyerId !== product.user?.id && (
+                                    <TouchableOpacity
+                                        onPress={toggleUserFollow}
+                                        style={styles.followButton}
+                                    >
+                                        <Icon
+                                            name={userFollowed ? 'heart' : 'heart-outline'}
+                                            size={28}
+                                            color={userFollowed ? '#e74c3c' : '#7f8c8d'}
+                                        />
+                                    </TouchableOpacity>
+                                )}
                             </View>
                         </View>
                     </View>

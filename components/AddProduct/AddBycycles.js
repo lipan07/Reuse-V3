@@ -152,7 +152,7 @@ const AddBycycles = ({ route, navigation }) => {
           <Text style={styles.formHeaderTitle}>{subcategory?.name}</Text>
           <Text style={styles.formSubHeader}>Fill in details for your listing</Text>
         </View>
-        <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        <ScrollView contentContainerStyle={styles.scrollViewContent} keyboardShouldPersistTaps="handled">
           {/* Brand Selection */}
           <Text style={styles.label}>Brand *</Text>
           <CustomPicker

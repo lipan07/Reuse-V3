@@ -28,7 +28,7 @@ const iconMapping = {
 };
 
 const ParentCategoryPanel = memo(({ categories, onSelectCategory, isLoading, isError, isRefreshing }) => {
-  const rainbowColors = ['#FF0000', '#FF7F00', '#4B0082', '#00FF00', '#0000FF', '#FFFFF', '#9400D3'];
+  const rainbowColors = ['#FF6B6B'];
 
   const renderItem = ({ item, index }) => {
     const iconInfo = iconMapping[item.guard_name] || { name: 'tag', type: 'MC' };

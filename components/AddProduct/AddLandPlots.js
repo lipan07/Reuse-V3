@@ -136,7 +136,7 @@ const AddLandPlots = ({ route, navigation }) => {
           <Text style={styles.formHeaderTitle}>Land & Plots</Text>
           <Text style={styles.formSubHeader}>Fill in details for your listing</Text>
         </View>
-        <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        <ScrollView contentContainerStyle={styles.scrollViewContent} keyboardShouldPersistTaps="handled">
 
           {/* Listed By */}
           <Text style={styles.label}>Listed By *</Text>

@@ -114,6 +114,11 @@ const FilterScreen = ({ navigation }) => {
         console.log('Query Params:', queryParams);
         console.log('Advanced Filter API URL:', `${process.env.BASE_URL}/posts?${queryParams}`);
         try {
+            await AsyncStorage.setItem('defaultLocation', JSON.stringify({
+                address: formData.address,
+                latitude: formData.latitude,
+                longitude: formData.longitude
+            }));
             const response = await fetch(`${process.env.BASE_URL}/posts?${queryParams}`, {
                 method: 'GET',
                 headers: { Authorization: `Bearer ${token}` },
@@ -122,6 +127,7 @@ const FilterScreen = ({ navigation }) => {
             if (response.ok) {
                 const jsonResponse = await response.json();
                 // console.log('Filtered Products:', jsonResponse.data);
+
                 navigation.navigate('Home', {
                     filters,
                     products: jsonResponse.data

@@ -42,7 +42,6 @@ export const submitForm = async (formData, subcategory) => {
     formDataToSend.append('category_id', subcategory.id);
     formDataToSend.append('guard_name', subcategory.guard_name);
     formDataToSend.append('post_type', 'sell');
-    formDataToSend.append('address', 'India');
 
     // Determine API endpoint and method
     const isUpdate = !!formData.id;

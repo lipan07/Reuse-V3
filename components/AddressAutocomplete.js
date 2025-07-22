@@ -90,7 +90,7 @@ const AddressAutocomplete = ({
                 setSearchQuery(address);
                 setPredictions([]);
 
-                await AsyncStorage.setItem('defaultLocation', JSON.stringify(locationData));
+                // await AsyncStorage.setItem('defaultLocation', JSON.stringify(locationData));
                 if (onAddressSelect) onAddressSelect(locationData);
             }
         } catch (err) {

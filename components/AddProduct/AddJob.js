@@ -137,7 +137,7 @@ const AddJob = ({ route, navigation }) => {
           <Text style={styles.formHeaderTitle}>{subcategory?.name}</Text>
           <Text style={styles.formSubHeader}>Fill in details for your listing</Text>
         </View>
-        <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        <ScrollView contentContainerStyle={styles.scrollViewContent} keyboardShouldPersistTaps="handled">
 
           {/* Salary Period Selection */}
           <Text style={styles.label}>Salary Period *</Text>

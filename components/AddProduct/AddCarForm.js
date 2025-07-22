@@ -4,7 +4,7 @@ import { Picker } from '@react-native-picker/picker';
 import { submitForm } from '../../service/apiService';
 import ImagePickerComponent from './SubComponent/ImagePickerComponent';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import AddressAutocomplete from '../AddressAutocomplete.js';
+import AddressAutocomplete from '../AddressAutocomplete';
 import styles from '../../assets/css/AddProductForm.styles.js';
 import CustomPicker from './SubComponent/CustomPicker.js';
 import ModalScreen from '../SupportElement/ModalScreen.js';
@@ -218,7 +218,7 @@ const AddCarForm = ({ route, navigation }) => {
           <Text style={styles.formHeaderTitle}>{category?.name}</Text>
           <Text style={styles.formSubHeader}>Fill in details for your listing</Text>
         </View>
-        <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        <ScrollView contentContainerStyle={styles.scrollViewContent} keyboardShouldPersistTaps="handled">
           {/* Brand Field */}
           <Text style={styles.label}>Brand *</Text>
           <CustomPicker

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, FlatList, Dimensions, StatusBar,Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, FlatList, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import Header from './Screens/Header';
+import CustomStatusBar from './Screens/CustomStatusBar';
 
 const { width, height } = Dimensions.get('window');
 const scale = width / 375;
@@ -9,9 +11,9 @@ const verticalScale = height / 812;
 const normalize = (size) => Math.round(scale * size);
 const normalizeVertical = (size) => Math.round(verticalScale * size);
 
-const PackagePage = () => {
+const PackagePage = ({ navigation }) => {
   const [expandedId, setExpandedId] = useState(null);
-  const statusBarHeight = StatusBar.currentHeight || (Platform.OS === 'ios' ? 20 : 24);
+  const [darkMode, setDarkMode] = useState(false);
   const packageData = [
     {
       id: '1',
@@ -127,17 +129,16 @@ const PackagePage = () => {
   return (
 
     <>
-      <StatusBar backgroundColor="#007BFF" barStyle="light-content" translucent={true} />
-      {/* Blue background for status bar area */}
-      <View style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: statusBarHeight,
-        backgroundColor: '#007BFF',
-        zIndex: 1,
-      }} />
+      <CustomStatusBar />
+      {/* Header with proper spacing */}
+      <View>
+        <Header
+          title="Packages"
+          navigation={navigation}
+          darkMode={darkMode}
+        />
+        <View style={[styles.separator, darkMode && styles.darkSeparator]} />
+      </View>
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Seller Packages</Text>

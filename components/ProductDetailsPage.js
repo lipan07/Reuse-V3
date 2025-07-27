@@ -10,7 +10,6 @@ import {
     Linking,
     Alert,
     Dimensions,
-    StatusBar
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -40,7 +39,7 @@ import styles from '../assets/css/ProductDetailsPage.styles';
 import AddressSection from './AddressSection.js';
 import ReportPostModal from './ReportPostModal.js';
 import ModalScreen from './SupportElement/ModalScreen.js';
-
+import CustomStatusBar from './Screens/CustomStatusBar';
 
 const { width } = Dimensions.get('window');
 
@@ -285,17 +284,7 @@ const ProductDetails = () => {
 
     return (
         <>
-            <StatusBar backgroundColor="#007BFF" barStyle="light-content" translucent={true} />
-            {/* Blue background for status bar area */}
-            <View style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: statusBarHeight,
-                backgroundColor: '#007BFF',
-                zIndex: 1,
-            }} />
+            <CustomStatusBar />
             <View style={styles.container}>
                 <ScrollView contentContainerStyle={styles.scrollContainer}>
                     {/* ✅ Auto-scrolling Image Gallery */}

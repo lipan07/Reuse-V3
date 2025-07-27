@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet, Dimensions, Platform, StatusBar } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import Header from './Screens/Header';
 
 const { width } = Dimensions.get('window');
 const scale = width / 375;
@@ -12,6 +13,7 @@ const AccountPage = ({ navigation }) => {
     const statusBarHeight = StatusBar.currentHeight || (Platform.OS === 'ios' ? 20 : 24);
     const [userName, setUserName] = useState('');
     const [userImage, setUserImage] = useState('https://cdn-icons-png.flaticon.com/512/3135/3135715.png');
+    const [darkMode, setDarkMode] = useState(false);
 
     useEffect(() => {
         const fetchProfile = async () => {

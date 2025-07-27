@@ -51,6 +51,7 @@ import LocationPicker from './LocationPicker';
 import ChangePassword from './ChangePassword';
 import SubCategoryScreen from './Screens/SubCategoryScreen';
 import HelpSupport from './HelpSupport';
+import Feedback from './Feedback';
 
 const Stack = createStackNavigator();
 
@@ -73,7 +74,6 @@ const AppNavigator = () => {
 
   return (
     <>
-      <CustomStatusBar />
       <Stack.Navigator initialRouteName={initialRouteName}
         screenOptions={{
           // Default: show custom header
@@ -120,6 +120,22 @@ const AppNavigator = () => {
           component={PackagePage}
           options={{ headerShown: false }}
         />
+        <Stack.Screen
+          name="Feedback"
+          component={Feedback}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="HelpSupport"
+          component={HelpSupport}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="FollowingPage"
+          component={FollowingPage}
+          options={{ headerShown: false }}
+        />
+
         {/* <Stack.Screen name="Login" component={Login} /> */}
         <Stack.Screen name="Home" component={Home} />
         <Stack.Screen name="FilterScreen" component={FilterScreen} />
@@ -135,7 +151,7 @@ const AppNavigator = () => {
         <Stack.Screen name="MyNetwork" component={MyNetwork} />
         <Stack.Screen name="FollowersPage" component={FollowersPage} />
         <Stack.Screen name="MyFollowersPage" component={MyFollowersPage} />
-        <Stack.Screen name="FollowingPage" component={FollowingPage} />
+        {/* <Stack.Screen name="FollowingPage" component={FollowingPage} /> */}
         {/* <Stack.Screen name="PackagePage" component={PackagePage} /> */}
         {/* <Stack.Screen name="Settings" component={Settings} /> */}
         <Stack.Screen name="ChangePassword" component={ChangePassword} />
@@ -167,7 +183,6 @@ const AppNavigator = () => {
         <Stack.Screen name="AddCommercialHeavyMachinery" component={AddCommercialHeavyMachinery} />
 
         <Stack.Screen name="SubCategories" component={SubCategoryScreen} />
-        <Stack.Screen name="HelpSupport" component={HelpSupport} />
       </Stack.Navigator>
     </>
   );

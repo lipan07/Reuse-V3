@@ -19,6 +19,7 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AddressAutocomplete from './AddressAutocomplete';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import CustomStatusBar from './Screens/CustomStatusBar';
 
 const { width, height } = Dimensions.get('window');
 const scale = width / 375;
@@ -27,7 +28,6 @@ const normalize = (size) => Math.round(scale * size);
 const normalizeVertical = (size) => Math.round(verticalScale * size);
 
 const EditProfilePage = () => {
-  const statusBarHeight = StatusBar.currentHeight || (Platform.OS === 'ios' ? 20 : 24);
   const [userData, setUserData] = useState({
     firstName: '',
     lastName: '',
@@ -170,17 +170,7 @@ const EditProfilePage = () => {
 
   return (
     <>
-      <StatusBar backgroundColor="#007BFF" barStyle="light-content" translucent={true} />
-      {/* Blue background for status bar area */}
-      <View style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: statusBarHeight,
-        backgroundColor: '#007BFF',
-        zIndex: 1,
-      }} />
+      <CustomStatusBar />
       <View style={styles.outerContainer}>
         {/* Custom Modal */}
         <Modal

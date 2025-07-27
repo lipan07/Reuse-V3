@@ -17,6 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import MapView, { Marker } from 'react-native-maps';
 import { AlertNotificationRoot, Toast, ALERT_TYPE } from 'react-native-alert-notification';
 import ModalScreen from '../components/SupportElement/ModalScreen';
+import CustomStatusBar from './Screens/CustomStatusBar';
 
 const { width, height } = Dimensions.get('window');
 const scale = width / 375;
@@ -147,17 +148,7 @@ const LocationPicker = ({ navigation }) => {
 
     return (
         <AlertNotificationRoot>
-            <StatusBar backgroundColor="#007BFF" barStyle="light-content" translucent={true} />
-            {/* Blue background for status bar area */}
-            <View style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: statusBarHeight,
-                backgroundColor: '#007BFF',
-                zIndex: 1,
-            }} />
+            <CustomStatusBar />
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.container}

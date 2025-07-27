@@ -7,12 +7,19 @@ import {
     ScrollView,
     StyleSheet,
     Alert,
-    Dimensions
+    Dimensions,
+    StatusBar,
+    Platform,
+    Linking,
+    ActivityIndicator
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import ModalScreen from './SupportElement/ModalScreen.js'; // Adjust the path as necessary
-import AsyncStorage from '@react-native-async-storage/async-storage'; // assuming token might be needed
-
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import ModalScreen from './SupportElement/ModalScreen.js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+import Header from './Screens/Header';
+import CustomStatusBar from './Screens/CustomStatusBar';
 
 const { width, height } = Dimensions.get('window');
 const scale = width / 375;
@@ -21,41 +28,25 @@ const normalize = (size) => Math.round(scale * size);
 const normalizeVertical = (size) => Math.round(verticalScale * size);
 
 const HelpSupport = () => {
+    const navigation = useNavigation();
     const [issue, setIssue] = useState('');
     const [message, setMessage] = useState('');
     const [modalVisible, setModalVisible] = useState(false);
     const [modalType, setModalType] = useState('info');
     const [modalTitle, setModalTitle] = useState('');
     const [modalMessage, setModalMessage] = useState('');
-    const [issueError, setIssueError] = useState('');
-    const [messageError, setMessageError] = useState('');
-
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [darkMode, setDarkMode] = useState(false);
 
     const handleSubmit = async () => {
-        let hasError = false;
-
-        if (issue.length > 50) {
-            setIssueError('Issue type must be less than or equal to 50 characters.');
-            hasError = true;
-        } else {
-            setIssueError('');
-        }
+        setIsSubmitting(true);
 
         if (!message.trim()) {
-            setMessageError('Please describe your issue.');
-            hasError = true;
-        } else if (message.length > 150) {
-            setMessageError('Message must be less than or equal to 150 characters.');
-            hasError = true;
-        } else {
-            setMessageError('');
-        }
-
-        if (hasError) {
             setModalType('error');
             setModalTitle('Validation Error');
-            setModalMessage('Please fix the form validation errors before submitting.');
+            setModalMessage('Please describe your issue before submitting.');
             setModalVisible(true);
+            setIsSubmitting(false);
             return;
         }
 
@@ -75,7 +66,6 @@ const HelpSupport = () => {
             });
 
             const data = await response.json();
-            console.log(data);
 
             if (!response.ok) {
                 throw new Error(data.message || 'Something went wrong.');
@@ -83,330 +73,333 @@ const HelpSupport = () => {
 
             setModalType('success');
             setModalTitle('Support Request Sent');
-            setModalMessage('Our team will get back to you shortly.');
+            setModalMessage('Our team will get back to you within 24 hours.');
             setModalVisible(true);
             setIssue('');
             setMessage('');
         } catch (error) {
             setModalType('error');
             setModalTitle('Submission Failed');
-            setModalMessage(error.message || 'Unable to send support request.');
+            setModalMessage(error.message || 'Unable to send support request. Please try again later.');
             setModalVisible(true);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
+    const handleContactPress = (type) => {
+        switch (type) {
+            case 'email':
+                Linking.openURL('mailto:support@reuse.com');
+                break;
+            case 'phone':
+                Linking.openURL('tel:+18001234567');
+                break;
+            case 'chat':
+                // Implement your chat functionality here
+                Alert.alert('Live Chat', 'Connecting you to our support team...');
+                break;
+        }
+    };
+
+    const commonQuestions = [
+        {
+            q: 'How do I post an ad?',
+            a: "Go to the 'Sell' tab and follow the steps to upload product details and images."
+        },
+        {
+            q: 'Is it free to post ads?',
+            a: 'Yes! Posting on Reuse is 100% free for everyone.'
+        },
+        {
+            q: 'What if I get scammed?',
+            a: 'Reuse encourages face-to-face deals in safe locations. If you suspect fraud, report the user immediately.'
+        },
+        {
+            q: 'Should I pay in advance before receiving the product?',
+            a: '❌ No. Reuse strongly advises users never to pay any advance money before inspecting and receiving the product.',
+            warning: true
+        }
+    ];
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            {/* Solid Color Header (Replaced Linear Gradient) */}
-            <View style={styles.header}>
-                <View style={styles.headerContent}>
-                    <Icon name="support-agent" size={normalize(24)} color="#fff" />
-                    <Text style={styles.title}>Help Center</Text>
-                </View>
-            </View>
+        <>
+            <CustomStatusBar />
+            <View style={styles.container}>
+                {/* Header with proper status bar spacing */}
+                <Header
+                    title="Help & Support"
+                    navigation={navigation}
+                    darkMode={darkMode}
+                />
 
-            <Text style={styles.description}>
-                Need help using Reuse? Whether you're buying or selling new or used items like mobiles, bikes, flats,
-                electronics, services, or machinery — we're here to help!
-            </Text>
+                <ScrollView
+                    contentContainerStyle={styles.scrollContainer}
+                    showsVerticalScrollIndicator={false}
+                >
+                    {/* Welcome Section */}
+                    <View style={styles.welcomeCard}>
+                        <Icon name="help-outline" size={normalize(30)} color="#007BFF" />
+                        <Text style={styles.welcomeTitle}>How can we help you?</Text>
+                        <Text style={styles.welcomeText}>
+                            Whether you're buying or selling items on Reuse, our support team is here to assist you.
+                        </Text>
+                    </View>
 
-            <View style={styles.card}>
-                <View style={styles.sectionHeader}>
-                    <Icon name="help-outline" size={normalize(20)} color="#0d6efd" />
-                    <Text style={styles.sectionTitle}>Common Questions</Text>
-                </View>
+                    {/* Common Questions */}
+                    <Text style={styles.sectionHeaderText}>Common Questions</Text>
+                    <View style={styles.card}>
+                        {commonQuestions.map((item, index) => (
+                            <View key={index} style={[
+                                styles.questionContainer,
+                                index < commonQuestions.length - 1 && styles.questionBorder
+                            ]}>
+                                <Icon
+                                    name={item.warning ? 'error-outline' : 'help-outline'}
+                                    size={normalize(20)}
+                                    color={item.warning ? '#FF3B30' : '#007BFF'}
+                                    style={styles.questionIcon}
+                                />
+                                <View style={styles.questionTextContainer}>
+                                    <Text style={[styles.questionText, item.warning && styles.warningText]}>
+                                        {item.q}
+                                    </Text>
+                                    <Text style={styles.answerText}>{item.a}</Text>
+                                </View>
+                            </View>
+                        ))}
+                    </View>
 
-                {[
-                    {
-                        q: 'How do I post an ad?',
-                        a: "Go to the 'Sell' tab and follow the steps to upload product details and images."
-                    },
-                    {
-                        q: 'Is it free to post ads?',
-                        a: 'Yes! Posting on Reuse is 100% free for everyone.'
-                    },
-                    {
-                        q: 'What if I get scammed?',
-                        a: 'Reuse encourages face-to-face deals in safe locations. If you suspect fraud, report the user immediately.'
-                    },
-                    {
-                        q: 'Should I pay in advance before receiving the product?',
-                        a: '❌ No. Reuse strongly advises users never to pay any advance money before inspecting and receiving the product. Always meet in person and verify the item before making any payment.',
-                        warning: true
-                    }
-                ].map((item, index) => (
-                    <View key={index} style={styles.questionContainer}>
-                        <Icon
-                            name={item.warning ? 'warning' : 'help'}
-                            size={normalize(16)}
-                            color={item.warning ? '#dc3545' : '#0d6efd'}
-                            style={styles.icon}
-                        />
-                        <View style={styles.textWrapper}>
-                            <Text style={[styles.question, item.warning && styles.warning]}>{item.q}</Text>
-                            <Text style={styles.answer}>{item.a}</Text>
+                    {/* Contact Form */}
+                    <Text style={styles.sectionHeaderText}>Contact Support</Text>
+                    <View style={styles.card}>
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.inputLabel}>Issue Type (optional)</Text>
+                            <TextInput
+                                placeholder="E.g. Account issue, Payment problem..."
+                                placeholderTextColor="#999"
+                                value={issue}
+                                onChangeText={setIssue}
+                                style={styles.input}
+                                maxLength={50}
+                            />
+                            <Text style={styles.charCounter}>{issue.length}/50</Text>
                         </View>
+
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.inputLabel}>Describe your issue *</Text>
+                            <TextInput
+                                placeholder="Please provide details about your problem..."
+                                placeholderTextColor="#999"
+                                value={message}
+                                onChangeText={setMessage}
+                                style={[styles.input, styles.messageInput]}
+                                multiline
+                                textAlignVertical="top"
+                                maxLength={200}
+                            />
+                            <Text style={styles.charCounter}>{message.length}/200</Text>
+                        </View>
+
+                        <TouchableOpacity
+                            onPress={handleSubmit}
+                            style={styles.submitButton}
+                            disabled={isSubmitting}
+                            activeOpacity={0.8}
+                        >
+                            {isSubmitting ? (
+                                <ActivityIndicator color="#fff" />
+                            ) : (
+                                <>
+                                    <Text style={styles.submitButtonText}>Submit Request</Text>
+                                    <Icon name="send" size={normalize(16)} color="#fff" />
+                                </>
+                            )}
+                        </TouchableOpacity>
                     </View>
-                ))}
-            </View>
 
-            <View style={styles.card}>
-                <View style={styles.sectionHeader}>
-                    <Icon name="contact-support" size={normalize(20)} color="#0d6efd" />
-                    <Text style={styles.sectionTitle}>Still Need Help?</Text>
-                </View>
-
-                <Text style={styles.description}>
-                    Fill out the form below and our support team will get in touch with you within 24 hours.
-                </Text>
-
-                {[
-                    { icon: 'info', placeholder: 'Issue Type (optional)', value: issue, onChangeText: setIssue },
-                ].map((item, index) => (
-                    <View key={index} style={styles.inputContainer}>
-                        <Icon name={item.icon} size={normalize(18)} color="#6c757d" style={styles.inputIcon} />
-                        <TextInput
-                            placeholder={item.placeholder}
-                            placeholderTextColor="#adb5bd"
-                            value={item.value}
-                            onChangeText={(text) => {
-                                setIssue(text);
-                                if (text.length > 50) {
-                                    setIssueError('Issue type must be under 50 characters.');
-                                } else {
-                                    setIssueError('');
-                                }
-                            }}
-                            style={styles.input}
-                            maxLength={60} // optional UI safety cap
-                        />
+                    {/* Contact Options */}
+                    <Text style={styles.sectionHeaderText}>Other Ways to Reach Us</Text>
+                    <View style={styles.card}>
+                        {[
+                            { icon: 'email', text: 'Email Support', type: 'email' },
+                            { icon: 'phone', text: 'Call Support', type: 'phone' },
+                            { icon: 'chat', text: 'Live Chat', type: 'chat' }
+                        ].map((item, index) => (
+                            <TouchableOpacity
+                                key={index}
+                                style={styles.contactOption}
+                                onPress={() => handleContactPress(item.type)}
+                                activeOpacity={0.7}
+                            >
+                                <Icon
+                                    name={item.icon}
+                                    size={normalize(20)}
+                                    color="#007BFF"
+                                    style={styles.contactIcon}
+                                />
+                                <Text style={styles.contactText}>{item.text}</Text>
+                                <Icon
+                                    name="chevron-right"
+                                    size={normalize(20)}
+                                    color="#999"
+                                    style={styles.contactArrow}
+                                />
+                            </TouchableOpacity>
+                        ))}
                     </View>
-                ))}
-                {issueError ? <Text style={styles.errorText}>{issueError}</Text> : null}
+                </ScrollView>
 
-                <View style={styles.inputContainer}>
-                    <Icon
-                        name="message"
-                        size={normalize(18)}
-                        color="#6c757d"
-                        style={[styles.inputIcon, { alignSelf: 'flex-start', marginTop: normalizeVertical(12) }]}
-                    />
-                    <TextInput
-                        placeholder="Describe your issue"
-                        placeholderTextColor="#adb5bd"
-                        value={message}
-                        onChangeText={(text) => {
-                            setMessage(text);
-                            if (text.length > 150) {
-                                setMessageError('Message must be under 150 characters.');
-                            } else {
-                                setMessageError('');
-                            }
-                        }}
-                        style={[styles.input, styles.messageInput]}
-                        multiline
-                        textAlignVertical="top"
-                        maxLength={200}
-                    />
-                </View>
-                {messageError ? <Text style={styles.errorText}>{messageError}</Text> : null}
-
-
-                <TouchableOpacity onPress={handleSubmit} style={styles.button}>
-                    <Text style={styles.buttonText}>Submit Request</Text>
-                    <Icon name="send" size={normalize(16)} color="#fff" style={styles.buttonIcon} />
-                </TouchableOpacity>
+                <ModalScreen
+                    visible={modalVisible}
+                    type={modalType}
+                    title={modalTitle}
+                    message={modalMessage}
+                    onClose={() => setModalVisible(false)}
+                />
             </View>
-
-            <View style={styles.contactInfo}>
-                <View style={styles.sectionHeader}>
-                    <Icon name="alternate-email" size={normalize(20)} color="#0d6efd" />
-                    <Text style={styles.contactTitle}>Other Ways to Reach Us</Text>
-                </View>
-
-                {[
-                    { icon: 'email', text: 'support@reuse.com' },
-                    { icon: 'phone', text: '+1 (800) 123-4567' },
-                    { icon: 'forum', text: 'Live Chat (available 24/7)' }
-                ].map((item, index) => (
-                    <View key={index} style={styles.contactRow}>
-                        <Icon name={item.icon} size={normalize(16)} color="#0d6efd" />
-                        <Text style={styles.contactText}>{item.text}</Text>
-                    </View>
-                ))}
-            </View>
-            <ModalScreen
-                visible={modalVisible}
-                type={modalType}
-                title={modalTitle}
-                message={modalMessage}
-                onClose={() => setModalVisible(false)}
-            />
-        </ScrollView >
+        </>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
-        padding: normalize(14),
-        backgroundColor: '#f8f9fa',
-        paddingBottom: normalizeVertical(30),
+        flex: 1,
+        backgroundColor: '#F5F7FA',
     },
-    header: {
-        borderRadius: normalize(12),
-        marginBottom: normalizeVertical(16),
-        marginTop: normalizeVertical(6),
-        backgroundColor: '#0d6efd',
+    scrollContainer: {
+        padding: normalize(16),
+        paddingBottom: normalize(32),
     },
-    headerContent: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: normalize(14),
-    },
-    title: {
-        fontSize: normalize(20),
-        fontWeight: '700',
-        color: '#fff',
-        marginLeft: normalize(10),
-    },
-    description: {
-        fontSize: normalize(14),
-        color: '#495057',
-        marginBottom: normalizeVertical(18),
-        fontWeight: '400',
-        lineHeight: normalizeVertical(20),
-    },
-    card: {
+    welcomeCard: {
         backgroundColor: '#fff',
         borderRadius: normalize(12),
-        padding: normalize(14),
-        marginBottom: normalizeVertical(16),
+        padding: normalize(20),
+        marginBottom: normalize(16),
+        alignItems: 'center',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
         shadowRadius: 6,
         elevation: 2,
-        borderWidth: 1,
-        borderColor: '#e9ecef',
     },
-    sectionHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: normalizeVertical(14),
+    welcomeTitle: {
+        fontSize: normalize(18),
+        fontWeight: '600',
+        color: '#333',
+        marginTop: normalize(8),
+        marginBottom: normalize(4),
     },
-    sectionTitle: {
+    welcomeText: {
+        fontSize: normalize(14),
+        color: '#666',
+        textAlign: 'center',
+        lineHeight: normalize(20),
+    },
+    sectionHeaderText: {
         fontSize: normalize(16),
         fontWeight: '600',
-        color: '#212529',
-        marginLeft: normalize(8),
+        color: '#333',
+        marginBottom: normalize(12),
+        marginTop: normalize(8),
     },
-    questionContainer: {
-        flexDirection: 'row',
-        marginBottom: normalizeVertical(16),
-        alignItems: 'flex-start',
-    },
-    icon: {
-        marginRight: normalize(10),
-        marginTop: normalizeVertical(3),
-    },
-    textWrapper: {
-        flex: 1,
-    },
-    question: {
-        fontWeight: '500',
-        fontSize: normalize(14),
-        marginBottom: normalizeVertical(4),
-        color: '#212529',
-    },
-    warning: {
-        color: '#dc3545',
-    },
-    answer: {
-        fontSize: normalize(13),
-        color: '#6c757d',
-        lineHeight: normalizeVertical(18),
-    },
-    inputContainer: {
-        flexDirection: 'row',
-        marginBottom: normalizeVertical(12),
-        position: 'relative',
-    },
-    inputIcon: {
-        position: 'absolute',
-        left: normalize(12),
-        top: normalize(12),
-        zIndex: 1,
-    },
-    input: {
-        flex: 1,
-        height: normalizeVertical(44),
-        backgroundColor: '#f8f9fa',
-        borderRadius: normalize(10),
-        paddingHorizontal: normalize(40),
-        fontSize: normalize(13),
-        borderColor: '#dee2e6',
-        borderWidth: 1,
-        color: '#212529',
-    },
-    messageInput: {
-        height: normalizeVertical(100),
-        paddingTop: normalizeVertical(12),
-        paddingHorizontal: normalize(40),
-    },
-    button: {
-        backgroundColor: '#0d6efd',
-        paddingVertical: normalizeVertical(12),
-        borderRadius: normalize(10),
-        alignItems: 'center',
-        marginTop: normalizeVertical(8),
-        flexDirection: 'row',
-        justifyContent: 'center',
-        shadowColor: '#0d6efd',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-        elevation: 3,
-    },
-    buttonText: {
-        color: '#fff',
-        fontWeight: '600',
-        fontSize: normalize(14),
-    },
-    buttonIcon: {
-        marginLeft: normalize(6),
-    },
-    contactInfo: {
+    card: {
         backgroundColor: '#fff',
         borderRadius: normalize(12),
         padding: normalize(16),
+        marginBottom: normalize(16),
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 6,
+        elevation: 2,
+    },
+    questionContainer: {
+        flexDirection: 'row',
+        paddingVertical: normalize(12),
+    },
+    questionBorder: {
+        borderBottomWidth: 1,
+        borderBottomColor: '#f0f0f0',
+    },
+    questionIcon: {
+        marginRight: normalize(12),
+        marginTop: normalize(2),
+    },
+    questionTextContainer: {
+        flex: 1,
+    },
+    questionText: {
+        fontWeight: '500',
+        fontSize: normalize(14),
+        color: '#333',
+        marginBottom: normalize(4),
+    },
+    warningText: {
+        color: '#FF3B30',
+    },
+    answerText: {
+        fontSize: normalize(13),
+        color: '#666',
+        lineHeight: normalize(18),
+    },
+    inputContainer: {
+        marginBottom: normalize(16),
+    },
+    inputLabel: {
+        fontSize: normalize(13),
+        color: '#666',
+        marginBottom: normalize(6),
+    },
+    input: {
+        backgroundColor: '#F5F7FA',
+        borderRadius: normalize(8),
+        padding: normalize(12),
+        fontSize: normalize(14),
         borderWidth: 1,
-        borderColor: '#e9ecef',
+        borderColor: '#E0E0E0',
+        color: '#333',
     },
-    contactTitle: {
-        fontSize: normalize(16),
+    messageInput: {
+        height: normalize(120),
+    },
+    charCounter: {
+        fontSize: normalize(11),
+        color: '#999',
+        textAlign: 'right',
+        marginTop: normalize(4),
+    },
+    submitButton: {
+        backgroundColor: '#007BFF',
+        borderRadius: normalize(8),
+        padding: normalize(14),
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'row',
+        marginTop: normalize(8),
+    },
+    submitButtonText: {
+        color: '#fff',
         fontWeight: '600',
-        color: '#212529',
-        marginLeft: normalize(8),
+        fontSize: normalize(14),
+        marginRight: normalize(8),
     },
-    contactRow: {
+    contactOption: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: normalizeVertical(10),
-        paddingLeft: normalize(4),
+        paddingVertical: normalize(12),
+    },
+    contactIcon: {
+        marginRight: normalize(12),
     },
     contactText: {
+        flex: 1,
         fontSize: normalize(14),
-        color: '#495057',
-        marginLeft: normalize(10),
+        color: '#333',
     },
-    errorText: {
-        color: '#dc3545',
-        fontSize: normalize(12),
-        marginBottom: normalizeVertical(8),
-        marginLeft: normalize(8),
+    contactArrow: {
+        marginLeft: 'auto',
     },
-
 });
 
 export default HelpSupport;

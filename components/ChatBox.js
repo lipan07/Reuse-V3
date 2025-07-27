@@ -171,6 +171,7 @@ const ChatBox = ({ route }) => {
 
       console.log(`${process.env.BASE_URL}/send-message`);
 
+      setInputText('');
       const response = await fetch(`${process.env.BASE_URL}/send-message`, {
         method: 'POST',
         headers: {
@@ -189,7 +190,6 @@ const ChatBox = ({ route }) => {
         setChatId(data.chat_id); // ✅ Set the new chat ID
       }
 
-      setInputText('');
     } catch (error) {
       console.error("Error sending message:", error);
     }

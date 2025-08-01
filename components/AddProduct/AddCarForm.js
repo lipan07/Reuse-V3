@@ -84,6 +84,7 @@ const AddCarForm = ({ route, navigation }) => {
   const { category, subcategory, product } = route.params;
   const currentYear = new Date().getFullYear();
   const [formData, setFormData] = useState({
+    listingType: 'sell',
     brand: '',
     year: currentYear.toString(),
     fuelType: 'Petrol',
@@ -124,8 +125,10 @@ const AddCarForm = ({ route, navigation }) => {
         if (response.ok) {
           const data = await response.json();
           const productData = data.data;
+          console.log(productData);
           setFormData({
             id: productData.id,
+            listingType: productData?.type || 'sell',
             brand: productData.post_details?.brand || '',
             year: productData.post_details?.year?.toString() || currentYear.toString(),
             fuelType: productData.post_details?.fuel || 'Petrol',
@@ -215,10 +218,29 @@ const AddCarForm = ({ route, navigation }) => {
         style={styles.container}
       >
         <View style={styles.formHeaderContainer}>
-          <Text style={styles.formHeaderTitle}>{category?.name}</Text>
+          <Text style={styles.formHeaderTitle}>{subcategory?.name}</Text>
           <Text style={styles.formSubHeader}>Fill in details for your listing</Text>
         </View>
         <ScrollView contentContainerStyle={styles.scrollViewContent} keyboardShouldPersistTaps="handled">
+          {/* Listing Type section */}
+          <Text style={styles.label}>Listing Type *</Text>
+          <View style={styles.optionContainer}>
+            {['sell', 'rent'].map((type) => (
+              <TouchableOpacity
+                key={type}
+                style={[
+                  styles.optionButton,
+                  formData.listingType === type && styles.selectedOption,
+                  { textTransform: 'capitalize' }
+                ]}
+                onPress={() => handleChange('listingType', type)}
+              >
+                <Text style={formData.listingType === type ? styles.selectedText : styles.optionText}>
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
           {/* Brand Field */}
           <Text style={styles.label}>Brand *</Text>
           <CustomPicker

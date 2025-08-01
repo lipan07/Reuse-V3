@@ -60,7 +60,6 @@ const ProductDetails = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [currentImageIndex, setCurrentImageIndex] = useState(0); // ✅ added for auto-scroll
     const scrollViewRef = useRef(null); // ✅ added for auto-scroll
-    const statusBarHeight = StatusBar.currentHeight || (Platform.OS === 'ios' ? 20 : 24);
     const [showReportModal, setShowReportModal] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
     const [modalType, setModalType] = useState('info');

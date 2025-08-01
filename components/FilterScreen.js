@@ -17,6 +17,7 @@ const FilterScreen = ({ navigation }) => {
         latitude: route.params?.initialFilters?.location?.coordinates?.[1] || 28.6139,
         longitude: route.params?.initialFilters?.location?.coordinates?.[0] || 77.209,
     });
+    const [listingType, setListingType] = useState(route.params?.initialFilters?.listingType || 'sell');
 
     const [loading, setLoading] = useState(false);
     const [city, setCity] = useState(route.params?.initialFilters?.location?.city || '');
@@ -70,6 +71,7 @@ const FilterScreen = ({ navigation }) => {
             latitude: 28.6139,
             longitude: 77.209,
         });
+        setListingType('sell');
         setSelectedCategory('');
         setSelectedDistance(5);
         setSelectedPriceRange('Recently Added');
@@ -93,6 +95,7 @@ const FilterScreen = ({ navigation }) => {
             distance: selectedDistance,
             longitude: formData.longitude,
             latitude: formData.latitude,
+            listingType: listingType,
             // location: {
             //     coordinates: [formData.longitude, formData.latitude],
             //     address: formData.address,
@@ -136,7 +139,7 @@ const FilterScreen = ({ navigation }) => {
         } finally {
             setLoading(false);
         }
-    }, [searchTerm, selectedCategory, selectedPriceRange, minBudget, maxBudget, formData, city, state, country]);
+    }, [searchTerm, selectedCategory, selectedPriceRange, minBudget, maxBudget, formData, city, state, country, listingType]);
 
     const renderHeader = () => (
         <>
@@ -163,6 +166,28 @@ const FilterScreen = ({ navigation }) => {
                         }}
                     />
                 </View>
+            </View>
+
+            {/* Add Listing Type Filter */}
+            <Text style={styles.sectionTitle}>Listing Type</Text>
+            <View style={styles.filterListContainer}>
+                {['sell', 'rent'].map((type) => (
+                    <TouchableOpacity
+                        key={type}
+                        style={[
+                            styles.filterItem,
+                            listingType === type && styles.filterItemSelected,
+                        ]}
+                        onPress={() => setListingType(type)}
+                    >
+                        <Text style={[
+                            styles.filterText,
+                            listingType === type && styles.filterTextSelected
+                        ]}>
+                            {type.charAt(0).toUpperCase() + type.slice(1)}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
             </View>
 
             <Text style={styles.distanceTitle}>Search Radius</Text>

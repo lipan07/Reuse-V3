@@ -28,6 +28,7 @@ const AddOthers = ({ route, navigation }) => {
     longitude: null,
     images: [],
     deletedImages: [],
+    listingType: 'sell',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -128,7 +129,25 @@ const AddOthers = ({ route, navigation }) => {
           keyboardShouldPersistTaps="handled"
           nestedScrollEnabled={true}
         >
-
+          {/* Listing Type section */}
+          <Text style={styles.label}>Listing Type *</Text>
+          <View style={styles.optionContainer}>
+            {['sell', 'rent'].map((type) => (
+              <TouchableOpacity
+                key={type}
+                style={[
+                  styles.optionButton,
+                  formData.listingType === type && styles.selectedOption,
+                  { textTransform: 'capitalize' }
+                ]}
+                onPress={() => handleChange('listingType', type)}
+              >
+                <Text style={formData.listingType === type ? styles.selectedText : styles.optionText}>
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
           <Text style={styles.label}>Title *</Text>
           <TextInput
             style={styles.input}

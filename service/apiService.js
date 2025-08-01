@@ -41,7 +41,7 @@ export const submitForm = async (formData, subcategory) => {
     // Common fields
     formDataToSend.append('category_id', subcategory.id);
     formDataToSend.append('guard_name', subcategory.guard_name);
-    formDataToSend.append('post_type', 'sell');
+    // formDataToSend.append('post_type', 'sell');
 
     // Determine API endpoint and method
     const isUpdate = !!formData.id;

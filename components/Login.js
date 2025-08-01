@@ -9,7 +9,6 @@ import { getApp } from '@react-native-firebase/app';
 
 import { BASE_URL } from '@env';
 
-
 const countryCodes = [
    { code: '+1', name: 'United States' },
    { code: '+91', name: 'India' },
@@ -105,6 +104,8 @@ const Login = () => {
    const [alertType, setAlertType] = useState('info');
    const [alertTitle, setAlertTitle] = useState('');
    const [alertMessage, setAlertMessage] = useState('');
+   const [timer, setTimer] = useState(60);
+   const [showTimer, setShowTimer] = useState(false);
    const navigation = useNavigation();
    const otpInputRef = useRef(null);
 
@@ -119,6 +120,20 @@ const Login = () => {
       checkLoginStatus();
    }, []);
 
+   useEffect(() => {
+      let interval;
+      if (showTimer && timer > 0) {
+         interval = setInterval(() => {
+            setTimer(prevTimer => prevTimer - 1);
+         }, 1000);
+      } else if (timer === 0 && showTimer) {
+         setShowTimer(false);
+         setShowOtpField(false);
+         setTimer(60);
+      }
+      return () => clearInterval(interval);
+   }, [showTimer, timer]);
+
    const handlePhoneNumberSubmit = async () => {
       if (!phoneNumber || phoneNumber.length < 10) {
          setAlertType('error');
@@ -127,7 +142,11 @@ const Login = () => {
          setShowAlert(true);
          return;
       }
+
       setShowOtpField(true);
+      setShowTimer(true);
+      setTimer(60);
+
       setTimeout(() => {
          otpInputRef.current?.focus();
       }, 100);
@@ -135,10 +154,6 @@ const Login = () => {
 
    const handleOtpSubmit = async () => {
       try {
-         // Log the API endpoint and parameters
-         console.log('API URL:', `${BASE_URL}/login`);
-         console.log('Request Body:', { phoneNumber, otp });
-
          const messaging = getMessaging(getApp());
          const fcmToken = await getToken(messaging);
 
@@ -148,14 +163,15 @@ const Login = () => {
                Accept: 'application/json',
                'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ phoneNumber: `${phoneNumber}`, otp: `${otp}`, fcmToken: `${fcmToken}`, platform: `${Platform.OS}` }),
+            body: JSON.stringify({
+               phoneNumber: `${phoneNumber}`,
+               otp: `${otp}`,
+               fcmToken: `${fcmToken}`,
+               platform: `${Platform.OS}`
+            }),
          });
 
-         // Log the raw response object
-         console.log('Fetch Response:', response);
-
          const data = await response.json();
-         console.log('Response Data:', data);
 
          if (response.ok) {
             await AsyncStorage.multiSet([
@@ -175,8 +191,6 @@ const Login = () => {
             setShowAlert(true);
          }
       } catch (error) {
-         // Log the error object
-         console.log('FETCH ERROR:', error);
          setAlertType('error');
          setAlertTitle('Connection Error');
          setAlertMessage('Please check your internet connection');
@@ -188,6 +202,7 @@ const Login = () => {
       await AsyncStorage.clear();
       setIsLoggedIn(false);
       setShowOtpField(false);
+      setShowTimer(false);
       setCountryCode('+91');
       setPhoneNumber('');
       setOtp('');
@@ -246,25 +261,38 @@ const Login = () => {
             </View>
 
             {showOtpField && (
-               <TextInput
-                  ref={otpInputRef}
-                  style={styles.input}
-                  placeholder="Enter OTP"
-                  placeholderTextColor="#bbb"
-                  value={otp}
-                  onChangeText={setOtp}
-                  keyboardType="number-pad"
-                  autoFocus
-               />
+               <>
+                  <TextInput
+                     ref={otpInputRef}
+                     style={styles.input}
+                     placeholder="Enter OTP"
+                     placeholderTextColor="#bbb"
+                     value={otp}
+                     onChangeText={setOtp}
+                     keyboardType="number-pad"
+                     autoFocus
+                  />
+                  {showTimer && (
+                     <Text style={styles.timerText}>
+                        Time remaining: {timer} seconds
+                     </Text>
+                  )}
+               </>
             )}
 
             <TouchableOpacity
-               style={styles.loginButton}
+               style={[styles.loginButton, showTimer && !showOtpField && styles.disabledButton]}
                onPress={showOtpField ? handleOtpSubmit : handlePhoneNumberSubmit}
                activeOpacity={0.85}
+               disabled={showTimer && !showOtpField}
             >
                <Text style={styles.buttonText}>
-                  {showOtpField ? 'Verify OTP' : 'Send OTP'}
+                  {showOtpField
+                     ? 'Verify OTP'
+                     : showTimer
+                        ? 'Resend OTP'
+                        : 'Send OTP'
+                  }
                </Text>
             </TouchableOpacity>
 
@@ -384,7 +412,12 @@ const styles = StyleSheet.create({
       color: '#2d3436',
       borderWidth: 1,
       borderColor: '#dfe6e9',
-      marginBottom: 20,
+      marginBottom: 10,
+   },
+   timerText: {
+      textAlign: 'center',
+      color: '#636e72',
+      marginBottom: 15,
    },
    loginButton: {
       backgroundColor: '#0984e3',
@@ -393,6 +426,9 @@ const styles = StyleSheet.create({
       justifyContent: 'center',
       alignItems: 'center',
       marginTop: 10,
+   },
+   disabledButton: {
+      backgroundColor: '#b2bec3',
    },
    logoutButton: {
       backgroundColor: '#d63031',

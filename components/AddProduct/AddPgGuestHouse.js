@@ -24,6 +24,7 @@ const AddPgGuestHouse = ({ route, navigation }) => {
     longitude: null, // Added longitude
     images: [],
     deletedImages: [],
+    listingType: 'sell',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!product);
@@ -144,7 +145,25 @@ const AddPgGuestHouse = ({ route, navigation }) => {
           <Text style={styles.formSubHeader}>Fill in details for your listing</Text>
         </View>
         <ScrollView contentContainerStyle={styles.scrollViewContent} keyboardShouldPersistTaps="handled">
-
+          {/* Listing Type section */}
+          <Text style={styles.label}>Listing Type *</Text>
+          <View style={styles.optionContainer}>
+            {['sell', 'rent'].map((type) => (
+              <TouchableOpacity
+                key={type}
+                style={[
+                  styles.optionButton,
+                  formData.listingType === type && styles.selectedOption,
+                  { textTransform: 'capitalize' }
+                ]}
+                onPress={() => handleChange('listingType', type)}
+              >
+                <Text style={formData.listingType === type ? styles.selectedText : styles.optionText}>
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
           {/* Type Selection */}
           <Text style={styles.label}>Type *</Text>
           <View style={styles.optionContainer}>

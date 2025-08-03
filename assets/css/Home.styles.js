@@ -236,5 +236,25 @@ export default StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
+  productTag: {
+    position: 'absolute',
+    top: 3,
+    left: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    zIndex: 2, // Make sure it appears above the image
+  },
+  rentTag: {
+    backgroundColor: 'rgba(76, 175, 79, 0.53)', // Green with 80% opacity
+  },
+  sellTag: {
+    backgroundColor: 'rgba(255, 86, 34, 0.54)', // Orange with 80% opacity
+  },
+  tagText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
 
 });

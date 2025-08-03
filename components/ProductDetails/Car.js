@@ -1,56 +1,55 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import styles from '../../assets/css/productDetailsCard.styles';
-import useFollowPost from '../../hooks/useFollowPost'; // Import the hook
+
+// Responsive scaling
+const { width } = Dimensions.get('window');
+const scale = width / 375;
+const normalize = (size) => Math.round(scale * size);
 
 const Car = ({ product, buyerId }) => {
-    const { isFollowed, toggleFollow } = useFollowPost(product); // Use the hook
+    const details = [
+        { label: 'Brand', value: product.post_details?.brand, icon: 'car' },
+        { label: 'Model Year', value: product.post_details?.year, icon: 'calendar' },
+        { label: 'Fuel Type', value: product.post_details?.fuel, icon: 'fuel' },
+        { label: 'Transmission', value: product.post_details?.transmission, icon: 'cog' },
+        { label: 'KM Driven', value: product.post_details?.km_driven, icon: 'speedometer' },
+        { label: 'Owner', value: product.post_details?.no_of_owner, icon: 'account' }
+    ].filter(item => item.value); // Filter out empty values
+
+    // Check if there's only one item
+    const isSingleItem = details.length === 1;
 
     return (
         <View style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.productTitle}>{product.title || 'No Title'}</Text>
-                {buyerId !== product.user?.id && (
-                    <TouchableOpacity onPress={toggleFollow}>
-                        <Icon
-                            name={isFollowed ? 'heart' : 'heart-outline'}
-                            size={28}
-                            color={isFollowed ? 'red' : 'gray'}
-                            style={styles.heartIcon}
-                        />
-                    </TouchableOpacity>
-                )}
+            <View style={[
+                styles.gridContainer,
+                isSingleItem && styles.fullWidthContainer
+            ]}>
+                {details.map((item, index) => (
+                    <View key={index} style={[
+                        styles.detailItem,
+                        isSingleItem && styles.fullWidthItem
+                    ]}>
+                        <View style={styles.iconContainer}>
+                            <Icon name={item.icon} size={normalize(16)} color="#666" />
+                        </View>
+                        <View style={styles.textContainer}>
+                            <Text style={styles.label}>{item.label}</Text>
+                            <Text style={[
+                                styles.value,
+                                item.label === 'KM Driven' && parseInt(item.value) < 50000 && styles.highlightValue,
+                                item.label === 'Owner' && item.value === '1' && styles.highlightValue
+                            ]}>
+                                {item.value || 'N/A'}
+                            </Text>
+                        </View>
+                    </View>
+                ))}
             </View>
-
-            {/* Car Details */}
-            <View style={styles.detailsContainer}>
-                {renderDetailRow('Brand', product.post_details?.brand)}
-                {renderDetailRow('Model Year', product.post_details?.year)}
-                {renderDetailRow('Fuel Type', product.post_details?.fuel)}
-                {renderDetailRow('Transmission', product.post_details?.transmission)}
-                {renderDetailRow('KM Driven', product.post_details?.km_driven)}
-                {renderDetailRow('Owner', product.post_details?.no_of_owner)}
-            </View>
-
-            {/* Description */}
-            <View style={styles.descriptionContainer}>
-                <Text style={styles.label}>Description:</Text>
-                <Text style={styles.description}>{product.post_details?.description || 'No description available'}</Text>
-            </View>
-
-            {/* Price */}
-            <Text style={styles.price}>Price: ${product.post_details?.amount || 'N/A'}</Text>
         </View>
     );
 };
-
-/** Reusable function to render detail rows */
-const renderDetailRow = (label, value) => (
-    <View style={styles.detailRow}>
-        <Text style={styles.label}>{label}:</Text>
-        <Text style={styles.value}>{value || 'N/A'}</Text>
-    </View>
-);
 
 export default Car;

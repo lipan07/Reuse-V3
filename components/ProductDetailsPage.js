@@ -10,13 +10,14 @@ import {
     Linking,
     Alert,
     Dimensions,
+    FlatList
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MapView, { Marker } from 'react-native-maps';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import BottomNavBar from './BottomNavBar';
+import ImageView from 'react-native-image-viewing';
 import Car from './ProductDetails/Car';
 import Mobile from './ProductDetails/Mobile';
 import Bycycle from './ProductDetails/Bycycle';
@@ -35,62 +36,55 @@ import Scooter from './ProductDetails/Scooter';
 import ToursTravel from './ProductDetails/ToursTravel';
 import VehicleSparePart from './ProductDetails/VehicleSparePart';
 import Others from './ProductDetails/Others';
-import styles from '../assets/css/ProductDetailsPage.styles';
-import AddressSection from './AddressSection.js';
-import ReportPostModal from './ReportPostModal.js';
-import ModalScreen from './SupportElement/ModalScreen.js';
+import ReportPostModal from './ReportPostModal';
+import ShopOffice from './ProductDetails/ShopOffice';
+import ModalScreen from './SupportElement/ModalScreen';
 import CustomStatusBar from './Screens/CustomStatusBar';
+import styles from '../assets/css/ProductDetailsPage.styles';
+import useFollowPost from '../hooks/useFollowPost'; // Import the hook
 
-const { width } = Dimensions.get('window');
-
-import {
-    BannerAd,
-    BannerAdSize,
-    TestIds,
-    AppOpenAd,
-    AdEventType,
-} from 'react-native-google-mobile-ads';
-
-const adUnitId = __DEV__ ? TestIds.ADAPTIVE_BANNER : process.env.G_BANNER_AD_UNIT_ID;
+const { width, height } = Dimensions.get('window');
+const scale = width / 375;
+const normalize = (size) => Math.round(scale * size);
 
 const ProductDetails = () => {
     const [buyerId, setBuyerId] = useState(null);
     const [userFollowed, setUserFollowed] = useState(false);
     const [product, setProduct] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [currentImageIndex, setCurrentImageIndex] = useState(0); // ✅ added for auto-scroll
-    const scrollViewRef = useRef(null); // ✅ added for auto-scroll
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [showReportModal, setShowReportModal] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
     const [modalType, setModalType] = useState('info');
     const [modalTitle, setModalTitle] = useState('');
-    const [modalMessage, setModalMessage] = useState(''); // Changed from modalText
+    const [modalMessage, setModalMessage] = useState('');
+    const [visibleImageView, setVisibleImageView] = useState(false);
+    const [imageIndex, setImageIndex] = useState(0);
+    const [isScrolling, setIsScrolling] = useState(false);
+
+    const { isFollowed, toggleFollow } = useFollowPost(product); // Use the hook
 
     const navigation = useNavigation();
     const route = useRoute();
     const { productDetails } = route.params;
     const productId = productDetails.id;
+    const flatListRef = useRef(null);
+    const scrollViewRef = useRef(null);
+    const autoScrollInterval = useRef(null);
 
+    // Fetch product details
     useEffect(() => {
         const fetchProductDetails = async () => {
             try {
                 const token = await AsyncStorage.getItem('authToken');
-                const apiURL = `${process.env.BASE_URL}/posts/${productId}`;
-                const response = await fetch(apiURL, {
-                    method: 'GET',
+                const response = await fetch(`${process.env.BASE_URL}/posts/${productId}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    const product = data.data;
-
-                    console.log('Product Details:', product);
-                    setUserFollowed(data.is_following_post_user === true);
-                    setProduct(product);
-                }
+                const data = await response.json();
+                setProduct(data.data);
+                setUserFollowed(data.is_following_post_user === true);
             } catch (error) {
-                console.error('Error fetching product details:', error);
+                console.error('Error:', error);
             } finally {
                 setIsLoading(false);
             }
@@ -112,40 +106,47 @@ const ProductDetails = () => {
         loadBuyerId();
     }, []);
 
-    // ✅ Auto-scroll logic
     useEffect(() => {
         if (!product?.images || product.images.length <= 1) return;
 
-        const interval = setInterval(() => {
-            setCurrentImageIndex((prevIndex) => {
-                const nextIndex = (prevIndex + 1) % product.images.length;
-                const scrollToX = width * nextIndex;
+        const scrollImages = () => {
+            setCurrentImageIndex(prev => {
+                const nextIndex = (prev + 1) % product.images.length;
+                flatListRef.current?.scrollToIndex({
+                    index: nextIndex,
+                    animated: true
+                });
+                return nextIndex;
+            });
+        };
 
-                scrollViewRef.current?.scrollTo({ x: scrollToX, animated: true });
+        autoScrollInterval.current = setInterval(scrollImages, 3000);
+
+        return () => {
+            if (autoScrollInterval.current) {
+                clearInterval(autoScrollInterval.current);
+            }
+        };
+    }, [product?.images]);
+
+    const handleScroll = (event) => {
+        const contentOffset = event.nativeEvent.contentOffset.x;
+        const index = Math.round(contentOffset / width);
+        setCurrentImageIndex(index);
+
+        // Reset auto-scroll timer after manual interaction
+        clearInterval(autoScrollInterval.current);
+        autoScrollInterval.current = setInterval(() => {
+            setCurrentImageIndex(prev => {
+                const nextIndex = (prev + 1) % product.images.length;
+                flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
                 return nextIndex;
             });
         }, 3000);
+    };
 
-        return () => clearInterval(interval);
-    }, [product?.images]);
-
-    if (isLoading) {
-        return (
-            <View style={styles.loaderContainer}>
-                <ActivityIndicator size="large" color="#007bff" />
-                <Text style={styles.loadingText}>Loading...</Text>
-            </View>
-        );
-    }
-
-    if (!product) {
-        return (
-            <View style={styles.notFoundContainer}>
-                <Icon name="alert-circle-outline" size={50} color="gray" />
-                <Text style={styles.notFoundText}>Product Not Found</Text>
-            </View>
-        );
-    }
+    const handleTouchStart = () => setIsScrolling(true);
+    const handleTouchEnd = () => setIsScrolling(false);
 
     const toggleUserFollow = async () => {
         try {
@@ -162,11 +163,8 @@ const ProductDetails = () => {
             const result = await response.json();
 
             if (response.ok) {
-                // Update based on API response if available, otherwise toggle
                 const newStatus = result.data?.is_following ?? !userFollowed;
                 setUserFollowed(newStatus);
-
-                // Also update the product object to keep consistency
                 setProduct(prev => ({
                     ...prev,
                     is_following_post_user: newStatus
@@ -187,7 +185,7 @@ const ProductDetails = () => {
                 postId: product.id,
                 postTitle: product.title,
                 postImage: product.images?.[0] || null,
-                chatId: null // explicitly set as null to trigger first message logic
+                chatId: null
             });
         }
     };
@@ -198,12 +196,10 @@ const ProductDetails = () => {
         Linking.openURL(url).catch(() => Alert.alert("Error", "Could not open Google Maps"));
     };
 
-    // Add this function in your ProductDetails component
     const handleReportSubmit = async (reportData) => {
         try {
             const token = await AsyncStorage.getItem('authToken');
             const url = `${process.env.BASE_URL}/reports`;
-            console.log(url);
             const formData = new FormData();
             formData.append('post_id', product.id);
             formData.append('reporting_user_id', buyerId);
@@ -211,7 +207,7 @@ const ProductDetails = () => {
             if (reportData.description) {
                 formData.append('description', reportData.description);
             }
-            console.log(formData);
+
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
@@ -234,138 +230,316 @@ const ProductDetails = () => {
                 throw new Error(result.message || 'Failed to submit report');
             }
         } catch (error) {
-            setModalType('error'); // Changed from 'danger' to match your ModalScreen types
+            setModalType('error');
             setModalTitle('Submission Failed');
             setModalMessage(error.message || 'Something went wrong while submitting your report.');
             setModalVisible(true);
         }
     };
 
+    const openImageViewer = (index) => {
+        setImageIndex(index);
+        setVisibleImageView(true);
+    };
 
     const renderDetails = () => {
         switch (product.category_id) {
-            case 1: return <Car product={product} buyerId={buyerId} />
-            case 3: return <HouseApartment product={product} buyerId={buyerId} />
-            case 4: return <LandPlot product={product} buyerId={buyerId} />
-            case 5: return <PgGuestHouse product={product} buyerId={buyerId} />
-            case 7: return <Mobile product={product} buyerId={buyerId} />
-            case 27: return <Bycycle product={product} buyerId={buyerId} />
-            case 72: return <CleaningPestControl product={product} buyerId={buyerId} />
-            case 43: return <CommercialHeavyMachinery product={product} buyerId={buyerId} />
-            case 67: return <EducationClasses product={product} buyerId={buyerId} />
-            case 69: return <Electronics product={product} buyerId={buyerId} />
-            case 71: return <HomeRenovation product={product} buyerId={buyerId} />
-            case 9:
-            case 10:
-            case 11:
-            case 12:
-            case 13:
-            case 14:
-            case 15:
-            case 16:
-            case 17:
-            case 18:
-            case 19:
-            case 20:
-            case 21:
-            case 22:
-            case 23: return <Job product={product} buyerId={buyerId} />
-            case 73: return <LegalService product={product} buyerId={buyerId} />
-            case 25: return <Motorcycle product={product} buyerId={buyerId} />
-            case 26: return <Scooter product={product} buyerId={buyerId} />
-            case 68: return <ToursTravel product={product} buyerId={buyerId} />
-            case 41: return <VehicleSparePart product={product} buyerId={buyerId} />
+            // case 1: return <Car product={product} buyerId={buyerId} />
+            // case 3: return <HouseApartment product={product} buyerId={buyerId} />
+            // case 4: return <LandPlot product={product} buyerId={buyerId} />
+            // case 5: return <PgGuestHouse product={product} buyerId={buyerId} />
+            // case 6: return <ShopOffice product={product} buyerId={buyerId} />
+            // case 7: return <Mobile product={product} buyerId={buyerId} />
+            // case 27: return <Bycycle product={product} buyerId={buyerId} />
+            // case 72: return <CleaningPestControl product={product} buyerId={buyerId} />
+            // case 43: return <CommercialHeavyMachinery product={product} buyerId={buyerId} />
+            // case 67: return <EducationClasses product={product} buyerId={buyerId} />
+            // case 69: return <Electronics product={product} buyerId={buyerId} />
+            // case 71: return <HomeRenovation product={product} buyerId={buyerId} />
+            // case 9:
+            // case 10:
+            // case 11:
+            // case 12:
+            // case 13:
+            // case 14:
+            // case 15:
+            // case 16:
+            // case 17:
+            // case 18:
+            // case 19:
+            // case 20:
+            // case 21:
+            // case 22:
+            // case 23: return <Job product={product} buyerId={buyerId} />
+            // case 73: return <LegalService product={product} buyerId={buyerId} />
+            // case 25: return <Motorcycle product={product} buyerId={buyerId} />
+            // case 26: return <Scooter product={product} buyerId={buyerId} />
+            // case 68: return <ToursTravel product={product} buyerId={buyerId} />
+            // case 41: return <VehicleSparePart product={product} buyerId={buyerId} />
             default: return <Others product={product} buyerId={buyerId} />
         }
     };
 
-    const handleReportButton = () => setShowReportModal(true);
+    if (isLoading) {
+        return (
+            <View style={styles.loaderContainer}>
+                <ActivityIndicator size="large" color="#007bff" />
+            </View>
+        );
+    }
+
+    if (!product) {
+        return (
+            <View style={styles.notFoundContainer}>
+                <Text>Product not found</Text>
+            </View>
+        );
+    }
+    const getMemberSince = (createdAt) => {
+        if (!createdAt) return 'Member since N/A';
+
+        const createdDate = new Date(createdAt);
+        const currentDate = new Date();
+
+        // Calculate difference in years
+        const diffYears = currentDate.getFullYear() - createdDate.getFullYear();
+
+        // Check if the created date hasn't happened yet this year
+        if (
+            currentDate.getMonth() < createdDate.getMonth() ||
+            (currentDate.getMonth() === createdDate.getMonth() &&
+                currentDate.getDate() < createdDate.getDate())
+        ) {
+            return `Member since ${createdDate.getFullYear() - 1}`;
+        }
+
+        return `Member since ${createdDate.getFullYear()}`;
+    };
+
+    const getTimeSincePosting = (createdAt) => {
+        if (!createdAt) return 'Recently posted';
+
+        const createdDate = new Date(createdAt);
+        const currentDate = new Date();
+        const diffTime = Math.abs(currentDate - createdDate);
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) {
+            const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+            if (diffHours === 0) {
+                const diffMinutes = Math.floor(diffTime / (1000 * 60));
+                return `${diffMinutes} minute${diffMinutes !== 1 ? 's' : ''} ago`;
+            }
+            return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+        } else if (diffDays === 1) {
+            return '1 day ago';
+        } else if (diffDays < 7) {
+            return `${diffDays} days ago`;
+        } else if (diffDays < 30) {
+            const weeks = Math.floor(diffDays / 7);
+            return `${weeks} week${weeks !== 1 ? 's' : ''} ago`;
+        } else if (diffDays < 365) {
+            const months = Math.floor(diffDays / 30);
+            return `${months} month${months !== 1 ? 's' : ''} ago`;
+        } else {
+            const years = Math.floor(diffDays / 365);
+            return `${years} year${years !== 1 ? 's' : ''} ago`;
+        }
+    };
+
+    const excludedCategories = [
+        3, 28, 44, 73, 74, 75, // Specific category IDs
+        29, 45, 51, 55, 61    // Parent category IDs
+    ];
+
+    const shouldShowDetails = !excludedCategories.some(id =>
+        product.category_id === id ||
+        product.category?.parent_id === id
+    );
 
     return (
-        <>
+        <SafeAreaView style={styles.safeArea}>
             <CustomStatusBar />
-            <View style={styles.container}>
-                <ScrollView contentContainerStyle={styles.scrollContainer}>
-                    {/* ✅ Auto-scrolling Image Gallery */}
+            <ScrollView
+                contentContainerStyle={styles.container}
+                ref={scrollViewRef}
+                showsVerticalScrollIndicator={false}
+            >
+                {/* Image Gallery */}
+                <View style={styles.galleryContainer}>
                     {product.images?.length > 0 ? (
-                        <ScrollView
-                            ref={scrollViewRef}
+                        <FlatList
+                            ref={flatListRef}
+                            data={product.images}
                             horizontal
                             pagingEnabled
                             showsHorizontalScrollIndicator={false}
-                            style={styles.imageGallery}
-                            onMomentumScrollEnd={(e) => {
-                                const index = Math.round(e.nativeEvent.contentOffset.x / width);
-                                setCurrentImageIndex(index);
-                            }}
-                        >
-                            {product.images.map((img, index) => (
+                            onScroll={handleScroll}
+                            scrollEventThrottle={16}
+                            renderItem={({ item, index }) => (
                                 <TouchableOpacity
-                                    key={index}
-                                    onPress={() => navigation.navigate('ImageViewer', {
-                                        images: product.images,
-                                        selectedIndex: index
-                                    })}
+                                    activeOpacity={0.9}
+                                    onPress={() => openImageViewer(index)}
                                 >
                                     <Image
-                                        source={{ uri: img }}
+                                        source={{ uri: item }}
                                         style={styles.galleryImage}
                                     />
                                 </TouchableOpacity>
-                            ))}
-                        </ScrollView>
+                            )}
+                            keyExtractor={(item, index) => index.toString()}
+                        />
                     ) : (
-                        <View style={[styles.galleryImage, styles.noImageContainer]}>
-                            <Text style={styles.noImageText}>
-                                {product.category.name
-                                    ? `No image found for \n ${product.category.name}`
-                                    : 'No product image available'}
-                            </Text>
+                        <View style={styles.noImageContainer}>
+                            <Icon name="image-off" size={normalize(24)} color="#ccc" />
+                            <Text style={styles.noImageText}>No images available</Text>
                         </View>
                     )}
 
-
-                    {/* Product Details Section */}
-                    <View style={styles.detailsSection}>{renderDetails()}</View>
-
-                    {/* Seller Information */}
-                    <View style={styles.sectionContainer}>
-                        <Text style={styles.sectionTitle}>Seller Information</Text>
-                        <View style={styles.sellerCard}>
-                            <View style={styles.sellerHeader}>
-                                <Image
-                                    source={product.user?.profile_image
-                                        ? { uri: product.user.profile_image }
-                                        : require('../assets/images/user.webp')}
-                                    style={styles.sellerImage}
+                    {product.images?.length > 1 && (
+                        <View style={styles.imageIndicator}>
+                            {product.images.map((_, index) => (
+                                <View
+                                    key={index}
+                                    style={[
+                                        styles.indicatorDot,
+                                        currentImageIndex === index && styles.activeDot
+                                    ]}
                                 />
-                                <View style={styles.sellerInfo}>
-                                    <Text style={styles.sellerName}>
-                                        {product.user?.name || 'Unknown Seller'}
-                                    </Text>
-                                    <Text style={styles.postedText}>Posted 2 days ago</Text>
-                                </View>
-                                {buyerId !== product.user?.id && (
-                                    <TouchableOpacity
-                                        onPress={toggleUserFollow}
-                                        style={styles.followButton}
-                                    >
-                                        <Icon
-                                            name={userFollowed ? 'heart' : 'heart-outline'}
-                                            size={28}
-                                            color={userFollowed ? '#e74c3c' : '#7f8c8d'}
-                                        />
-                                    </TouchableOpacity>
-                                )}
-                            </View>
+                            ))}
                         </View>
+                    )}
+
+                    <View style={[
+                        styles.productTag,
+                        product.type === 'rent' ? styles.rentTag : styles.sellTag
+                    ]}>
+                        <Text style={styles.tagText}>
+                            {product.type === 'rent' ? 'RENT' : 'SELL'}
+                        </Text>
+                    </View>
+                </View>
+
+                {/* Compact Product Header */}
+                <View style={styles.headerContainer}>
+                    <View style={styles.headerTopRow}>
+                        <Text style={styles.priceText}>
+                            {!(product.category_id >= 9 && product.category_id <= 23) ? (
+                                product.post_details?.amount ? (
+                                    <Text style={styles.priceText}>₹{product.post_details.amount}</Text>
+                                ) : '---'
+                            ) : (
+                                product.post_details?.salary_from || product.post_details?.salary_to ? (
+                                    <Text style={styles.priceText}>
+                                        {product.post_details.salary_from ? `₹${product.post_details.salary_from}` : ''}
+                                        {product.post_details.salary_from && product.post_details.salary_to ? ' - ' : ''}
+                                        {product.post_details.salary_to ? `₹${product.post_details.salary_to}` : ''}
+                                    </Text>
+                                ) : '---'
+                            )}
+                        </Text>
+                        {buyerId !== product.user?.id && (
+                            <TouchableOpacity onPress={toggleUserFollow}>
+                                <Icon
+                                    name={userFollowed ? 'heart' : 'heart-outline'}
+                                    size={normalize(22)}
+                                    color={userFollowed ? '#FF3B30' : '#8E8E93'}
+                                />
+                            </TouchableOpacity>
+                        )}
                     </View>
 
-                    {/* Map with Address Overlay */}
-                    <View style={styles.mapContainer}>
+                    <Text style={styles.titleText}>{product.title}</Text>
+
+                    <View style={styles.metaRow}>
+                        <View style={styles.metaItem}>
+                            <Icon name="tag-outline" size={normalize(14)} color="#8E8E93" />
+                            <Text style={styles.metaText}>
+                                {product.category?.name || 'Uncategorized'}
+                            </Text>
+                        </View>
+                        <View style={styles.metaItem}>
+                            <Icon name="map-marker-outline" size={normalize(14)} color="#8E8E93" />
+                            <Text style={styles.metaText}>
+                                {product.address || 'Location not specified'}
+                            </Text>
+                        </View>
+                        <View style={styles.metaItem}>
+                            <Icon name="clock-outline" size={normalize(14)} color="#8E8E93" />
+                            <Text style={styles.metaText}>
+                                {getTimeSincePosting(product.created_at)}
+                            </Text>
+                        </View>
+                    </View>
+                </View>
+
+                {/* Details Section */}
+                {shouldShowDetails && (
+                    <View style={styles.detailsSection}>
+                        {renderDetails()}
+                    </View>
+                )}
+
+                {/* Description Section */}
+                {product.post_details?.description && (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Description</Text>
+                        <Text style={styles.descriptionText}>
+                            {product.post_details.description}
+                        </Text>
+                    </View>
+                )}
+
+                {/* Seller Section */}
+                {/* Seller Section */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Seller Information</Text>
+                    <View style={styles.sellerCard}>
+                        <Image
+                            source={product.user?.profile_image
+                                ? { uri: product.user.profile_image }
+                                : require('../assets/images/user.webp')}
+                            style={styles.sellerImage}
+                        />
+                        <View style={styles.sellerInfo}>
+                            <Text style={styles.sellerName}>
+                                {product.user?.name || 'Unknown Seller'}
+                            </Text>
+                            <Text style={styles.sellerMeta}>
+                                <Icon name="star" size={normalize(12)} color="#FFCC00" />
+                                4.8 (24) • {getMemberSince(product.user?.created_at)}
+                            </Text>
+                        </View>
+                        <View style={styles.sellerActions}>
+                            <TouchableOpacity
+                                style={styles.followSellerButton}
+                                onPress={toggleUserFollow}
+                            >
+                                <Icon
+                                    name={userFollowed ? 'heart' : 'heart-outline'}
+                                    size={normalize(20)}
+                                    color={userFollowed ? '#FF3B30' : '#8E8E93'}
+                                />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.chatIcon}
+                                onPress={handleChatWithSeller}
+                            >
+                                <Icon name="message-text-outline" size={normalize(20)} color="#007AFF" />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+
+                {/* Location Section */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Location</Text>
+                    <TouchableOpacity
+                        style={styles.mapContainer}
+                        onPress={handleMapPress}
+                    >
                         <MapView
                             style={styles.map}
-                            onPress={handleMapPress}
                             initialRegion={{
                                 latitude: 22.6992,
                                 longitude: 88.3902,
@@ -373,75 +547,76 @@ const ProductDetails = () => {
                                 longitudeDelta: 0.0421,
                             }}
                         >
-                            <Marker
-                                coordinate={{ latitude: 22.6992, longitude: 88.3902 }}
-                                title="Product Location"
-                            />
+                            <Marker coordinate={{ latitude: 22.6992, longitude: 88.3902 }} />
                         </MapView>
-                        {/* Address overlay at top left */}
-                        <View style={styles.mapAddressOverlay}>
-                            <Text style={styles.mapAddressText} numberOfLines={2} ellipsizeMode="tail">
-                                {'Agarpara, Kolkata-700109' || product.address}
+                        <View style={styles.addressOverlay}>
+                            <Text style={styles.addressText} numberOfLines={2}>
+                                {product.address || 'Location not specified'}
                             </Text>
                         </View>
-                    </View>
+                    </TouchableOpacity>
+                </View>
 
-
-                    {/* Report Link */}
-                    {buyerId !== product.user?.id && (
-                        <>
-                            <View style={styles.reportLinkContainer}>
-                                <TouchableOpacity
-                                    style={styles.reportButton}
-                                    onPress={handleReportButton}
-                                    activeOpacity={0.85}
-                                >
-                                    <Icon name="alert-circle-outline" size={18} color="red" style={{ marginRight: 8 }} />
-                                    <Text style={styles.reportButtonText}>Report this post</Text>
-                                </TouchableOpacity>
-                            </View>
-
-                            <ReportPostModal
-                                visible={showReportModal}
-                                onClose={() => setShowReportModal(false)}
-                                onSubmit={handleReportSubmit}
-                                postId={product.id}
-                            />
-                        </>
-                    )}
-                </ScrollView>
-
-                {/* Chat/Call Buttons */}
+                {/* Report Button */}
                 {buyerId !== product.user?.id && (
-                    <View style={styles.buttonContainer}>
-                        <TouchableOpacity
-                            style={[styles.actionButton, styles.chatButton]}
-                            onPress={handleChatWithSeller}
-                        >
-                            <Icon name="message-text" size={20} color="#fff" />
-                            <Text style={styles.buttonText}>Chat with Seller</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={[styles.actionButton, styles.callButton]}
-                            onPress={() => Linking.openURL(`tel:${product.phone}`)}
-                        >
-                            <Icon name="phone" size={20} color="#fff" />
-                            <Text style={styles.buttonText}>Call Now</Text>
-                        </TouchableOpacity>
-                    </View>
+                    <TouchableOpacity
+                        style={styles.reportButton}
+                        onPress={() => setShowReportModal(true)}
+                    >
+                        <Icon name="alert-circle-outline" size={normalize(16)} color="#FF3B30" />
+                        <Text style={styles.reportButtonText}>Report this post</Text>
+                    </TouchableOpacity>
                 )}
-                {/* <BottomNavBar /> */}
+            </ScrollView>
 
-                <ModalScreen
-                    visible={modalVisible}
-                    type={modalType}
-                    title={modalTitle}
-                    message={modalMessage}  // Changed from textBody
-                    onClose={() => setModalVisible(false)}
+            {/* Action Buttons */}
+            {buyerId !== product.user?.id && product.phone && (
+                <View style={styles.actionBar}>
+                    <TouchableOpacity
+                        style={[styles.actionButton, styles.chatButton]}
+                        onPress={handleChatWithSeller}
+                    >
+                        <Icon name="message-text" size={normalize(18)} color="#fff" />
+                        <Text style={styles.actionButtonText}>Chat</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.actionButton, styles.callButton]}
+                        onPress={() => Linking.openURL(`tel:${product.phone}`)}
+                    >
+                        <Icon name="phone" size={normalize(18)} color="#fff" />
+                        <Text style={styles.actionButtonText}>Call</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+
+            {/* Image Viewer Modal - Exactly as before */}
+            {product.images?.length > 0 && (
+                <ImageView
+                    images={product.images.map(img => ({ uri: img }))}
+                    imageIndex={imageIndex}
+                    visible={visibleImageView}
+                    onRequestClose={() => setVisibleImageView(false)}
+                    presentationStyle="overFullScreen"
+                    animationType="fade"
                 />
-            </View>
-        </>
+            )}
+
+            {/* Keep all your modals exactly as before */}
+            <ReportPostModal
+                visible={showReportModal}
+                onClose={() => setShowReportModal(false)}
+                onSubmit={handleReportSubmit}
+                postId={product.id}
+            />
+
+            <ModalScreen
+                visible={modalVisible}
+                type={modalType}
+                title={modalTitle}
+                message={modalMessage}
+                onClose={() => setModalVisible(false)}
+            />
+        </SafeAreaView>
     );
 };
 

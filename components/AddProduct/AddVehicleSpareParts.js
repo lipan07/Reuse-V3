@@ -35,6 +35,7 @@ const AddVehicleSpareParts = ({ route, navigation }) => {
   const [modalType, setModalType] = useState('info');
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchProductDetails = async () => {
@@ -82,7 +83,10 @@ const AddVehicleSpareParts = ({ route, navigation }) => {
   };
 
   const handleSubmit = async () => {
+    // Prevent multiple submissions
     if (isSubmitting) return;
+
+    console.log('handleSubmit called with formData:', formData);
     setIsSubmitting(true);
 
     try {
@@ -93,9 +97,12 @@ const AddVehicleSpareParts = ({ route, navigation }) => {
       setModalMessage(response.alert.message);
       setIsModalVisible(true);
 
-      setIsSubmitting(false);
     } catch (error) {
       console.error('Submission error:', error);
+      setModalType('error');
+      setModalTitle('Submission Failed');
+      setModalMessage('An error occurred while submitting the form. Please try again.');
+      setIsModalVisible(true);
     } finally {
       setIsSubmitting(false);
     }

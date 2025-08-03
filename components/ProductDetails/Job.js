@@ -1,59 +1,63 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import styles from '../../assets/css/productDetailsCard.styles';
 import useFollowPost from '../../hooks/useFollowPost';
 
 const Job = ({ product, buyerId }) => {
-    const { isFollowed, toggleFollow } = useFollowPost(product); // Use the hook
+    const { isFollowed, toggleFollow } = useFollowPost(product);
 
     if (!product?.post_details) {
         return <Text style={styles.errorText}>Job details are not available.</Text>;
     }
 
+    const jobDetails = [
+        {
+            label: 'Salary Period',
+            value: product.post_details?.salary_period,
+            icon: 'calendar'
+        },
+        {
+            label: 'Position Type',
+            value: product.post_details?.position_type,
+            icon: 'briefcase'
+        },
+        {
+            label: 'Salary Range',
+            value: product.post_details?.salary_from && product.post_details?.salary_to
+                ? `$${product.post_details.salary_from} - $${product.post_details.salary_to}`
+                : null,
+            icon: 'cash'
+        }
+    ].filter(item => item.value);
+
+    const isSingleItem = jobDetails.length === 1;
+
     return (
         <View style={styles.container}>
-            {/* Header with Job Title & Follow Icon */}
-            <View style={styles.header}>
-                <Text style={styles.productTitle}>{product.title || 'No Title'}</Text>
-                {buyerId !== product.user?.id && (
-                    <TouchableOpacity onPress={toggleFollow}>
-                        <Icon
-                            name={isFollowed ? 'heart' : 'heart-outline'}
-                            size={28}
-                            color={isFollowed ? 'red' : 'gray'}
-                            style={styles.heartIcon}
-                        />
-                    </TouchableOpacity>
-                )}
-            </View>
-
-            {/* Job Details */}
-            <View style={styles.detailRow}>
-                <Text style={styles.label}>Salary Period:</Text>
-                <Text style={styles.value}>{product.post_details?.salary_period || 'N/A'}</Text>
-            </View>
-
-            <View style={styles.detailRow}>
-                <Text style={styles.label}>Position Type:</Text>
-                <Text style={styles.value}>{product.post_details?.position_type || 'N/A'}</Text>
-            </View>
-
-            <View style={styles.detailRow}>
-                <Text style={styles.label}>Salary Range:</Text>
-                <Text style={styles.value}>
-                    {product.post_details?.salary_from && product.post_details?.salary_to
-                        ? `$${product.post_details.salary_from} - $${product.post_details.salary_to}`
-                        : 'N/A'}
-                </Text>
-            </View>
-
-            {/* Job Description */}
-            <View style={styles.descriptionContainer}>
-                <Text style={styles.label}>Description:</Text>
-                <Text style={styles.description}>
-                    {product.post_details?.description || 'No description available'}
-                </Text>
+            <View style={[
+                styles.gridContainer,
+                isSingleItem && styles.fullWidthContainer
+            ]}>
+                {jobDetails.map((detail, index) => (
+                    <View
+                        key={index}
+                        style={[
+                            styles.detailItem,
+                            isSingleItem && styles.fullWidthItem
+                        ]}
+                    >
+                        <View style={styles.iconContainer}>
+                            <Icon name={detail.icon} size={16} color="#666" />
+                        </View>
+                        <View style={styles.textContainer}>
+                            <Text style={styles.label}>{detail.label}</Text>
+                            <Text style={styles.value}>
+                                {detail.value}
+                            </Text>
+                        </View>
+                    </View>
+                ))}
             </View>
         </View>
     );

@@ -1,56 +1,55 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import styles from '../../assets/css/productDetailsCard.styles';
 import useFollowPost from '../../hooks/useFollowPost';
 
 const LandPlot = ({ product, buyerId }) => {
-    const { isFollowed, toggleFollow } = useFollowPost(product); // Use the hook
+    const { isFollowed, toggleFollow } = useFollowPost(product);
+
+    if (!product?.post_details) {
+        return <Text style={styles.errorText}>Land plot details are not available.</Text>;
+    }
+
+    const plotDetails = [
+        { label: 'Listed By', value: product.post_details?.listed_by, icon: 'account' },
+        { label: 'Carpet Area', value: product.post_details?.carpet_area, icon: 'floor-plan' },
+        { label: 'Length', value: product.post_details?.length, icon: 'ruler' },
+        { label: 'Breadth', value: product.post_details?.breadth, icon: 'ruler-square' },
+        { label: 'Facing', value: product.post_details?.facing, icon: 'compass' },
+        { label: 'Project Name', value: product.post_details?.project_name, icon: 'domain' }
+    ].filter(item => item.value);
+
+    const isSingleItem = plotDetails.length === 1;
 
     return (
         <View style={styles.container}>
-            {/* Header with Title and Follow Icon */}
-            <View style={styles.header}>
-                <Text style={styles.productTitle}>{product.title || 'No Title'}</Text>
-                {buyerId !== product.user?.id && (
-                    <TouchableOpacity onPress={toggleFollow}>
-                        <Icon
-                            name={isFollowed ? 'heart' : 'heart-outline'}
-                            size={30}
-                            color={isFollowed ? 'red' : 'gray'}
-                        />
-                    </TouchableOpacity>
-                )}
+            <View style={[
+                styles.gridContainer,
+                isSingleItem && styles.fullWidthContainer
+            ]}>
+                {plotDetails.map((detail, index) => (
+                    <View
+                        key={index}
+                        style={[
+                            styles.detailItem,
+                            isSingleItem && styles.fullWidthItem
+                        ]}
+                    >
+                        <View style={styles.iconContainer}>
+                            <Icon name={detail.icon} size={16} color="#666" />
+                        </View>
+                        <View style={styles.textContainer}>
+                            <Text style={styles.label}>{detail.label}</Text>
+                            <Text style={styles.value}>
+                                {detail.value}
+                            </Text>
+                        </View>
+                    </View>
+                ))}
             </View>
-
-            {/* Property Details in a bordered box */}
-            <View style={styles.detailsContainer}>
-                {renderDetailRow('Listed By', product.post_details?.listed_by)}
-                {renderDetailRow('Carpet Area', product.post_details?.carpet_area)}
-                {renderDetailRow('Length', product.post_details?.length)}
-                {renderDetailRow('Breadth', product.post_details?.breadth)}
-                {renderDetailRow('Facing', product.post_details?.facing)}
-                {renderDetailRow('Project Name', product.post_details?.project_name)}
-            </View>
-
-            {/* Description */}
-            <View style={styles.descriptionContainer}>
-                <Text style={styles.label}>Description:</Text>
-                <Text style={styles.description}>{product.post_details?.description || 'N/A'}</Text>
-            </View>
-
-            {/* Price */}
-            <Text style={styles.price}>Price: ${product.post_details?.amount || 'N/A'}</Text>
         </View>
     );
 };
-
-/** Helper function to render property details */
-const renderDetailRow = (label, value) => (
-    <View style={styles.detailRow}>
-        <Text style={styles.label}>{label}:</Text>
-        <Text style={styles.value}>{value || 'N/A'}</Text>
-    </View>
-);
 
 export default LandPlot;

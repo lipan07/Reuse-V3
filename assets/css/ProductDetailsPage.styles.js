@@ -1,261 +1,263 @@
-import { StyleSheet, Dimensions, Platform } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
-
-// Responsive scaling functions
-const scale = size => width / 360 * size; // 360 is standard mobile screen width
-const verticalScale = size => height / 640 * size; // 640 is standard mobile screen height
+const scale = width / 375;
+const normalize = (size) => Math.round(scale * size);
 
 const styles = StyleSheet.create({
-    container: {
+    safeArea: {
         flex: 1,
-        backgroundColor: '#ffffff',
+        backgroundColor: '#F8F8F8',
     },
-    scrollContainer: {
-        paddingBottom: verticalScale(80), // Adjusted for button height
+    container: {
+        paddingBottom: normalize(80),
     },
-    imageGallery: {
-        height: width * 0.9, // 60% of screen width
+    galleryContainer: {
+        height: normalize(250),
+        position: 'relative',
     },
     galleryImage: {
         width: width,
-        height: width * 0.9,
+        height: '100%',
         resizeMode: 'cover',
     },
-    detailsSection: {
-        backgroundColor: '#ffffff',
-        marginHorizontal: scale(16),
-        marginVertical: verticalScale(8),
+    noImageContainer: {
+        height: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#F0F0F0',
     },
-    mapContainer: {
-        height: verticalScale(180),
-        marginHorizontal: scale(16),
-        marginVertical: verticalScale(8),
-        backgroundColor: '#fff',
-        borderRadius: scale(8),
-        overflow: 'hidden', // Ensures the map corners are rounded
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: verticalScale(2) },
-        shadowOpacity: 0.1,
-        shadowRadius: scale(4),
-        elevation: 2,
+    noImageText: {
+        marginTop: normalize(8),
+        color: '#8E8E93',
+        fontSize: normalize(14),
     },
-    map: {
-        ...StyleSheet.absoluteFillObject,
-        borderRadius: scale(8), // Not strictly needed with overflow: 'hidden', but safe
-    },
-    buttonContainer: {
-        flexDirection: 'row',
-        gap: scale(8),
+    imageIndicator: {
         position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        paddingHorizontal: scale(16),
-        paddingVertical: verticalScale(10),
-        backgroundColor: '#ffffff',
-        borderTopWidth: 1,
-        borderTopColor: '#e0e0e0',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -verticalScale(2) },
-        shadowOpacity: 0.1,
-        shadowRadius: scale(4),
-        elevation: 8,
-    },
-    actionButton: {
-        flex: 1,
+        bottom: normalize(12),
         flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: verticalScale(10),
-        borderRadius: scale(6),
+        alignSelf: 'center',
     },
-    buttonText: {
-        color: '#fff',
-        fontSize: scale(14),
-        fontWeight: '600',
-        marginLeft: scale(6),
+    indicatorDot: {
+        width: normalize(6),
+        height: normalize(6),
+        borderRadius: normalize(3),
+        backgroundColor: 'rgba(255,255,255,0.5)',
+        marginHorizontal: normalize(3),
     },
-    chatButton: {
-        backgroundColor: '#007bff',
+    activeDot: {
+        backgroundColor: '#FFFFFF',
+        width: normalize(10),
     },
-    callButton: {
-        backgroundColor: '#27ae60',
+    productTag: {
+        position: 'absolute',
+        top: normalize(16),
+        left: normalize(16),
+        paddingHorizontal: normalize(10),
+        paddingVertical: normalize(4),
+        borderRadius: normalize(3),
+        zIndex: 2,
     },
-    // Loading states
-    loaderContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#ffffff',
+    rentTag: {
+        backgroundColor: 'rgba(0, 184, 148, 0.9)',
     },
-    loadingText: {
-        marginTop: verticalScale(12),
-        fontSize: scale(14),
-        color: '#666',
+    sellTag: {
+        backgroundColor: 'rgba(255, 71, 87, 0.9)',
     },
-    // Product details
-    priceText: {
-        fontSize: scale(22),
-        fontWeight: '700',
-        color: '#2ecc71',
-        marginVertical: verticalScale(8),
+    tagText: {
+        color: '#FFFFFF',
+        fontSize: normalize(10),
+        fontWeight: 'bold',
     },
-    titleText: {
-        fontSize: scale(20),
-        fontWeight: '600',
-        color: '#1a1a1a',
-        marginVertical: verticalScale(8),
+    headerContainer: {
+        padding: normalize(16),
+        backgroundColor: '#FFFFFF',
+        borderBottomWidth: 1,
+        borderBottomColor: '#F0F0F0',
     },
-    descriptionText: {
-        fontSize: scale(15),
-        color: '#444',
-        lineHeight: scale(22),
-        marginVertical: verticalScale(8),
-    },
-    specContainer: {
+    headerTopRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginVertical: verticalScale(4),
+        alignItems: 'center',
+        marginBottom: normalize(8),
     },
-    specLabel: {
-        fontSize: scale(14),
-        color: '#666',
-        flex: 1,
+    titleText: {
+        fontSize: normalize(16),
+        fontWeight: '600',
+        color: '#1A1A1A',
+        marginBottom: normalize(12),
     },
-    specValue: {
-        fontSize: scale(14),
-        color: '#1a1a1a',
-        flex: 1,
-        textAlign: 'right',
+    metaRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        marginTop: normalize(4),
     },
-    sectionContainer: {
-        marginHorizontal: scale(16),
-        marginVertical: verticalScale(12),
-        padding: scale(16),
-        backgroundColor: '#ffffff',
-        borderRadius: scale(8),
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: verticalScale(2) },
-        shadowOpacity: 0.1,
-        shadowRadius: scale(4),
-        elevation: 2,
+    metaItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginRight: normalize(16),
+        marginBottom: normalize(4),
+    },
+    metaText: {
+        marginLeft: normalize(4),
+        fontSize: normalize(12),
+        color: '#8E8E93',
+    },
+    section: {
+        backgroundColor: '#FFFFFF',
+        padding: normalize(16),
+        marginTop: normalize(8),
+        borderBottomWidth: 1,
+        borderBottomColor: '#F0F0F0',
+    },
+    detailsSection: {
+        backgroundColor: '#FFFFFF',
+        padding: normalize(16),
     },
     sectionTitle: {
-        fontSize: scale(18),
-        fontWeight: 'bold',
-        color: '#1a1a1a',
-        marginBottom: verticalScale(12),
+        fontSize: normalize(14),
+        fontWeight: '600',
+        color: '#1A1A1A',
+        marginBottom: normalize(12),
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
-    sellerCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    sellerHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    descriptionText: {
+        fontSize: normalize(13),
+        lineHeight: normalize(18),
+        color: '#3A3A3A',
     },
     sellerImage: {
-        width: scale(48),
-        height: scale(48),
-        borderRadius: scale(24),
-        marginRight: scale(12),
+        width: normalize(40),
+        height: normalize(40),
+        borderRadius: normalize(20),
+        marginRight: normalize(12),
     },
     sellerInfo: {
         flex: 1,
     },
     sellerName: {
-        fontSize: scale(16),
+        fontSize: normalize(14),
         fontWeight: '600',
-        color: '#1a1a1a',
+        color: '#1A1A1A',
+        marginBottom: normalize(2),
     },
-    postedText: {
-        fontSize: scale(12),
-        color: '#666',
-        marginTop: verticalScale(2),
+    sellerMeta: {
+        fontSize: normalize(12),
+        color: '#8E8E93',
     },
-    followButton: {
-        padding: scale(8),
+    mapContainer: {
+        height: normalize(150),
+        borderRadius: normalize(8),
+        overflow: 'hidden',
+        marginTop: normalize(8),
     },
-    addressContainer: {
-        marginHorizontal: scale(16),
-        marginVertical: verticalScale(8),
-        width: '100%',
+    map: {
+        ...StyleSheet.absoluteFillObject,
     },
-    addressRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: verticalScale(8),
-    },
-    mapAddressOverlay: {
+    addressOverlay: {
         position: 'absolute',
-        top: verticalScale(12),
-        left: scale(12),
-        backgroundColor: 'rgba(255,255,255,0.92)',
-        paddingHorizontal: scale(12),
-        paddingVertical: verticalScale(6),
-        borderRadius: scale(8),
-        maxWidth: '80%',
-        zIndex: 10,
+        bottom: normalize(8),
+        left: normalize(8),
+        right: normalize(8),
+        backgroundColor: 'rgba(255,255,255,0.9)',
+        padding: normalize(8),
+        borderRadius: normalize(4),
     },
-    mapAddressText: {
-        color: '#222',
-        fontSize: scale(13),
-        fontWeight: '500',
+    addressText: {
+        fontSize: normalize(12),
+        color: '#1A1A1A',
     },
-    // Add platform-specific styles where needed
-    ...Platform.select({
-        ios: {
-            safeArea: {
-                flex: 1,
-                backgroundColor: '#007BFF',
-            },
-        },
-        android: {
-            safeArea: {
-                flex: 1,
-            },
-        },
-    }),
-    noImageContainer: {
+    actionBar: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        flexDirection: 'row',
+        padding: normalize(12),
+        backgroundColor: '#FFFFFF',
+        borderTopWidth: 1,
+        borderTopColor: '#E0E0E0',
+    },
+    actionButton: {
+        flex: 1,
+        flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f0f0f0',
-        borderRadius: 8,
+        paddingVertical: normalize(10),
+        borderRadius: normalize(6),
+        marginHorizontal: normalize(4),
     },
-
-    noImageText: {
-        color: '#7f8c8d',
-        fontSize: 16,
-        textAlign: 'center',
-        paddingHorizontal: 16,
+    chatButton: {
+        backgroundColor: '#007AFF',
     },
-
-    reportLinkContainer: {
-        alignItems: 'flex-end',
-        marginTop: 8,
-        marginRight: 16,
+    callButton: {
+        backgroundColor: '#34C759',
+    },
+    actionButtonText: {
+        color: '#FFFFFF',
+        fontSize: normalize(14),
+        fontWeight: '500',
+        marginLeft: normalize(6),
     },
     reportButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'white',
-        paddingVertical: 8,
-        paddingHorizontal: 18,
-        borderRadius: 22,
-        shadowColor: 'red',
-        shadowOpacity: 0.18,
-        shadowRadius: 6,
-        shadowOffset: { width: 0, height: 2 },
-        elevation: 2,
+        justifyContent: 'center',
+        padding: normalize(12),
+        backgroundColor: '#FFFFFF',
     },
     reportButtonText: {
-        color: 'red',
-        fontWeight: 'bold',
-        fontSize: 15,
-        letterSpacing: 0.2,
+        color: '#FF3B30',
+        fontSize: normalize(12),
+        fontWeight: '500',
+        marginLeft: normalize(6),
+    },
+    loaderContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#FFFFFF',
     },
 
+    sellerCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: normalize(8),
+        backgroundColor: '#F8F8F8',
+        borderRadius: normalize(8),
+    },
+    sellerActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginLeft: 'auto', // This pushes the actions to the right
+    },
+    followSellerButton: {
+        padding: normalize(8),
+        marginRight: normalize(8),
+    },
+    chatIcon: {
+        padding: normalize(8),
+    },
+
+
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+    priceContainer: {
+        marginTop: 12,
+        padding: 10,
+        backgroundColor: '#f5f5f5',
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    priceText: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#2e7d32', // dark green
+    }
 });
 
 export default styles;

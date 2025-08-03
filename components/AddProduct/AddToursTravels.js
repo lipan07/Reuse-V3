@@ -13,7 +13,7 @@ const AddToursTravel = ({ route, navigation }) => {
   const { category, subcategory, product } = route.params;
   const [formData, setFormData] = useState({
     type: '',
-    title: '',
+    adTitle: '',
     description: '',
     amount: '',
     address: '', // Added address field
@@ -48,7 +48,7 @@ const AddToursTravel = ({ route, navigation }) => {
           setFormData({
             id: productData.id,
             type: productData.post_details?.type || '',
-            title: productData.title || '',
+            adTitle: productData.title || '',
             description: productData.post_details?.description || '',
             amount: productData.post_details?.amount?.toString() || '',
             address: productData.post_details?.address || '', // Initialize address
@@ -149,8 +149,8 @@ const AddToursTravel = ({ route, navigation }) => {
           <TextInput
             style={styles.input}
             placeholder="Enter Title"
-            value={formData.title}
-            onChangeText={(value) => handleChange('title', value)}
+            value={formData.adTitle}
+            onChangeText={(value) => handleChange('adTitle', value)}
           />
 
           {/* Description Field */}

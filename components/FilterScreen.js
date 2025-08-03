@@ -113,6 +113,7 @@ const FilterScreen = ({ navigation }) => {
             distance: selectedDistance,
             longitude: formData.longitude,
             latitude: formData.latitude,
+            listingType: listingType,
         }).toString();
         console.log('Query Params:', queryParams);
         console.log('Advanced Filter API URL:', `${process.env.BASE_URL}/posts?${queryParams}`);

@@ -29,6 +29,7 @@
     "react-native-get-random-values": "^1.11.0",
     "react-native-google-mobile-ads": "^15.4.0",
     "react-native-image-picker": "^8.2.1",
+    "react-native-image-viewing": "^0.2.2",
     "react-native-maps": "^1.24.3",
     "react-native-ratings": "^8.1.0",
     "react-native-reanimated": "^3.18.0",

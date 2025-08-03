@@ -277,6 +277,16 @@ const Home = () => {
       onPress={() => navigation.navigate('ProductDetails', { productDetails: item })}
     >
       <View style={styles.imageContainer}>
+        {/* Add the tag container here */}
+        <View style={[
+          styles.productTag,
+          item.type === 'rent' ? styles.rentTag : styles.sellTag
+        ]}>
+          <Text style={styles.tagText}>
+            {item.type === 'rent' ? 'Rent' : 'Sell'}
+          </Text>
+        </View>
+
         <Swiper style={styles.swiper} showsPagination={false} autoplay autoplayTimeout={3}>
           {item.images && item.images.length > 0 ? (
             item.images.map((imageUri, index) => (
@@ -304,7 +314,15 @@ const Home = () => {
           {item.post_details.description}
         </Text>
         <View style={styles.priceAddressContainer}>
-          <Text style={styles.price}>₹{item.post_details.amount}</Text>
+          <Text style={styles.price}>
+            {!(item.category_id >= 9 && item.category_id <= 23) ? (
+              <Text style={styles.priceText}>₹{item.post_details?.amount || 'N/A'}</Text>
+            ) : (
+              <Text style={styles.priceText}>
+                ₹{item.post_details?.salary_from || 'N/A'} - ₹{item.post_details?.salary_to || 'N/A'}
+              </Text>
+            )}
+          </Text>
           <Text style={styles.address} numberOfLines={1}>
             {item.address || 'Address not available'}
           </Text>

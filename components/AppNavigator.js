@@ -139,7 +139,6 @@ const AppNavigator = () => {
         {/* <Stack.Screen name="Login" component={Login} /> */}
         <Stack.Screen name="Home" component={Home} />
         <Stack.Screen name="FilterScreen" component={FilterScreen} />
-        {/* <Stack.Screen name="ProductDetails" component={ProductDetails} /> */}
         <Stack.Screen name="FullScreenMap" component={FullScreenMap} />
         {/* <Stack.Screen name="ImageViewer" component={ImageViewer} /> */}
         <Stack.Screen name="ChatBox" component={ChatBox} />

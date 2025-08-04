@@ -18,11 +18,7 @@ const FilterScreen = ({ navigation }) => {
         longitude: route.params?.initialFilters?.location?.coordinates?.[0] || 77.209,
     });
     const [listingType, setListingType] = useState(route.params?.initialFilters?.listingType || 'sell');
-
     const [loading, setLoading] = useState(false);
-    const [city, setCity] = useState(route.params?.initialFilters?.location?.city || '');
-    const [state, setState] = useState(route.params?.initialFilters?.location?.state || '');
-    const [country, setCountry] = useState(route.params?.initialFilters?.location?.country || '');
 
     // Existing filter states
     const [searchTerm, setSearchTerm] = useState(route.params?.initialFilters?.search || '');
@@ -47,6 +43,7 @@ const FilterScreen = ({ navigation }) => {
     const distances = [5, 10, 15, 20, 25];
     const priceRanges = ['Recently Added', 'Price: Low to High', 'Price: High to Low'];
 
+
     const handleAddressSelect = useCallback((location) => {
         setFormData(prev => ({
             ...prev,
@@ -61,8 +58,11 @@ const FilterScreen = ({ navigation }) => {
         setSelectedCategory(categoryId);
     }, []);
 
-    const handleDistanceSelect = useCallback((distance) => setSelectedDistance(distance), []);
-    const handlePriceRangeSelect = useCallback((priceRange) => setSelectedPriceRange(priceRange), []);
+
+    const handleDistanceSelect = useCallback((distance) => {
+        console.log('Selected distance:', distance); // Debug log
+        setSelectedDistance(distance);
+    }, []);
 
     const handleClearFilters = useCallback(() => {
         setSearchTerm('');
@@ -85,24 +85,17 @@ const FilterScreen = ({ navigation }) => {
 
     const handleSubmit = useCallback(async () => {
         setLoading(true);
-        const selectedCategoryId = selectedCategory;
+        console.log('Current selected distance:', selectedDistance); // Debug log
 
         const filters = {
             search: searchTerm,
-            category: selectedCategoryId,
+            category: selectedCategory,
             sortBy: selectedPriceRange,
             priceRange: [minBudget, maxBudget],
-            distance: selectedDistance,
+            distance: selectedDistance, // Make sure this is being used
             longitude: formData.longitude,
             latitude: formData.latitude,
             listingType: listingType,
-            // location: {
-            //     coordinates: [formData.longitude, formData.latitude],
-            //     address: formData.address,
-            //     city,
-            //     state,
-            //     country
-            // }
         };
 
         const token = await AsyncStorage.getItem('authToken');
@@ -110,19 +103,21 @@ const FilterScreen = ({ navigation }) => {
             search: filters.search || '',
             category: filters.category || '',
             sortBy: filters.sortBy || '',
-            distance: selectedDistance,
+            distance: filters.distance || 5, // Ensure this uses the selectedDistance
             longitude: formData.longitude,
             latitude: formData.latitude,
             listingType: listingType,
         }).toString();
-        console.log('Query Params:', queryParams);
-        console.log('Advanced Filter API URL:', `${process.env.BASE_URL}/posts?${queryParams}`);
+
+        console.log('Final query params:', queryParams); // Debug log
+
         try {
             await AsyncStorage.setItem('defaultLocation', JSON.stringify({
                 address: formData.address,
                 latitude: formData.latitude,
                 longitude: formData.longitude
             }));
+
             const response = await fetch(`${process.env.BASE_URL}/posts?${queryParams}`, {
                 method: 'GET',
                 headers: { Authorization: `Bearer ${token}` },
@@ -130,8 +125,6 @@ const FilterScreen = ({ navigation }) => {
 
             if (response.ok) {
                 const jsonResponse = await response.json();
-                // console.log('Filtered Products:', jsonResponse.data);
-
                 navigation.navigate('Home', {
                     filters,
                     products: jsonResponse.data
@@ -140,7 +133,33 @@ const FilterScreen = ({ navigation }) => {
         } finally {
             setLoading(false);
         }
-    }, [searchTerm, selectedCategory, selectedPriceRange, minBudget, maxBudget, formData, city, state, country, listingType]);
+    }, [searchTerm, selectedCategory, selectedPriceRange, minBudget, maxBudget, selectedDistance, formData, listingType]);
+
+    // Update your distance selection UI to ensure it's working properly
+    const renderDistanceSelection = () => (
+        <>
+            <Text style={styles.distanceTitle}>Search Radius</Text>
+            <View style={styles.filterListContainer}>
+                {distances.map((distance) => (
+                    <TouchableOpacity
+                        key={distance}
+                        style={[
+                            styles.filterItem,
+                            selectedDistance === distance && styles.filterItemSelected,
+                        ]}
+                        onPress={() => handleDistanceSelect(distance)}
+                    >
+                        <Text style={[
+                            styles.filterText,
+                            selectedDistance === distance && styles.filterTextSelected
+                        ]}>
+                            {distance} km
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+        </>
+    );
 
     const renderHeader = () => (
         <>
@@ -149,7 +168,6 @@ const FilterScreen = ({ navigation }) => {
                 value={searchTerm}
                 onChangeText={setSearchTerm}
                 placeholder="Search products..."
-                accessibilityLabel="Search input"
             />
 
             {/* Custom Address Search */}
@@ -169,7 +187,7 @@ const FilterScreen = ({ navigation }) => {
                 </View>
             </View>
 
-            {/* Add Listing Type Filter */}
+            {/* Listing Type Filter */}
             <Text style={styles.sectionTitle}>Listing Type</Text>
             <View style={styles.filterListContainer}>
                 {['sell', 'rent'].map((type) => (
@@ -191,27 +209,10 @@ const FilterScreen = ({ navigation }) => {
                 ))}
             </View>
 
-            <Text style={styles.distanceTitle}>Search Radius</Text>
-            <View style={styles.filterListContainer}>
-                {distances.map((distance, index) => (
-                    <TouchableOpacity
-                        key={index}
-                        style={[
-                            styles.filterItem,
-                            selectedDistance === distance && styles.filterItemSelected,
-                        ]}
-                        onPress={() => handleDistanceSelect(distance)}
-                    >
-                        <Text style={[
-                            styles.filterText,
-                            selectedDistance === distance && styles.filterTextSelected
-                        ]}>
-                            {distance} km
-                        </Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
+            {/* Updated Distance Selection */}
+            {renderDistanceSelection()}
 
+            {/* Rest of your filters... */}
             <Text style={styles.sectionTitle}>Categories</Text>
             <View style={styles.categoryListContainer}>
                 {categories.map((category) => (

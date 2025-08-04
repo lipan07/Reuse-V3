@@ -18,26 +18,8 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MapView, { Marker } from 'react-native-maps';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ImageView from 'react-native-image-viewing';
-import Car from './ProductDetails/Car';
-import Mobile from './ProductDetails/Mobile';
-import Bycycle from './ProductDetails/Bycycle';
-import CleaningPestControl from './ProductDetails/CleaningPestControl';
-import CommercialHeavyMachinery from './ProductDetails/CommercialHeavyMachinery';
-import EducationClasses from './ProductDetails/EducationClasses';
-import Electronics from './ProductDetails/Electronics';
-import HomeRenovation from './ProductDetails/HomeRenovation';
-import HouseApartment from './ProductDetails/HouseApartment';
-import Job from './ProductDetails/Job';
-import LandPlot from './ProductDetails/LandPlot';
-import LegalService from './ProductDetails/LegalService';
-import Motorcycle from './ProductDetails/Motorcycle';
-import PgGuestHouse from './ProductDetails/PgGuestHouse';
-import Scooter from './ProductDetails/Scooter';
-import ToursTravel from './ProductDetails/ToursTravel';
-import VehicleSparePart from './ProductDetails/VehicleSparePart';
 import Others from './ProductDetails/Others';
 import ReportPostModal from './ReportPostModal';
-import ShopOffice from './ProductDetails/ShopOffice';
 import ModalScreen from './SupportElement/ModalScreen';
 import CustomStatusBar from './Screens/CustomStatusBar';
 import styles from '../assets/css/ProductDetailsPage.styles';
@@ -244,38 +226,6 @@ const ProductDetails = () => {
 
     const renderDetails = () => {
         switch (product.category_id) {
-            // case 1: return <Car product={product} buyerId={buyerId} />
-            // case 3: return <HouseApartment product={product} buyerId={buyerId} />
-            // case 4: return <LandPlot product={product} buyerId={buyerId} />
-            // case 5: return <PgGuestHouse product={product} buyerId={buyerId} />
-            // case 6: return <ShopOffice product={product} buyerId={buyerId} />
-            // case 7: return <Mobile product={product} buyerId={buyerId} />
-            // case 27: return <Bycycle product={product} buyerId={buyerId} />
-            // case 72: return <CleaningPestControl product={product} buyerId={buyerId} />
-            // case 43: return <CommercialHeavyMachinery product={product} buyerId={buyerId} />
-            // case 67: return <EducationClasses product={product} buyerId={buyerId} />
-            // case 69: return <Electronics product={product} buyerId={buyerId} />
-            // case 71: return <HomeRenovation product={product} buyerId={buyerId} />
-            // case 9:
-            // case 10:
-            // case 11:
-            // case 12:
-            // case 13:
-            // case 14:
-            // case 15:
-            // case 16:
-            // case 17:
-            // case 18:
-            // case 19:
-            // case 20:
-            // case 21:
-            // case 22:
-            // case 23: return <Job product={product} buyerId={buyerId} />
-            // case 73: return <LegalService product={product} buyerId={buyerId} />
-            // case 25: return <Motorcycle product={product} buyerId={buyerId} />
-            // case 26: return <Scooter product={product} buyerId={buyerId} />
-            // case 68: return <ToursTravel product={product} buyerId={buyerId} />
-            // case 41: return <VehicleSparePart product={product} buyerId={buyerId} />
             default: return <Others product={product} buyerId={buyerId} />
         }
     };
@@ -510,24 +460,26 @@ const ProductDetails = () => {
                                 4.8 (24) • {getMemberSince(product.user?.created_at)}
                             </Text>
                         </View>
-                        <View style={styles.sellerActions}>
-                            <TouchableOpacity
-                                style={styles.followSellerButton}
-                                onPress={toggleUserFollow}
-                            >
-                                <Icon
-                                    name={userFollowed ? 'heart' : 'heart-outline'}
-                                    size={normalize(20)}
-                                    color={userFollowed ? '#FF3B30' : '#8E8E93'}
-                                />
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={styles.chatIcon}
-                                onPress={handleChatWithSeller}
-                            >
-                                <Icon name="message-text-outline" size={normalize(20)} color="#007AFF" />
-                            </TouchableOpacity>
-                        </View>
+                        {buyerId !== product.user?.id && (
+                            <View style={styles.sellerActions}>
+                                <TouchableOpacity
+                                    style={styles.followSellerButton}
+                                    onPress={toggleUserFollow}
+                                >
+                                    <Icon
+                                        name={userFollowed ? 'heart' : 'heart-outline'}
+                                        size={normalize(20)}
+                                        color={userFollowed ? '#FF3B30' : '#8E8E93'}
+                                    />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={styles.chatIcon}
+                                    onPress={handleChatWithSeller}
+                                >
+                                    <Icon name="message-text-outline" size={normalize(20)} color="#007AFF" />
+                                </TouchableOpacity>
+                            </View>
+                        )}
                     </View>
                 </View>
 

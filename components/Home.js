@@ -61,6 +61,7 @@ const Home = () => {
     priceRange: route.params?.filters?.priceRange || [],
     sortBy: route.params?.filters?.sortBy || 'Recently Added',
     distance: route.params?.filters?.distance || 5,
+    listingType: route.params?.filters?.listingType || 'sell',
     latitude: route.params?.filters?.latitude || null,
     longitude: route.params?.filters?.longitude || null,
   });

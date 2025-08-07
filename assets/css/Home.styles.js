@@ -129,7 +129,7 @@ export default StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#e0e0e0',
+    backgroundColor: '#f7f7f7ff',
     padding: normalize(6),
   },
   productItem: {
@@ -137,7 +137,7 @@ export default StyleSheet.create({
     margin: normalize(4),
     borderRadius: normalize(4),
     padding: normalize(6), // Reduced padding
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#f7f7f7ff',
     shadowColor: '#565656',
     shadowOffset: { width: 0, height: normalizeVertical(2) }, // Smaller shadow
     shadowOpacity: 0.1,
@@ -257,4 +257,139 @@ export default StyleSheet.create({
     fontWeight: 'bold',
   },
 
+  // Add to Home.styles.js
+  filterBarContainer: {
+    paddingHorizontal: normalize(10),
+    paddingVertical: normalize(8),
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  activeFiltersContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    marginBottom: normalize(8),
+  },
+  activeFiltersText: {
+    fontSize: normalize(12),
+    color: '#666',
+    marginRight: normalize(6),
+  },
+  filterPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#007bff',
+    borderRadius: normalize(12),
+    paddingVertical: normalize(4),
+    paddingHorizontal: normalize(8),
+    margin: normalize(3),
+  },
+  filterPillText: {
+    color: '#fff',
+    fontSize: normalize(10),
+    marginRight: normalize(4),
+  },
+  filterToggleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: normalize(6),
+  },
+  filterToggleText: {
+    color: '#007bff',
+    fontSize: normalize(12),
+    fontWeight: '500',
+    marginRight: normalize(4),
+  },
+  quickFiltersContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: normalize(8),
+    paddingHorizontal: normalize(20),
+  },
+  quickFilterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: normalize(6),
+  },
+  quickFilterText: {
+    color: '#007bff',
+    fontSize: normalize(12),
+    marginLeft: normalize(4),
+  },
+
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#fff',
+  },
+  searchInputWrapper: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    height: 40,
+    fontSize: normalize(14),
+    color: '#333',
+    padding: 0,
+  },
+  clearButton: {
+    padding: 4,
+    marginLeft: 8,
+  },
+  searchButton: {
+    paddingHorizontal: 12,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: '#007bff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  searchButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  searchButtonIcon: {
+    // marginRight: 6,
+  },
+  searchButtonText: {
+    color: '#fff',
+    fontSize: normalize(14),
+    fontWeight: '500',
+  },
+  filterButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: '#007bff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  filterBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#ff3b30',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  filterBadgeText: {
+    color: '#fff',
+    fontSize: normalize(10),
+    fontWeight: 'bold',
+  },
 });

@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Modal, TouchableWithoutFeedback, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Modal, TouchableWithoutFeedback, ActivityIndicator, Dimensions } from 'react-native';
 import BottomNavBar from './BottomNavBar';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
+import ConfettiCannon from 'react-native-confetti-cannon';
 
 const MyAdsPage = ({ navigation }) => {
   const [products, setProducts] = useState([]);
@@ -14,6 +15,9 @@ const MyAdsPage = ({ navigation }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMorePages, setHasMorePages] = useState(true);
+
+  const [showConfetti, setShowConfetti] = useState(false);
+  const confettiRef = useRef(null);
 
   useEffect(() => {
     fetchProducts(1, true); // Fetch the first page on component mount
@@ -234,8 +238,54 @@ const MyAdsPage = ({ navigation }) => {
   const getComponentForCategory = (guard_name) => {
     return categoryComponentMap[guard_name] || 'AddOthers';
   };
+
+  const handleBoost = () => {
+    setShowConfetti(true);
+    hidePopup();
+    setTimeout(() => setShowConfetti(false), 3000);
+  };
+
   return (
     <View style={styles.container}>
+      {showConfetti && (
+        <>
+          {/* Main cannon blast */}
+          <ConfettiCannon
+            count={300}
+            origin={{ x: -50, y: 0 }}
+            explosionSpeed={800}
+            fallSpeed={4000}
+            fadeOut={true}
+            colors={['#FFD700', '#FF5733', '#C70039', '#900C3F', '#00BFFF', '#7CFC00']}
+            particleSize={10}
+          />
+
+          {/* Additional smaller bursts */}
+          <ConfettiCannon
+            count={150}
+            origin={{ x: Dimensions.get('window').width + 50, y: 0 }}
+            explosionSpeed={600}
+            fallSpeed={3500}
+            fadeOut={true}
+            delay={300}
+            colors={['#FF1493', '#9400D3', '#4B0082', '#FF8C00', '#32CD32']}
+            particleSize={8}
+          />
+
+          {/* Vertical burst */}
+          <ConfettiCannon
+            count={100}
+            origin={{ x: Dimensions.get('window').width / 2, y: Dimensions.get('window').height }}
+            explosionSpeed={500}
+            fallSpeed={2500}
+            fadeOut={true}
+            delay={500}
+            colors={['#FFFFFF', '#FF0000', '#0000FF', '#FFFF00', '#FF00FF']}
+            particleSize={12}
+          />
+        </>
+      )}
+
       <FlatList
         data={products}
         renderItem={renderProductItem}
@@ -316,6 +366,16 @@ const MyAdsPage = ({ navigation }) => {
                     </View>
                   </TouchableOpacity>
                   <TouchableOpacity
+                    style={[styles.newPopupOption, styles.newBoostOption]}
+                    onPress={handleBoost}
+                  >
+                    <Icon name="bolt" size={20} color="#FFD700" style={styles.newPopupIcon} />
+                    <Text style={styles.newPopupOptionText}>Boost</Text>
+                    <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                      <Icon name="angle-right" size={20} color="#888" />
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity
                     style={[styles.newPopupOption, styles.newDeleteOption]}
                     onPress={() => {
                       hidePopup();
@@ -362,6 +422,9 @@ const MyAdsPage = ({ navigation }) => {
   );
 };
 
+// ... (keep all your existing styles exactly the same)
+
+// Add these new styles:
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -523,6 +586,9 @@ const styles = StyleSheet.create({
   },
 
 
+  newBoostOption: {
+    backgroundColor: '#fff8e1',
+  },
 });
 
 export default MyAdsPage;

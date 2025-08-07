@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
     View, Text, TextInput, TouchableOpacity, StyleSheet,
     KeyboardAvoidingView, FlatList, Platform, ActivityIndicator
@@ -8,44 +8,51 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { AlertNotificationRoot } from 'react-native-alert-notification';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import AddressAutocomplete from './AddressAutocomplete';
+import MCIcon from 'react-native-vector-icons/MaterialCommunityIcons';
+import MIcon from 'react-native-vector-icons/MaterialIcons';
+import FA5Icon from 'react-native-vector-icons/FontAwesome5';
+import Fontisto from 'react-native-vector-icons/Fontisto';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import styles from '../assets/css/FilterScreen.styles.js';
 
 const FilterScreen = ({ navigation }) => {
     const route = useRoute();
-    const [formData, setFormData] = useState({
-        address: route.params?.initialFilters?.location?.address || '',
-        latitude: route.params?.initialFilters?.location?.coordinates?.[1] || 28.6139,
-        longitude: route.params?.initialFilters?.location?.coordinates?.[0] || 77.209,
-    });
-    const [listingType, setListingType] = useState(route.params?.initialFilters?.listingType || 'sell');
     const [loading, setLoading] = useState(false);
 
-    // Existing filter states
-    const [searchTerm, setSearchTerm] = useState(route.params?.initialFilters?.search || '');
-    const [selectedCategory, setSelectedCategory] = useState(route.params?.initialFilters?.category || '');
-    const [selectedDistance, setSelectedDistance] = useState(route.params?.initialFilters?.distance || 5);
-    const [selectedPriceRange, setSelectedPriceRange] = useState(route.params?.initialFilters?.sortBy || 'Recently Added');
-    const [minBudget, setMinBudget] = useState(route.params?.initialFilters?.priceRange?.[0] || '');
-    const [maxBudget, setMaxBudget] = useState(route.params?.initialFilters?.priceRange?.[1] || '');
+    // Initialize all filter states from route params or defaults
+    const [filters, setFilters] = useState({
+        search: route.params?.initialFilters?.search || '',
+        category: route.params?.initialFilters?.category || null,
+        priceRange: route.params?.initialFilters?.priceRange || [],
+        sortBy: route.params?.initialFilters?.sortBy || 'Relevance',
+        distance: route.params?.initialFilters?.distance || 5,
+        listingType: route.params?.initialFilters?.listingType || null,
+        latitude: route.params?.initialFilters?.latitude || null,
+        longitude: route.params?.initialFilters?.longitude || null,
+        address: route.params?.initialFilters?.address || '',
+    });
 
+    // Categories data
     const categories = [
-        { id: '', name: 'All', icon: 'list', color: '#8A2BE2' },
-        { id: '1', name: 'Cars', icon: 'car', color: '#FF6347' },
-        { id: '2', name: 'Properties', icon: 'home', color: '#4682B4' },
-        { id: '7', name: 'Mobile', icon: 'phone-portrait', color: '#32CD32' },
-        { id: '29', name: 'Electronics', icon: 'tv', color: '#FFD700' },
-        { id: '24', name: 'Bikes', icon: 'bicycle', color: '#D2691E' },
-        { id: '45', name: 'Furniture', icon: 'bed', color: '#8A2BE2' },
-        { id: '51', name: 'Fashion', icon: 'shirt', color: '#FF69B4' },
-        { id: '55', name: 'Books', icon: 'book', color: '#6495ED' },
+        { id: null, name: 'All', icon: 'apps', color: '#2563eb', type: 'Ion' },
+        { id: '1', name: 'Cars', icon: 'car', color: '#dc2626', type: 'MC' },
+        { id: '2', name: 'Property', icon: 'home', color: '#16a34a', type: 'Ion' },
+        { id: '7', name: 'Phones', icon: 'mobile-alt', color: '#f59e0b', type: 'Fontisto' },
+        { id: '29', name: 'Tech', icon: 'laptop', color: '#0ea5e9', type: 'FA5' },
+        { id: '24', name: 'Bikes', icon: 'motorbike', color: '#8b5cf6', type: 'MC' },
+        { id: '45', name: 'Furniture', icon: 'sofa', color: '#d97706', type: 'MC' },
+        { id: '51', name: 'Fashion', icon: 'tshirt-crew', color: '#ec4899', type: 'MC' },
+        { id: '55', name: 'Books', icon: 'menu-book', color: '#14b8a6', type: 'M' },
     ];
 
+    // Available options
     const distances = [5, 10, 15, 20, 25];
-    const priceRanges = ['Recently Added', 'Price: Low to High', 'Price: High to Low'];
+    const sortOptions = ['Relevance', 'Recently Added', 'Price: Low to High', 'Price: High to Low'];
+    const listingTypes = ['all', 'sell', 'rent'];
 
-
+    // Handle address selection from autocomplete
     const handleAddressSelect = useCallback((location) => {
-        setFormData(prev => ({
+        setFilters(prev => ({
             ...prev,
             address: location.address,
             latitude: location.latitude,
@@ -53,107 +60,93 @@ const FilterScreen = ({ navigation }) => {
         }));
     }, []);
 
-    // Existing filter handlers
-    const handleCategorySelect = useCallback((categoryId) => {
-        setSelectedCategory(categoryId);
-    }, []);
+    // Handle input changes
+    const handleInputChange = (field, value) => {
+        setFilters(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
 
-
-    const handleDistanceSelect = useCallback((distance) => {
-        console.log('Selected distance:', distance); // Debug log
-        setSelectedDistance(distance);
-    }, []);
-
+    // Clear all filters
     const handleClearFilters = useCallback(() => {
-        setSearchTerm('');
-        setFormData({
+        setLoading(true);
+        const clearedFilters = setFilters({
+            search: '',
+            category: null,
+            priceRange: [],
+            sortBy: 'Relevance', // Changed from 'Recently Added'
+            distance: 5,
+            listingType: null,
+            latitude: null,
+            longitude: null,
             address: '',
-            latitude: 28.6139,
-            longitude: 77.209,
         });
-        setListingType('sell');
-        setSelectedCategory('');
-        setSelectedDistance(5);
-        setSelectedPriceRange('Recently Added');
-        setMinBudget('');
-        setMaxBudget('');
-        setCity('');
-        setState('');
-        setCountry('');
-        navigation.navigate('Home', { filters: null });
-    }, []);
 
+        navigation.navigate('Home', {
+            filters: clearedFilters,
+        });
+    }, [navigation]);
+
+    // Submit filters and navigate back to Home
+    // In FilterScreen.js, update the handleSubmit function:
     const handleSubmit = useCallback(async () => {
         setLoading(true);
-        console.log('Current selected distance:', selectedDistance); // Debug log
-
-        const filters = {
-            search: searchTerm,
-            category: selectedCategory,
-            sortBy: selectedPriceRange,
-            priceRange: [minBudget, maxBudget],
-            distance: selectedDistance, // Make sure this is being used
-            longitude: formData.longitude,
-            latitude: formData.latitude,
-            listingType: listingType,
-        };
-
-        const token = await AsyncStorage.getItem('authToken');
-        const queryParams = new URLSearchParams({
-            search: filters.search || '',
-            category: filters.category || '',
-            sortBy: filters.sortBy || '',
-            distance: filters.distance || 5, // Ensure this uses the selectedDistance
-            longitude: formData.longitude,
-            latitude: formData.latitude,
-            listingType: listingType,
-        }).toString();
-
-        console.log('Final query params:', queryParams); // Debug log
-
         try {
-            await AsyncStorage.setItem('defaultLocation', JSON.stringify({
-                address: formData.address,
-                latitude: formData.latitude,
-                longitude: formData.longitude
-            }));
+            const cleanFilters = {
+                search: filters.search,
+                category: filters.category,
+                sortBy: filters.sortBy === 'Relevance' ? null : filters.sortBy,
+                priceRange: filters.priceRange.filter(val => val !== ''),
+                distance: filters.distance,
+                latitude: filters.latitude,
+                longitude: filters.longitude,
+                listingType: filters.listingType,
+                address: filters.address
+            };
 
-            const response = await fetch(`${process.env.BASE_URL}/posts?${queryParams}`, {
-                method: 'GET',
-                headers: { Authorization: `Bearer ${token}` },
+            // Save location to AsyncStorage if address is provided
+            if (filters.address) {
+                await AsyncStorage.setItem('defaultLocation', JSON.stringify({
+                    address: filters.address,
+                    latitude: filters.latitude,
+                    longitude: filters.longitude
+                }));
+            }
+            console.log('Applying filters:', cleanFilters);
+            // Navigate back to Home with the new filters
+            navigation.navigate('Home', {
+                filters: cleanFilters,
+                // Don't pass products here - let Home fetch fresh data
             });
 
-            if (response.ok) {
-                const jsonResponse = await response.json();
-                navigation.navigate('Home', {
-                    filters,
-                    products: jsonResponse.data
-                });
-            }
+        } catch (error) {
+            console.error('Error applying filters:', error);
+            Alert.alert('Error', 'Failed to apply filters. Please try again.');
         } finally {
             setLoading(false);
         }
-    }, [searchTerm, selectedCategory, selectedPriceRange, minBudget, maxBudget, selectedDistance, formData, listingType]);
+    }, [filters, navigation]);
 
-    // Update your distance selection UI to ensure it's working properly
+    // Render distance selection options
     const renderDistanceSelection = () => (
         <>
-            <Text style={styles.distanceTitle}>Search Radius</Text>
+            <Text style={styles.sectionTitle}>Search Radius (km)</Text>
             <View style={styles.filterListContainer}>
                 {distances.map((distance) => (
                     <TouchableOpacity
                         key={distance}
                         style={[
                             styles.filterItem,
-                            selectedDistance === distance && styles.filterItemSelected,
+                            filters.distance === distance && styles.filterItemSelected,
                         ]}
-                        onPress={() => handleDistanceSelect(distance)}
+                        onPress={() => handleInputChange('distance', distance)}
                     >
                         <Text style={[
                             styles.filterText,
-                            selectedDistance === distance && styles.filterTextSelected
+                            filters.distance === distance && styles.filterTextSelected
                         ]}>
-                            {distance} km
+                            {distance}
                         </Text>
                     </TouchableOpacity>
                 ))}
@@ -161,129 +154,177 @@ const FilterScreen = ({ navigation }) => {
         </>
     );
 
-    const renderHeader = () => (
+    // Render price range inputs
+    const renderPriceRangeInputs = () => (
         <>
-            <TextInput
-                style={styles.searchInput}
-                value={searchTerm}
-                onChangeText={setSearchTerm}
-                placeholder="Search products..."
-            />
-
-            {/* Custom Address Search */}
-            <View style={styles.locationContainer}>
-                <Text style={styles.sectionTitle}>Enter an address or place to find products nearby</Text>
-                <View style={styles.addressSearchContainer}>
-                    <AddressAutocomplete
-                        initialAddress={formData.address}
-                        initialLatitude={formData.latitude}
-                        initialLongitude={formData.longitude}
-                        onAddressSelect={handleAddressSelect}
-                        styles={{
-                            input: styles.addressInput,
-                            container: { marginBottom: 16 }
-                        }}
-                    />
-                </View>
-            </View>
-
-            {/* Listing Type Filter */}
-            <Text style={styles.sectionTitle}>Listing Type</Text>
-            <View style={styles.filterListContainer}>
-                {['sell', 'rent'].map((type) => (
-                    <TouchableOpacity
-                        key={type}
-                        style={[
-                            styles.filterItem,
-                            listingType === type && styles.filterItemSelected,
-                        ]}
-                        onPress={() => setListingType(type)}
-                    >
-                        <Text style={[
-                            styles.filterText,
-                            listingType === type && styles.filterTextSelected
-                        ]}>
-                            {type.charAt(0).toUpperCase() + type.slice(1)}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
-
-            {/* Updated Distance Selection */}
-            {renderDistanceSelection()}
-
-            {/* Rest of your filters... */}
-            <Text style={styles.sectionTitle}>Categories</Text>
-            <View style={styles.categoryListContainer}>
-                {categories.map((category) => (
-                    <TouchableOpacity
-                        key={category.id}
-                        style={[
-                            styles.categoryItem,
-                            selectedCategory === category.id && styles.categoryItemSelected,
-                        ]}
-                        onPress={() => handleCategorySelect(category.id)}
-                    >
-                        <Icon
-                            name={category.icon}
-                            style={[
-                                styles.categoryIcon,
-                                selectedCategory === category.id && { color: '#fff' },
-                            ]}
-                            size={25}
-                            color={category.color}
-                        />
-                        <Text style={[
-                            styles.categoryText,
-                            selectedCategory === category.id && styles.categoryTextSelected
-                        ]}>
-                            {category.name}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
-
-            <Text style={styles.sectionTitle}>Sort By</Text>
-            <View style={styles.filterListContainer}>
-                {priceRanges.map((range, index) => (
-                    <TouchableOpacity
-                        key={index}
-                        style={[
-                            styles.filterItem,
-                            selectedPriceRange === range && styles.filterItemSelected,
-                        ]}
-                        onPress={() => handlePriceRangeSelect(range)}
-                    >
-                        <Text style={[
-                            styles.filterText,
-                            selectedPriceRange === range && styles.filterTextSelected
-                        ]}>
-                            {range}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
-
-            <Text style={styles.sectionTitle}>Price Range</Text>
+            <Text style={styles.sectionTitle}>Price Range (₹)</Text>
             <View style={styles.budgetInputContainer}>
                 <TextInput
                     style={styles.budgetInput}
-                    value={minBudget}
-                    onChangeText={setMinBudget}
+                    value={filters.priceRange[0] || ''}
+                    onChangeText={(text) => handleInputChange('priceRange', [text, filters.priceRange[1]])}
                     keyboardType="numeric"
-                    placeholder="Min ₹"
+                    placeholder="Min"
                     placeholderTextColor="#666"
                 />
                 <Text style={styles.toText}>to</Text>
                 <TextInput
                     style={styles.budgetInput}
-                    value={maxBudget}
-                    onChangeText={setMaxBudget}
+                    value={filters.priceRange[1] || ''}
+                    onChangeText={(text) => handleInputChange('priceRange', [filters.priceRange[0], text])}
                     keyboardType="numeric"
-                    placeholder="Max ₹"
+                    placeholder="Max"
                     placeholderTextColor="#666"
                 />
             </View>
+        </>
+    );
+
+    // Render the filter screen header
+    const renderHeader = () => (
+        <>
+            <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#2563eb', marginBottom: 16, textAlign: 'left' }}>
+                Advanced Filter
+            </Text>
+            <TextInput
+                style={styles.searchInput}
+                value={filters.search}
+                onChangeText={(text) => handleInputChange('search', text)}
+                placeholder="Search products..."
+                placeholderTextColor="#666"
+            />
+
+            {/* Location Search */}
+            <Text style={styles.sectionTitle}>Location</Text>
+            <View style={styles.addressSearchContainer}>
+                <AddressAutocomplete
+                    initialAddress={filters.address}
+                    initialLatitude={filters.latitude}
+                    initialLongitude={filters.longitude}
+                    onAddressSelect={handleAddressSelect}
+                    styles={{
+                        input: styles.addressInput,
+                        container: { marginBottom: 16 }
+                    }}
+                />
+            </View>
+
+            {/* Listing Type */}
+            <Text style={styles.sectionTitle}>Listing Type</Text>
+            <View style={styles.filterListContainer}>
+                {listingTypes.map((type) => {
+                    const isSelected = type === 'all'
+                        ? filters.listingType === null
+                        : filters.listingType === type;
+
+                    return (
+                        <TouchableOpacity
+                            key={type}
+                            style={[
+                                styles.filterItem,
+                                isSelected && styles.filterItemSelected,
+                            ]}
+                            onPress={() => handleInputChange(
+                                'listingType',
+                                type === 'all' ? null : type
+                            )}
+                        >
+                            <Text style={[
+                                styles.filterText,
+                                isSelected && styles.filterTextSelected
+                            ]}>
+                                {type === 'all' ? 'All' : type.charAt(0).toUpperCase() + type.slice(1)}
+                            </Text>
+                        </TouchableOpacity>
+                    );
+                })}
+            </View>
+
+            {/* Distance Selection */}
+            {renderDistanceSelection()}
+
+            {/* Categories */}
+            <Text style={styles.sectionTitle}>Categories</Text>
+            <View style={styles.categoryListContainer}>
+                {categories.map((category) => {
+                    let IconComponent;
+                    switch (category.type) {
+                        case 'M':
+                            IconComponent = MIcon;
+                            break;
+                        case 'FA5':
+                            IconComponent = FA5Icon;
+                            break;
+                        case 'Fontisto':
+                            IconComponent = Fontisto;
+                            break;
+                        case 'Ion':
+                            IconComponent = Ionicons;
+                            break;
+                        case 'MC':
+                        default:
+                            IconComponent = MCIcon;
+                            break;
+                    }
+
+                    const isSelected = filters.category === category.id;
+                    const isAllCategory = category.id === null;
+
+                    return (
+                        <TouchableOpacity
+                            key={category.id || 'all'}
+                            style={[
+                                styles.categoryItem,
+                                isSelected && styles.categoryItemSelected,
+                                isAllCategory && styles.allCategoryItem // Add specific style for "All" category
+                            ]}
+                            onPress={() => handleInputChange('category', category.id)}
+                        >
+                            {!isAllCategory && (
+                                <View style={styles.iconContainer}>
+                                    <IconComponent
+                                        name={category.icon}
+                                        size={25}
+                                        color={isSelected ? '#ffffff' : category.color}
+                                    />
+                                </View>
+                            )}
+                            <Text style={[
+                                styles.categoryText,
+                                isSelected && styles.categoryTextSelected,
+                                isAllCategory && styles.allCategoryText // Add specific text style for "All"
+                            ]}>
+                                {category.name}
+                            </Text>
+                        </TouchableOpacity>
+                    );
+                })}
+            </View>
+
+            {/* Sort By */}
+            <Text style={styles.sectionTitle}>Sort By</Text>
+            <View style={styles.filterListContainer}>
+                {sortOptions.map((option) => (
+                    <TouchableOpacity
+                        key={option}
+                        style={[
+                            styles.filterItem,
+                            filters.sortBy === option && styles.filterItemSelected,
+                        ]}
+                        onPress={() => handleInputChange('sortBy', option)}
+                    >
+                        <Text style={[
+                            styles.filterText,
+                            filters.sortBy === option && styles.filterTextSelected
+                        ]}>
+                            {option}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+
+            {/* Price Range */}
+            {renderPriceRangeInputs()}
         </>
     );
 
@@ -302,10 +343,17 @@ const FilterScreen = ({ navigation }) => {
                         keyboardShouldPersistTaps="handled"
                     />
                 </View>
+
+                {/* Fixed action buttons at bottom */}
                 <View style={styles.fixedButtonContainer}>
-                    <TouchableOpacity style={styles.clearButton} onPress={handleClearFilters}>
+                    <TouchableOpacity
+                        style={styles.clearButton}
+                        onPress={handleClearFilters}
+                        disabled={loading}
+                    >
                         <Text style={styles.clearButtonText}>Clear All</Text>
                     </TouchableOpacity>
+
                     <TouchableOpacity
                         style={styles.submitButton}
                         onPress={handleSubmit}

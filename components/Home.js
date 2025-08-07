@@ -49,6 +49,10 @@ const Home = () => {
   const searchRef = useRef(search);
   const selectedCategoryRef = useRef(selectedCategory);
 
+  // In Home.js, add these new state variables near the top
+  const [showFilters, setShowFilters] = useState(false);
+  const [activeFilterCount, setActiveFilterCount] = useState(0);
+
   const [showLocationPopup, setShowLocationPopup] = useState(false);
   const [hasShownInitialPopup, setHasShownInitialPopup] = useState(false);
   const locationCheckTimeout = useRef(null);
@@ -59,12 +63,33 @@ const Home = () => {
     search: route.params?.filters?.search || '',
     category: route.params?.filters?.category || null,
     priceRange: route.params?.filters?.priceRange || [],
-    sortBy: route.params?.filters?.sortBy || 'Recently Added',
+    sortBy: route.params?.filters?.sortBy || null,
     distance: route.params?.filters?.distance || 5,
-    listingType: route.params?.filters?.listingType || 'sell',
+    listingType: route.params?.filters?.listingType || null,
     latitude: route.params?.filters?.latitude || null,
     longitude: route.params?.filters?.longitude || null,
   });
+
+
+  // Categories data
+  const categories = [
+    { id: null, name: 'All', icon: 'apps', color: '#2563eb', type: 'Ion' },
+    { id: '1', name: 'Cars', icon: 'car', color: '#dc2626', type: 'MC' },
+    { id: '2', name: 'Property', icon: 'home', color: '#16a34a', type: 'Ion' },
+    { id: '7', name: 'Phones', icon: 'mobile-alt', color: '#f59e0b', type: 'Fontisto' },
+    { id: '29', name: 'Tech', icon: 'laptop', color: '#0ea5e9', type: 'FA5' },
+    { id: '24', name: 'Bikes', icon: 'motorbike', color: '#8b5cf6', type: 'MC' },
+    { id: '45', name: 'Furniture', icon: 'sofa', color: '#d97706', type: 'MC' },
+    { id: '51', name: 'Fashion', icon: 'tshirt-crew', color: '#ec4899', type: 'MC' },
+    { id: '55', name: 'Books', icon: 'menu-book', color: '#14b8a6', type: 'M' },
+  ];
+
+  const SORT_MAPPING = {
+    'Relevance': null,
+    'Recently Added': 'createdAt_desc',
+    'Price: Low to High': 'price_asc',
+    'Price: High to Low': 'price_desc'
+  };
 
   useEffect(() => {
     if (route.params?.filters) {
@@ -82,81 +107,73 @@ const Home = () => {
   useFocusEffect(
     useCallback(() => {
       console.log('Home Screen Focused');
-
-      // Only fetch products if route.params.products is empty
-      if (!route.params?.products) {
-        if (products.length === 0 || selectedCategoryRef.current !== selectedCategory || searchRef.current !== search) {
-          const param = {};
-          if (selectedCategoryRef.current) {
-            param.category = selectedCategoryRef.current;
-          }
-          if (searchRef.current) {
-            param.search = searchRef.current.trim();
-          }
-          fetchProducts(true, param);
+      const fetchInitialData = async () => {
+        if (!route.params?.products) {
+          await fetchProducts(true, cleanParams(activeFilters));
         }
-      }
-
-      return () => {
-        console.log('Home Screen Unfocused');
       };
-    }, [products.length, selectedCategory, search, route.params?.products])
+
+      const timer = setTimeout(fetchInitialData, 100); // Small delay to avoid race conditions
+      return () => clearTimeout(timer);
+    }, [activeFilters, route.params?.products])
   );
 
   const fetchProducts = useCallback(async (reset = false, param = null) => {
-    console.log('param- ', param);
-    const token = await AsyncStorage.getItem('authToken');
-    if (isLoading || (!reset && !hasMore)) return;
+    // Prevent multiple simultaneous requests
+    if (isLoading) return;
 
     setIsLoading(true);
-    let apiURL = `${process.env.BASE_URL}/posts`;
-
-    // Get location only if needed
-    const location = param?.latitude ? null : await getStoredLocation();
-
-    // Build base parameters
-    const baseParams = {
-      page: reset ? 1 : currentPage,
-      limit: PAGE_SIZE,
-      ...cleanParams(param || {})
-    };
-
-    // Only add location if it exists and wasn't already in params
-    if (location && !param?.latitude) {
-      baseParams.latitude = location.latitude;
-      baseParams.longitude = location.longitude;
-      baseParams.distance = activeFilters.distance || 5;
-    }
-
-    const queryParams = new URLSearchParams(
-      Object.fromEntries(
-        Object.entries(baseParams).filter(([_, v]) => v != null)
-      )
-    ).toString();
-
-    apiURL += `?${queryParams}`;
-
-    console.log('apiUrl- ', apiURL);
-
     try {
+      const token = await AsyncStorage.getItem('authToken');
+      let apiURL = `${process.env.BASE_URL}/posts`;
+
+      // Get location only if needed
+      const location = param?.latitude ? null : await getStoredLocation();
+
+      // Build base parameters
+      const baseParams = {
+        page: reset ? 1 : currentPage,
+        limit: PAGE_SIZE,
+        ...cleanParams(param || activeFilters) // Use activeFilters as fallback
+      };
+
+      // Convert sortBy display text to API value if needed
+      if (baseParams.sortBy && typeof baseParams.sortBy === 'string') {
+        baseParams.sortBy = SORT_MAPPING[baseParams.sortBy] || null;
+      }
+
+      // Only add location if it exists and wasn't already in params
+      if (location && !param?.latitude) {
+        baseParams.latitude = location.latitude;
+        baseParams.longitude = location.longitude;
+        baseParams.distance = baseParams.distance || 5;
+      }
+
+      // Create URLSearchParams correctly
+      const queryParams = new URLSearchParams(
+        Object.fromEntries(
+          Object.entries(baseParams).filter(([_, v]) => v != null)
+        )
+      ).toString();
+
+      apiURL += `?${queryParams}`;
+      console.log('Fetching products from:', apiURL);
+
       const response = await fetch(apiURL, {
         method: 'GET',
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Handle response errors
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
       const jsonResponse = await response.json();
 
-      // Handle empty response
       if (!jsonResponse.data || jsonResponse.data.length === 0) {
         setProducts(reset ? [] : products);
         setHasMore(false);
         return;
       }
 
-      // Update products and pagination state
       if (reset) {
         setProducts(jsonResponse.data);
         setCurrentPage(1);
@@ -165,7 +182,6 @@ const Home = () => {
         setCurrentPage(prev => prev + 1);
       }
 
-      // Determine if more pages exist
       setHasMore(jsonResponse.data.length === PAGE_SIZE);
 
     } catch (error) {
@@ -175,7 +191,7 @@ const Home = () => {
       setIsLoading(false);
       setRefreshing(false);
     }
-  }, [isLoading, currentPage, hasMore, products, activeFilters.distance]);
+  }, [isLoading, currentPage, activeFilters]);
 
   const cleanParams = (params) => {
     return Object.entries(params).reduce((acc, [key, value]) => {
@@ -226,13 +242,17 @@ const Home = () => {
   };
 
   const handleCategorySelect = (categoryId) => {
+    const newFilters = {
+      ...activeFilters,
+      category: categoryId
+    };
+
     setSelectedCategory(categoryId);
     selectedCategoryRef.current = categoryId;
-    const param = { category: categoryId };
-    if (searchRef.current || search) {
-      param.search = searchRef.current ?? search;
-    }
-    fetchProducts(true, cleanParams(param));
+    setActiveFilters(newFilters);
+
+    // Fetch with new filters
+    fetchProducts(true, cleanParams(newFilters));
   };
 
   const handleSearchPress = async () => {
@@ -411,6 +431,149 @@ const Home = () => {
     }
   };
 
+
+
+
+  useEffect(() => {
+    let count = 0;
+    if (activeFilters.search) count++;
+    if (activeFilters.category) count++;
+    if (activeFilters.distance !== 5) count++;
+    if (activeFilters.listingType !== null) count++;
+    if (activeFilters.priceRange[0] || activeFilters.priceRange[1]) count++;
+    if (activeFilters.sortBy) count++;
+    setActiveFilterCount(count);
+  }, [activeFilters]);
+
+  // Add this function to handle filter removal
+  const handleRemoveFilter = (filterType) => {
+    const newFilters = { ...activeFilters };
+
+    switch (filterType) {
+      case 'search':
+        newFilters.search = '';
+        setSearch('');
+        break;
+      case 'category':
+        newFilters.category = null;
+        setSelectedCategory(null);
+        break;
+      case 'distance':
+        newFilters.distance = 5;
+        break;
+      case 'listingType':
+        newFilters.listingType = null;
+        break;
+      case 'priceRange':
+        newFilters.priceRange = [];
+        break;
+      case 'sortBy':
+        newFilters.sortBy = null;
+        break;
+    }
+
+    setActiveFilters(newFilters);
+    fetchProducts(true, cleanParams(newFilters));
+  };
+
+  // Add this component just below the CategoryMenu in your FlatList ListHeaderComponent
+  const FilterBar = ({ categories }) => (
+    <View style={styles.filterBarContainer}>
+      {activeFilterCount > 0 && (
+        <View style={styles.activeFiltersContainer}>
+          <Text style={styles.activeFiltersText}>Filters:</Text>
+          {activeFilters.search && (
+            <TouchableOpacity
+              style={styles.filterPill}
+              onPress={() => handleRemoveFilter('search')}
+            >
+              <Text style={styles.filterPillText}>Search: {activeFilters.search}</Text>
+              <Icon name="close" size={normalize(10)} color="#fff" />
+            </TouchableOpacity>
+          )}
+          {activeFilters.category && (
+            <TouchableOpacity
+              style={styles.filterPill}
+              onPress={() => handleRemoveFilter('category')}
+            >
+              <Text style={styles.filterPillText}>
+                Category: {categories.find(c => String(c.id) === String(activeFilters.category))?.name || 'Unknown'}
+              </Text>
+              <Icon name="close" size={normalize(10)} color="#fff" />
+            </TouchableOpacity>
+          )}
+          {activeFilters.distance !== 5 && (
+            <TouchableOpacity
+              style={styles.filterPill}
+              onPress={() => handleRemoveFilter('distance')}
+            >
+              <Text style={styles.filterPillText}>Radius: {activeFilters.distance}km</Text>
+              <Icon name="close" size={normalize(10)} color="#fff" />
+            </TouchableOpacity>
+          )}
+          {activeFilters.listingType !== null && (
+            <TouchableOpacity
+              style={styles.filterPill}
+              onPress={() => handleRemoveFilter('listingType')}
+            >
+              <Text style={styles.filterPillText}>
+                Type: {activeFilters.listingType ?
+                  activeFilters.listingType.charAt(0).toUpperCase() + activeFilters.listingType.slice(1) :
+                  'All'}
+              </Text>
+              <Icon name="close" size={normalize(10)} color="#fff" />
+            </TouchableOpacity>
+          )}
+          {(activeFilters.priceRange[0] || activeFilters.priceRange[1]) && (
+            <TouchableOpacity
+              style={styles.filterPill}
+              onPress={() => handleRemoveFilter('priceRange')}
+            >
+              <Text style={styles.filterPillText}>
+                Price: {activeFilters.priceRange[0] ? `₹${activeFilters.priceRange[0]}` : 'Any'} -
+                {activeFilters.priceRange[1] ? `₹${activeFilters.priceRange[1]}` : 'Any'}
+              </Text>
+              <Icon name="close" size={normalize(10)} color="#fff" />
+            </TouchableOpacity>
+          )}
+          {activeFilters.sortBy !== null && (
+            <TouchableOpacity
+              style={styles.filterPill}
+              onPress={() => handleRemoveFilter('sortBy')}
+            >
+              <Text style={styles.filterPillText}>Sort: {activeFilters.sortBy}</Text>
+              <Icon name="close" size={normalize(10)} color="#fff" />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={styles.quickFilterButton}
+            onPress={() => {
+              const resetFilters = {
+                search: '',
+                category: null,
+                priceRange: [],
+                sortBy: null,
+                distance: 5,
+                listingType: null,
+                latitude: null,
+                longitude: null,
+              };
+              setActiveFilters(resetFilters);
+              setSearch('');
+              setSelectedCategory(null);
+              fetchProducts(true, cleanParams(resetFilters));
+            }}
+          >
+            <Icon name="refresh" size={normalize(16)} color="#007bff" />
+            <Text style={styles.quickFilterText}>Reset All</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  );
+
+
+
   return (
 
     <TouchableWithoutFeedback onPress={handleOutsidePress}>
@@ -425,19 +588,42 @@ const Home = () => {
             style={styles.bannerAd}
           />
         </View> */}
-            <View style={styles.searchBar}>
-              <TextInput
-                style={styles.searchInput}
-                onChangeText={handleInputChange}
-                value={search}
-                placeholder="Search..."
-                onFocus={() => setShowRecentSearches(true)}
-              />
-              {search.length > 0 && (
-                <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-                  <Icon name="close" size={normalize(13)} color="#888" />
-                </TouchableOpacity>
-              )}
+            <View style={styles.searchContainer}>
+              {/* Search Input */}
+              <View style={styles.searchInputWrapper}>
+                <TextInput
+                  style={styles.searchInput}
+                  onChangeText={handleInputChange}
+                  value={search}
+                  placeholder="Search products..."
+                  placeholderTextColor="#888"
+                  onFocus={() => setShowRecentSearches(true)}
+                  onSubmitEditing={handleSearchPress}
+                  returnKeyType="search"
+                />
+                {search.length > 0 && (
+                  <TouchableOpacity
+                    onPress={clearSearch}
+                    style={styles.clearButton}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Icon name="close" size={normalize(16)} color="#888" />
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Physical Search Button with Icon */}
+              <TouchableOpacity
+                style={styles.searchButton}
+                onPress={handleSearchPress}
+                disabled={search.length === 0}
+              >
+                <View style={styles.searchButtonContent}>
+                  <Icon name="search" size={normalize(16)} color="#fff" style={styles.searchButtonIcon} />
+                </View>
+              </TouchableOpacity>
+
+              {/* Filter Button */}
               <TouchableOpacity
                 style={styles.filterButton}
                 onPress={() => navigation.navigate('FilterScreen', {
@@ -445,9 +631,11 @@ const Home = () => {
                 })}
               >
                 <Icon name="filter-list" size={normalize(20)} color="#fff" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.searchButton} onPress={handleSearchPress}>
-                <Icon name="search" size={normalize(20)} color="#fff" />
+                {activeFilterCount > 0 && (
+                  <View style={styles.filterBadge}>
+                    <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
+                  </View>
+                )}
               </TouchableOpacity>
             </View>
             {/* {isLoading && products.length === 0 && (
@@ -466,6 +654,7 @@ const Home = () => {
                     onCategorySelect={handleCategorySelect}
                     selectedCategory={selectedCategory}
                   />
+                  <FilterBar categories={categories} />
                   <Text style={styles.recommendedText}>Recommended</Text>
                 </>
               }

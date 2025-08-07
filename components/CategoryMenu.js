@@ -17,8 +17,8 @@ const CategoryMenu = ({ onCategorySelect, selectedCategory }) => {
     { id: '1', name: 'Cars', icon: 'car', color: '#dc2626', type: 'MC' },           // Red
     { id: '2', name: 'Property', icon: 'home', color: '#16a34a', type: 'Ion' },     // Green
     { id: '7', name: 'Phones', icon: 'mobile-alt', color: '#f59e0b', type: 'Fontisto' }, // Amber
-    { id: '29', name: 'Tech', icon: 'laptop', color: '#0ea5e9', type: 'FA5' },      // Sky blue
     { id: '24', name: 'Bikes', icon: 'motorbike', color: '#8b5cf6', type: 'MC' },   // Violet
+    { id: '29', name: 'Tech', icon: 'laptop', color: '#0ea5e9', type: 'FA5' },      // Sky blue
     { id: '45', name: 'Furniture', icon: 'sofa', color: '#d97706', type: 'MC' },    // Warm yellow-brown
     { id: '51', name: 'Fashion', icon: 'tshirt-crew', color: '#ec4899', type: 'MC' }, // Pink
     { id: '55', name: 'Books', icon: 'menu-book', color: '#14b8a6', type: 'M' },    // Teal
@@ -97,18 +97,19 @@ const CategoryMenu = ({ onCategorySelect, selectedCategory }) => {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#ffffff',
-    paddingVertical: normalize(8),
+    // paddingVertical: normalize(8),
   },
   listContent: {
     paddingHorizontal: normalize(12),
   },
   categoryItem: {
     alignItems: 'center',
-    marginRight: normalize(16),
+    marginRight: normalize(10),
   },
   iconContainer: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#f7f7f7ff',
     padding: normalize(12),
+    width: normalize(48),
     borderRadius: normalize(12),
     marginBottom: normalize(4),
     elevation: 1,

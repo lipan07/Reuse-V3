@@ -1,209 +1,177 @@
 // FilterScreen.styles.js
-import { StyleSheet, Dimensions } from 'react-native';
-
-const { width, height } = Dimensions.get('window');
-const scale = width / 375;
-const verticalScale = height / 812;
-const normalize = (size) => Math.round(scale * size);
-const normalizeVertical = (size) => Math.round(verticalScale * size);
+import { StyleSheet } from 'react-native';
 
 export default StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f5f5f5'
+        backgroundColor: '#fff',
     },
     scrollContainer: {
-        padding: normalize(10)
+        padding: 16,
+        paddingBottom: 80
     },
     searchInput: {
-        backgroundColor: '#fff',
-        borderRadius: normalize(8),
-        padding: normalize(10),
-        marginBottom: normalizeVertical(10),
-        fontSize: normalize(12),
+        backgroundColor: '#f8f9fa',
+        borderRadius: 10,
+        padding: 14,
+        marginBottom: 16,
+        fontSize: 15,
+        color: '#1a1a1a',
         borderWidth: 1,
-        borderColor: '#ddd',
-        elevation: 2,
-    },
-    // Location Search Section
-    locationContainer: {
-        marginBottom: normalizeVertical(16),
+        borderColor: '#e9ecef'
     },
     addressSearchContainer: {
-        position: 'relative',
-        zIndex: 3,
+        marginBottom: 16
     },
     addressInput: {
-        backgroundColor: '#fff',
-        borderRadius: normalize(8),
-        padding: normalize(10),
-        fontSize: normalize(12),
+        backgroundColor: '#f8f9fa',
+        borderRadius: 10,
+        padding: 14,
+        fontSize: 15,
+        color: '#1a1a1a',
         borderWidth: 1,
-        borderColor: '#ddd',
-        elevation: 2,
+        borderColor: '#e9ecef'
     },
-    locationTitle: {
-        fontSize: normalize(14),
+    sectionTitle: {
+        fontSize: 15,
         fontWeight: '600',
-        marginBottom: normalizeVertical(4),
-        color: '#2c3e50',
-    },
-    locationSubtitle: {
-        fontSize: normalize(12),
-        color: '#666',
-        marginBottom: normalizeVertical(8),
-    },
-    predictionsList: {
-        position: 'absolute',
-        top: normalizeVertical(38),
-        width: '100%',
-        maxHeight: normalizeVertical(100),
-        backgroundColor: '#fff',
-        borderRadius: normalize(8),
-        borderWidth: 1,
-        borderColor: '#ddd',
-        zIndex: 4,
-        elevation: 5,
-    },
-    predictionItem: {
-        padding: normalize(8),
-        borderBottomWidth: 1,
-        borderBottomColor: '#eee',
-    },
-    predictionText: {
-        fontSize: normalize(12),
-        color: '#333',
-    },
-    loader: {
-        position: 'absolute',
-        right: normalize(10),
-        top: normalizeVertical(10),
-    },
-    distanceTitle: {
-        fontSize: normalize(14),
-        fontWeight: '600',
-        marginBottom: normalizeVertical(8),
-        color: '#2c3e50',
+        marginBottom: 12,
+        color: '#212529',
+        marginTop: 8
     },
     filterListContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        marginBottom: normalizeVertical(12),
-        gap: normalize(6),
+        marginBottom: 16,
+        gap: 8
     },
     filterItem: {
-        backgroundColor: '#fff',
-        borderRadius: normalize(6),
-        paddingVertical: normalizeVertical(10),
-        paddingHorizontal: normalize(12),
+        backgroundColor: '#f8f9fa',
+        borderRadius: 8,
+        paddingVertical: 12,
+        paddingHorizontal: 18,
         borderWidth: 1,
-        borderColor: '#ddd',
-        elevation: 2,
+        borderColor: '#e9ecef'
     },
     filterItemSelected: {
-        backgroundColor: '#007bff',
-        borderColor: '#007bff',
+        backgroundColor: '#1a73e8',
+        borderColor: '#1a73e8'
     },
     filterText: {
-        fontSize: normalize(12),
-        color: '#333'
+        fontSize: 14,
+        color: '#495057'
     },
     filterTextSelected: {
         color: '#fff'
     },
-    sectionTitle: {
-        fontSize: normalize(14),
-        fontWeight: '600',
-        marginVertical: normalizeVertical(10),
-        color: '#2c3e50',
-    },
     categoryListContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        marginBottom: normalizeVertical(12),
-        gap: normalize(6),
+        marginBottom: 16,
+        gap: 8
     },
     categoryItem: {
-        backgroundColor: '#fff',
-        borderRadius: normalize(6),
-        padding: normalize(7),
+        backgroundColor: '#f8f9fa',
+        borderRadius: 8,
+        padding: 10,
         borderWidth: 1,
-        borderColor: '#ddd',
+        borderColor: '#e9ecef',
         flexDirection: 'row',
         alignItems: 'center',
-        elevation: 2,
     },
     categoryItemSelected: {
-        backgroundColor: '#007bff',
-        borderColor: '#007bff',
-    },
-    categoryIcon: {
-        marginRight: normalize(5)
+        backgroundColor: '#1a73e8',
+        borderColor: '#1a73e8'
     },
     categoryText: {
-        fontSize: normalize(12),
-        color: '#333'
+        fontSize: 14,
+        color: '#495057'
     },
     categoryTextSelected: {
         color: '#fff'
     },
+    iconContainer: {
+        marginRight: 8
+    },
     budgetInputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: normalizeVertical(12),
-        gap: normalize(6),
+        marginBottom: 16,
+        gap: 8
     },
     budgetInput: {
         flex: 1,
-        backgroundColor: '#fff',
-        borderRadius: normalize(8),
-        padding: normalize(10),
-        fontSize: normalize(12),
+        backgroundColor: '#f8f9fa',
+        borderRadius: 8,
+        padding: 14,
+        fontSize: 15,
+        color: '#1a1a1a',
         borderWidth: 1,
-        borderColor: '#ddd',
-        elevation: 2,
+        borderColor: '#e9ecef'
     },
     toText: {
-        fontSize: normalize(12),
-        color: '#666'
+        fontSize: 14,
+        color: '#6c757d',
+        fontWeight: '500'
     },
     fixedButtonContainer: {
         position: 'absolute',
-        bottom: normalizeVertical(16),
-        left: normalize(10),
-        right: normalize(10),
+        bottom: 16,
+        left: 16,
+        right: 16,
         flexDirection: 'row',
-        gap: normalize(8),
-        zIndex: 2,
+        gap: 12,
+        backgroundColor: '#fff',
+        paddingTop: 12,
+        paddingBottom: 12,
+        borderTopWidth: 1,
+        borderTopColor: '#e9ecef'
     },
     clearButton: {
         flex: 1,
-        backgroundColor: '#6c757d',
-        borderRadius: normalize(8),
-        padding: normalize(10),
+        backgroundColor: '#f8f9fa',
+        borderRadius: 8,
+        padding: 14,
         alignItems: 'center',
-        elevation: 3,
+        borderWidth: 1,
+        borderColor: '#e9ecef'
     },
     clearButtonText: {
-        color: '#fff',
-        fontSize: normalize(12),
-        fontWeight: '500',
+        color: '#495057',
+        fontSize: 15,
+        fontWeight: '500'
     },
     submitButton: {
         flex: 1,
-        backgroundColor: '#007bff',
-        borderRadius: normalize(8),
-        padding: normalize(10),
+        backgroundColor: '#1a73e8',
+        borderRadius: 8,
+        padding: 14,
         alignItems: 'center',
-        elevation: 3,
     },
     submitButtonText: {
         color: '#fff',
-        fontSize: normalize(12),
-        fontWeight: '500',
+        fontSize: 15,
+        fontWeight: '500'
     },
-    scrollableContent: {
-        flex: 1,
-        marginBottom: normalizeVertical(70),
+    predictionsList: {
+        position: 'absolute',
+        top: 56,
+        width: '100%',
+        maxHeight: 200,
+        backgroundColor: '#fff',
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#e9ecef',
+        zIndex: 100,
+        elevation: 3
     },
+    predictionItem: {
+        padding: 14,
+        borderBottomWidth: 1,
+        borderBottomColor: '#f1f3f5'
+    },
+    predictionText: {
+        fontSize: 15,
+        color: '#212529'
+    }
 });

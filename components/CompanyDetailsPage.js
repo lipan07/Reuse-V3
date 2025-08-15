@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
@@ -6,160 +6,96 @@ import {
     StyleSheet,
     ScrollView,
     TouchableOpacity,
-    ActivityIndicator,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Dialog, ALERT_TYPE } from 'react-native-alert-notification';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
-const CompanyDetailsPage = ({ route }) => {
-    const { userId } = route.params; // Assuming companyId is passed for API calls
-    const [companyDetails, setCompanyDetails] = useState(null); // State to hold company details
-    const [isLoading, setIsLoading] = useState(true); // Loading state
-    const [isFollowing, setIsFollowing] = useState(false); // State to track follow status
+const CompanyDetailsPage = () => {
+    const [isFollowing, setIsFollowing] = useState(false);
 
-    const dummyReviews = [
-        { id: 1, user: 'John Doe', comment: 'Great company, excellent service!', rating: 5 },
-        { id: 2, user: 'Jane Smith', comment: 'Good products, fast delivery.', rating: 4 },
-    ];
-
-    // Fetch user details on component mount
-    useEffect(() => {
-        const fetchCompanyDetails = async () => {
-            setIsLoading(true);
-            const token = await AsyncStorage.getItem('authToken');
-
-            try {
-                console.log(`${process.env.BASE_URL}/users/${userId}`);
-                const response = await fetch(`${process.env.BASE_URL}/users/${userId}`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
-                });
-
-                const result = await response.json();
-                console.log(result);
-                if (response.ok) {
-                    setCompanyDetails(result.data); // Update company details
-                    setIsFollowing(result.data.is_following); // Update follow status
-                } else {
-                    console.error('Failed to fetch company details:', result.message);
-                }
-            } catch (error) {
-                console.error('Error fetching company details:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchCompanyDetails();
-    }, [userId]);
-
-    // Handle Follow/Unfollow logic
-    const handleFollowToggle = async () => {
-        const token = await AsyncStorage.getItem('authToken');
-        console.log(`${process.env.BASE_URL}/follow-user`);
-        console.log(companyDetails.id);
-        try {
-            const response = await fetch(`${process.env.BASE_URL}/follow-user`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({ following_id: companyDetails.id }),
-            });
-
-            const result = await response.json();
-
-            if (response.ok) {
-                setIsFollowing(!isFollowing); // Toggle follow state
-                Dialog.show({
-                    type: ALERT_TYPE.SUCCESS,
-                    title: isFollowing ? 'Unfollowed' : 'Followed',
-                    textBody: result.message,
-                    button: 'OK',
-                });
-            } else {
-                Dialog.show({
-                    type: ALERT_TYPE.WARNING,
-                    title: 'Warning',
-                    textBody: result.message || 'Something went wrong.',
-                    button: 'OK',
-                });
-            }
-        } catch (error) {
-            Dialog.show({
-                type: ALERT_TYPE.DANGER,
-                title: 'Error',
-                textBody: 'Failed to update follow status. Please try again later.',
-                button: 'OK',
-            });
-        }
+    const companyDetails = {
+        id: 1,
+        name: "TechVision Solutions",
+        logo: "", // Empty means missing
+        about: "We are a global technology solutions provider, delivering cutting-edge products and services to help businesses thrive in the digital era.",
+        address: "123 Innovation Street, Bangalore, India",
+        email: "contact@techvision.com",
+        phone_no: "+91 98765 43210",
+        website: "www.techvision.com",
+        rating: 4.7,
+        reviews: 245,
     };
 
-    if (isLoading) {
-        return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#007bff" />
-            </View>
-        );
-    }
-
-    if (!companyDetails) {
-        return (
-            <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>Failed to load company details. Please try again later.</Text>
-            </View>
-        );
-    }
+    const dummyReviews = [
+        { id: 1, user: 'John Doe', comment: 'Outstanding service and innovative products!', rating: 5 },
+        { id: 2, user: 'Jane Smith', comment: 'Very professional team, highly recommend.', rating: 4 },
+    ];
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <View style={styles.header}>
-                <Image
-                    source={{ uri: companyDetails.logo || 'https://via.placeholder.com/100' }}
-                    style={styles.logo}
-                />
-                <View style={styles.headerText}>
-                    <Text style={styles.companyName}>{companyDetails.name || 'N/A'}</Text>
-                    <TouchableOpacity
-                        style={[styles.followButton, isFollowing ? styles.followedButton : styles.unfollowButton]}
-                        onPress={handleFollowToggle}
-                    >
-                        <Text style={styles.followButtonText}>
-                            {isFollowing ? 'Unfollow' : 'Follow'}
+        <ScrollView style={styles.container}>
+            {/* Header Card */}
+            <View style={styles.headerCard}>
+                {companyDetails.logo ? (
+                    <Image source={{ uri: companyDetails.logo }} style={styles.logo} />
+                ) : (
+                    <View style={styles.defaultLogo}>
+                        <FontAwesome name="building" size={40} color="#007bff" />
+                    </View>
+                )}
+
+                <View style={{ flex: 1 }}>
+                    <Text style={styles.companyName}>{companyDetails.name}</Text>
+                    <View style={styles.ratingRow}>
+                        <FontAwesome name="star" size={18} color="#FFD700" />
+                        <Text style={styles.ratingText}>
+                            {companyDetails.rating} ({companyDetails.reviews} reviews)
                         </Text>
+                    </View>
+                    <TouchableOpacity
+                        style={[styles.followButton, isFollowing ? styles.following : styles.notFollowing]}
+                        onPress={() => setIsFollowing(!isFollowing)}
+                    >
+                        <Text style={styles.followText}>{isFollowing ? "Following" : "Follow"}</Text>
                     </TouchableOpacity>
                 </View>
             </View>
-            <Text style={styles.about}>{companyDetails.about || 'No description available.'}</Text>
-            <View style={styles.contactInfo}>
-                <Text style={styles.infoTitle}>Address:</Text>
-                <Text style={styles.infoText}>{companyDetails.address || 'N/A'}</Text>
-                <Text style={styles.infoTitle}>Email:</Text>
-                <Text style={styles.infoText}>{companyDetails.email || 'N/A'}</Text>
-                <Text style={styles.infoTitle}>Phone:</Text>
-                <Text style={styles.infoText}>{companyDetails.phone_no || 'N/A'}</Text>
-                <Text style={styles.infoTitle}>Website:</Text>
-                <Text style={styles.infoText}>{companyDetails.website || 'N/A'}</Text>
+
+            {/* About Section */}
+            <View style={styles.card}>
+                <Text style={styles.sectionTitle}>About</Text>
+                <Text style={styles.aboutText}>{companyDetails.about}</Text>
             </View>
-            <View style={styles.ratingContainer}>
-                <Text style={styles.rating}>
-                    Rating: {companyDetails.rating || 'N/A'} ⭐
-                </Text>
-                <Text style={styles.reviews}>
-                    Reviews: {companyDetails.reviews || 0}
-                </Text>
+
+            {/* Contact Info */}
+            <View style={styles.card}>
+                <Text style={styles.sectionTitle}>Contact Information</Text>
+                <View style={styles.infoRow}>
+                    <Ionicons name="location" size={20} color="#007bff" />
+                    <Text style={styles.infoText}>{companyDetails.address}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                    <MaterialIcons name="email" size={20} color="#007bff" />
+                    <Text style={styles.infoText}>{companyDetails.email}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                    <Ionicons name="call" size={20} color="#007bff" />
+                    <Text style={styles.infoText}>{companyDetails.phone_no}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                    <Ionicons name="globe" size={20} color="#007bff" />
+                    <Text style={styles.infoText}>{companyDetails.website}</Text>
+                </View>
             </View>
-            <View style={styles.reviewsContainer}>
-                <Text style={styles.reviewsTitle}>Recent Reviews:</Text>
+
+            {/* Reviews */}
+            <View style={styles.card}>
+                <Text style={styles.sectionTitle}>Recent Reviews</Text>
                 {dummyReviews.map((review) => (
-                    <View key={review.id} style={styles.reviewItem}>
+                    <View key={review.id} style={styles.reviewCard}>
                         <View style={styles.reviewHeader}>
                             <Text style={styles.reviewUser}>{review.user}</Text>
-                            <Text style={styles.reviewRating}>Rating: {review.rating} ⭐</Text>
+                            <Text style={styles.reviewRating}>⭐ {review.rating}</Text>
                         </View>
                         <Text style={styles.reviewComment}>{review.comment}</Text>
                     </View>
@@ -171,114 +107,123 @@ const CompanyDetailsPage = ({ route }) => {
 
 const styles = StyleSheet.create({
     container: {
-        flexGrow: 1,
-        padding: 20,
-        backgroundColor: '#f5f5f5',
-    },
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    errorContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    errorText: {
-        color: '#ff0000',
-        fontSize: 16,
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    logo: {
-        width: 100,
-        height: 100,
-        marginRight: 20,
-        borderRadius: 10,
-    },
-    headerText: {
-        flex: 1,
-    },
-    companyName: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#333',
-        marginBottom: 10,
-    },
-    followButton: {
-        paddingHorizontal: 15,
-        paddingVertical: 8,
-        borderRadius: 5,
-        alignItems: 'center',
-    },
-    followedButton: {
-        backgroundColor: '#4caf50', // Green for "Following"
-    },
-    unfollowButton: {
-        backgroundColor: '#007bff', // Blue for "Follow"
-    },
-    followButtonText: {
-        color: '#fff',
-        fontWeight: 'bold',
-    },
-    about: {
-        fontSize: 16,
-        color: '#555',
-        marginBottom: 20,
-    },
-    contactInfo: {
-        marginBottom: 20,
-    },
-    infoTitle: {
-        fontWeight: 'bold',
-        marginBottom: 5,
-    },
-    infoText: {
-        marginBottom: 10,
-    },
-    ratingContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 20,
-    },
-    rating: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#007bff',
-    },
-    reviewsContainer: {
-        marginBottom: 20,
-    },
-    reviewsTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 10,
-    },
-    reviewItem: {
-        backgroundColor: '#fff',
-        borderRadius: 10,
+        backgroundColor: "#f4f6f8",
         padding: 15,
-        marginBottom: 10,
+    },
+    headerCard: {
+        backgroundColor: "#fff",
+        flexDirection: "row",
+        alignItems: "center",
+        padding: 15,
+        borderRadius: 12,
+        marginBottom: 15,
+        shadowColor: "#000",
+        shadowOpacity: 0.05,
+        shadowRadius: 5,
         elevation: 3,
     },
-    reviewHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
+    logo: {
+        width: 80,
+        height: 80,
+        borderRadius: 10,
+        marginRight: 15,
+    },
+    defaultLogo: {
+        width: 80,
+        height: 80,
+        borderRadius: 10,
+        marginRight: 15,
+        backgroundColor: "#e0e0e0",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    companyName: {
+        fontSize: 20,
+        fontWeight: "bold",
+        color: "#333",
+        marginBottom: 5,
+    },
+    ratingRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 8,
+    },
+    ratingText: {
+        marginLeft: 5,
+        color: "#666",
+        fontSize: 14,
+    },
+    followButton: {
+        paddingVertical: 6,
+        paddingHorizontal: 15,
+        borderRadius: 8,
+        alignSelf: "flex-start",
+    },
+    following: {
+        backgroundColor: "#4caf50",
+    },
+    notFollowing: {
+        backgroundColor: "#007bff",
+    },
+    followText: {
+        color: "#fff",
+        fontWeight: "bold",
+    },
+    card: {
+        backgroundColor: "#fff",
+        borderRadius: 12,
+        padding: 15,
+        marginBottom: 15,
+        shadowColor: "#000",
+        shadowOpacity: 0.05,
+        shadowRadius: 5,
+        elevation: 3,
+    },
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: "bold",
         marginBottom: 10,
+        color: "#333",
+    },
+    aboutText: {
+        fontSize: 14,
+        color: "#555",
+        lineHeight: 20,
+    },
+    infoRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 10,
+    },
+    infoText: {
+        marginLeft: 8,
+        fontSize: 14,
+        color: "#555",
+    },
+    reviewCard: {
+        backgroundColor: "#f9f9f9",
+        borderRadius: 8,
+        padding: 12,
+        marginBottom: 10,
+    },
+    reviewHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginBottom: 5,
     },
     reviewUser: {
-        fontWeight: 'bold',
+        fontWeight: "bold",
+        fontSize: 14,
+        color: "#333",
     },
     reviewRating: {
-        color: '#007bff',
+        fontSize: 14,
+        color: "#007bff",
     },
     reviewComment: {
-        color: '#555',
-        marginBottom: 10,
+        fontSize: 13,
+        color: "#555",
+        lineHeight: 18,
     },
 });
 

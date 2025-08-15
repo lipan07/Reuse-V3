@@ -441,10 +441,12 @@ const ProductDetails = () => {
                 )}
 
                 {/* Seller Section */}
-                {/* Seller Section */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Seller Information</Text>
-                    <View style={styles.sellerCard}>
+                    <TouchableOpacity
+                        onPress={() => navigation.navigate('CompanyDetailsPage', { userId: product.user?.id })}
+                    >
+                        <View style={styles.sellerCard} >
                         <Image
                             source={product.user?.profile_image
                                 ? { uri: product.user.profile_image }
@@ -480,7 +482,8 @@ const ProductDetails = () => {
                                 </TouchableOpacity>
                             </View>
                         )}
-                    </View>
+                        </View>
+                    </TouchableOpacity>
                 </View>
 
                 {/* Location Section */}

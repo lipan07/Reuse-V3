@@ -227,17 +227,9 @@ const styles = StyleSheet.create({
         backgroundColor: '#F8F8F8',
         borderRadius: normalize(8),
     },
-    sellerActions: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginLeft: 'auto', // This pushes the actions to the right
-    },
     followSellerButton: {
         padding: normalize(8),
         marginRight: normalize(8),
-    },
-    chatIcon: {
-        padding: normalize(8),
     },
 
 
@@ -257,7 +249,18 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '700',
         color: '#2e7d32', // dark green
-    }
+    },
+    sellerActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    callIcon: {
+        marginRight: 10,  // Add some spacing between the call and chat icons
+        padding: 5,
+    },
+    chatIcon: {
+        padding: 5,
+    },
 });
 
 export default styles;

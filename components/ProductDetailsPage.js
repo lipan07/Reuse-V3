@@ -474,12 +474,14 @@ const ProductDetails = () => {
                                         color={userFollowed ? '#FF3B30' : '#8E8E93'}
                                     />
                                 </TouchableOpacity> */}
-                                    <TouchableOpacity
-                                        style={styles.callIcon}
-                                        onPress={() => Linking.openURL(`tel:${product.user?.phone}`)}
-                                    >
-                                        <Icon name="phone-outline" size={normalize(20)} color="#007AFF" />
-                                    </TouchableOpacity>
+                                    {product.phone && (
+                                        <TouchableOpacity
+                                            style={styles.callIcon}
+                                            onPress={() => Linking.openURL(`tel:${product.user?.phone}`)}
+                                        >
+                                            <Icon name="phone-outline" size={normalize(20)} color="#007AFF" />
+                                        </TouchableOpacity>
+                                    )}
                                 <TouchableOpacity
                                     style={styles.chatIcon}
                                     onPress={handleChatWithSeller}
@@ -531,8 +533,17 @@ const ProductDetails = () => {
             </ScrollView>
 
             {/* Action Buttons */}
-            {/* {buyerId !== product.user?.id && product.phone && (
+            {buyerId !== product.user?.id && (
                 <View style={styles.actionBar}>
+                    {product.phone && (
+                        <TouchableOpacity
+                            style={[styles.actionButton, styles.callButton]}
+                            onPress={() => Linking.openURL(`tel:${product.phone}`)}
+                        >
+                            <Icon name="phone" size={normalize(18)} color="#fff" />
+                            <Text style={styles.actionButtonText}>Call</Text>
+                        </TouchableOpacity>
+                    )}
                     <TouchableOpacity
                         style={[styles.actionButton, styles.chatButton]}
                         onPress={handleChatWithSeller}
@@ -540,15 +551,8 @@ const ProductDetails = () => {
                         <Icon name="message-text" size={normalize(18)} color="#fff" />
                         <Text style={styles.actionButtonText}>Chat</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.actionButton, styles.callButton]}
-                        onPress={() => Linking.openURL(`tel:${product.phone}`)}
-                    >
-                        <Icon name="phone" size={normalize(18)} color="#fff" />
-                        <Text style={styles.actionButtonText}>Call</Text>
-                    </TouchableOpacity>
                 </View>
-            )} */}
+            )}
 
             {/* Image Viewer Modal - Exactly as before */}
             {product.images?.length > 0 && (

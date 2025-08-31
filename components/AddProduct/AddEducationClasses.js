@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Switch } from 'react-native';
 import { submitForm } from '../../service/apiService';
 import ImagePickerComponent from './SubComponent/ImagePickerComponent';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -18,6 +18,7 @@ const AddEducationClasses = ({ route, navigation }) => {
     longitude: null,
     images: [],
     deletedImages: [],
+    show_phone: false, 
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!product);
@@ -121,6 +122,13 @@ const AddEducationClasses = ({ route, navigation }) => {
     );
   }
 
+  const handleToggleShowPhone = (value) => {
+    setFormData((prev) => ({
+      ...prev,
+      show_phone: value,
+    }));
+  };
+
   return (
     <>
       <KeyboardAvoidingView
@@ -178,6 +186,17 @@ const AddEducationClasses = ({ route, navigation }) => {
               container: { marginBottom: 16 }
             }}
           />
+
+          <Text style={styles.label}>Show Phone Number</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+            <Switch
+              value={formData.show_phone}
+              onValueChange={handleToggleShowPhone}
+            />
+            <Text style={{ marginLeft: 10 }}>
+              Allow buyers to contact me directly by phone
+            </Text>
+          </View>
 
           {/* Image Picker */}
           <ImagePickerComponent

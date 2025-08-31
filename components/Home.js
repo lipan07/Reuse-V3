@@ -3,7 +3,7 @@ import { Alert, View, Text, StyleSheet, TouchableOpacity, Image, TextInput, Flat
 import Swiper from 'react-native-swiper';
 import CategoryMenu from './CategoryMenu';
 import BottomNavBar from './BottomNavBar';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import styles from '../assets/css/Home.styles';
@@ -56,6 +56,8 @@ const Home = () => {
   const [showLocationPopup, setShowLocationPopup] = useState(false);
   const [hasShownInitialPopup, setHasShownInitialPopup] = useState(false);
   const locationCheckTimeout = useRef(null);
+
+  const isFocused = useIsFocused();
 
   const lastScrollY = useRef(0);
 
@@ -121,7 +123,6 @@ const Home = () => {
   const fetchProducts = useCallback(async (reset = false, param = null) => {
     // Prevent multiple simultaneous requests
     if (isLoading) return;
-
     setIsLoading(true);
     try {
       const token = await AsyncStorage.getItem('authToken');
@@ -204,8 +205,10 @@ const Home = () => {
       return acc;
     }, {});
   };
+
   // Modified scroll handler for pagination
   const handleScrollEndReached = useCallback(() => {
+    if (!isFocused) return;
     if (!isLoading && hasMore) {
       console.log('Loading more products...');
       fetchProducts(false, {
@@ -272,6 +275,7 @@ const Home = () => {
   };
 
   const handleRefresh = async () => {
+    console.log('Handle refresh product fetch');
     setRefreshing(true);
     fetchProducts(true, {
       ...activeFilters,

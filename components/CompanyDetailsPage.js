@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
     View,
     Text,
@@ -6,225 +6,255 @@ import {
     StyleSheet,
     ScrollView,
     TouchableOpacity,
-} from 'react-native';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+    Linking,
+    Dimensions,
+} from "react-native";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+
+const { width } = Dimensions.get("window");
+const normalize = (size) => Math.round((width / 375) * size);
 
 const CompanyDetailsPage = () => {
     const [isFollowing, setIsFollowing] = useState(false);
 
-    const companyDetails = {
-        id: 1,
+    // Mock data
+    const company = {
         name: "TechVision Solutions",
-        logo: "", // Empty means missing
-        about: "We are a global technology solutions provider, delivering cutting-edge products and services to help businesses thrive in the digital era.",
-        address: "123 Innovation Street, Bangalore, India",
-        email: "contact@techvision.com",
-        phone_no: "+91 98765 43210",
-        website: "www.techvision.com",
-        rating: 4.7,
-        reviews: 245,
+        type: "IT Services",
+        about:
+            "We provide cutting-edge technology solutions for businesses of all sizes, specializing in AI, cloud computing, and digital transformation.",
+        address: "123 Tech Park, Silicon Valley, CA 94025",
+        website: "www.techvisionsolutions.com",
+        employees: "150+",
+        founded: "2015",
     };
 
-    const dummyReviews = [
-        { id: 1, user: 'John Doe', comment: 'Outstanding service and innovative products!', rating: 5 },
-        { id: 2, user: 'Jane Smith', comment: 'Very professional team, highly recommend.', rating: 4 },
-    ];
+    const user = {
+        name: "Sarah Johnson",
+        position: "CEO & Founder",
+        email: "s.johnson@techvisionsolutions.com",
+        phone: "+1 (555) 123-4567",
+        profile_image: null,
+    };
+
+    const handleFollow = () => setIsFollowing(!isFollowing);
+    const handleCall = () => Linking.openURL(`tel:${user.phone}`);
+    const handleEmail = () => Linking.openURL(`mailto:${user.email}`);
+    const handleWebsite = () => Linking.openURL(`https://${company.website}`);
 
     return (
-        <ScrollView style={styles.container}>
-            {/* Header Card */}
-            <View style={styles.headerCard}>
-                {companyDetails.logo ? (
-                    <Image source={{ uri: companyDetails.logo }} style={styles.logo} />
-                ) : (
-                    <View style={styles.defaultLogo}>
-                        <FontAwesome name="building" size={40} color="#007bff" />
-                    </View>
-                )}
+        <View style={styles.container}>
+            {/* Header */}
+            <View style={styles.header}>
+                {/* Left logo */}
+                <View style={styles.logoWrapper}>
+                    {user.profile_image ? (
+                        <Image source={{ uri: user.profile_image }} style={styles.logo} />
+                    ) : (
+                        <View style={styles.defaultLogo}>
+                            <Icon name="office-building" size={normalize(30)} color="#1a73e8" />
+                        </View>
+                    )}
+                </View>
 
-                <View style={{ flex: 1 }}>
-                    <Text style={styles.companyName}>{companyDetails.name}</Text>
-                    <View style={styles.ratingRow}>
-                        <FontAwesome name="star" size={18} color="#FFD700" />
-                        <Text style={styles.ratingText}>
-                            {companyDetails.rating} ({companyDetails.reviews} reviews)
-                        </Text>
+                {/* Right info */}
+                <View style={styles.headerRight}>
+                    <Text style={styles.companyName}>{company.name}</Text>
+                    <Text style={styles.companyType}>{company.type}</Text>
+
+                    {/* Actions side by side */}
+                    <View style={styles.headerActions}>
+                        <TouchableOpacity
+                            style={[
+                                styles.actionBtn,
+                                isFollowing ? styles.followingBtn : styles.followBtn,
+                            ]}
+                            onPress={handleFollow}
+                        >
+                            <Text
+                                style={[
+                                    styles.actionBtnText,
+                                    isFollowing && styles.followingBtnText,
+                                ]}
+                            >
+                                {isFollowing ? "Following ✓" : "Follow"}
+                            </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={[styles.actionBtn, styles.messageBtn]}>
+                            <Icon name="message-text" size={16} color="#fff" />
+                            <Text style={[styles.actionBtnText, { color: "#fff" }]}>
+                                Message
+                            </Text>
+                        </TouchableOpacity>
                     </View>
-                    <TouchableOpacity
-                        style={[styles.followButton, isFollowing ? styles.following : styles.notFollowing]}
-                        onPress={() => setIsFollowing(!isFollowing)}
-                    >
-                        <Text style={styles.followText}>{isFollowing ? "Following" : "Follow"}</Text>
+                </View>
+            </View>
+
+            <ScrollView contentContainerStyle={styles.content}>
+                {/* Company Info */}
+                <View style={styles.card}>
+                    <Text style={styles.cardTitle}>Company Information</Text>
+                    <View style={styles.infoRow}>
+                        <Icon name="account-group" size={20} color="#1a73e8" />
+                        <Text style={styles.infoText}>{company.employees} Employees</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                        <Icon name="calendar" size={20} color="#1a73e8" />
+                        <Text style={styles.infoText}>Founded in {company.founded}</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                        <Icon name="web" size={20} color="#1a73e8" />
+                        <TouchableOpacity onPress={handleWebsite}>
+                            <Text style={styles.linkText}>{company.website}</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+
+                {/* About */}
+                <View style={styles.card}>
+                    <Text style={styles.cardTitle}>About</Text>
+                    <Text style={styles.aboutText}>{company.about}</Text>
+                </View>
+
+                {/* Contact */}
+                <View style={styles.card}>
+                    <Text style={styles.cardTitle}>Primary Contact</Text>
+                    <View style={styles.contactRow}>
+                        <View style={styles.avatar}>
+                            <Icon name="account" size={28} color="#fff" />
+                        </View>
+                        <View>
+                            <Text style={styles.contactName}>{user.name}</Text>
+                            <Text style={styles.contactPosition}>{user.position}</Text>
+                        </View>
+                    </View>
+                    <TouchableOpacity style={styles.infoRow} onPress={handleEmail}>
+                        <Icon name="email" size={20} color="#1a73e8" />
+                        <Text style={styles.linkText}>{user.email}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.infoRow} onPress={handleCall}>
+                        <Icon name="phone" size={20} color="#1a73e8" />
+                        <Text style={styles.linkText}>{user.phone}</Text>
                     </TouchableOpacity>
                 </View>
-            </View>
 
-            {/* About Section */}
-            <View style={styles.card}>
-                <Text style={styles.sectionTitle}>About</Text>
-                <Text style={styles.aboutText}>{companyDetails.about}</Text>
-            </View>
-
-            {/* Contact Info */}
-            <View style={styles.card}>
-                <Text style={styles.sectionTitle}>Contact Information</Text>
-                <View style={styles.infoRow}>
-                    <Ionicons name="location" size={20} color="#007bff" />
-                    <Text style={styles.infoText}>{companyDetails.address}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                    <MaterialIcons name="email" size={20} color="#007bff" />
-                    <Text style={styles.infoText}>{companyDetails.email}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                    <Ionicons name="call" size={20} color="#007bff" />
-                    <Text style={styles.infoText}>{companyDetails.phone_no}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                    <Ionicons name="globe" size={20} color="#007bff" />
-                    <Text style={styles.infoText}>{companyDetails.website}</Text>
-                </View>
-            </View>
-
-            {/* Reviews */}
-            <View style={styles.card}>
-                <Text style={styles.sectionTitle}>Recent Reviews</Text>
-                {dummyReviews.map((review) => (
-                    <View key={review.id} style={styles.reviewCard}>
-                        <View style={styles.reviewHeader}>
-                            <Text style={styles.reviewUser}>{review.user}</Text>
-                            <Text style={styles.reviewRating}>⭐ {review.rating}</Text>
-                        </View>
-                        <Text style={styles.reviewComment}>{review.comment}</Text>
+                {/* Location */}
+                <View style={styles.card}>
+                    <Text style={styles.cardTitle}>Location</Text>
+                    <View style={styles.infoRow}>
+                        <Icon name="map-marker" size={20} color="#1a73e8" />
+                        <Text style={styles.infoText}>{company.address}</Text>
                     </View>
-                ))}
-            </View>
-        </ScrollView>
+                    <View style={styles.mapPreview}>
+                        <Icon name="google-maps" size={40} color="#1a73e8" />
+                        <Text style={styles.mapText}>Open in Maps</Text>
+                    </View>
+                </View>
+            </ScrollView>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        backgroundColor: "#f4f6f8",
-        padding: 15,
-    },
-    headerCard: {
-        backgroundColor: "#fff",
+    container: { flex: 1, backgroundColor: "#f9fafc" },
+    header: {
         flexDirection: "row",
         alignItems: "center",
+        backgroundColor: "#1a73e8",
         padding: 15,
-        borderRadius: 12,
-        marginBottom: 15,
-        shadowColor: "#000",
-        shadowOpacity: 0.05,
-        shadowRadius: 5,
+        borderBottomLeftRadius: 15,
+        borderBottomRightRadius: 15,
         elevation: 3,
     },
-    logo: {
-        width: 80,
-        height: 80,
-        borderRadius: 10,
-        marginRight: 15,
+    logoWrapper: {
+        width: 65,
+        height: 65,
+        borderRadius: 32,
+        backgroundColor: "#fff",
+        justifyContent: "center",
+        alignItems: "center",
+        marginRight: 12,
     },
+    logo: { width: 65, height: 65, borderRadius: 32 },
     defaultLogo: {
-        width: 80,
-        height: 80,
-        borderRadius: 10,
-        marginRight: 15,
-        backgroundColor: "#e0e0e0",
+        width: 65,
+        height: 65,
+        borderRadius: 32,
+        backgroundColor: "#fff",
         justifyContent: "center",
         alignItems: "center",
     },
-    companyName: {
-        fontSize: 20,
-        fontWeight: "bold",
-        color: "#333",
-        marginBottom: 5,
-    },
-    ratingRow: {
-        flexDirection: "row",
-        alignItems: "center",
+    headerRight: { flex: 1 },
+    companyName: { fontSize: 18, fontWeight: "700", color: "#fff" },
+    companyType: {
+        fontSize: 12,
+        color: "rgba(255,255,255,0.85)",
         marginBottom: 8,
     },
-    ratingText: {
-        marginLeft: 5,
-        color: "#666",
-        fontSize: 14,
-    },
-    followButton: {
+    headerActions: { flexDirection: "row" },
+    actionBtn: {
+        flexDirection: "row",
+        alignItems: "center",
         paddingVertical: 6,
-        paddingHorizontal: 15,
-        borderRadius: 8,
-        alignSelf: "flex-start",
+        paddingHorizontal: 12,
+        borderRadius: 20,
+        marginRight: 8,
     },
-    following: {
-        backgroundColor: "#4caf50",
+    followBtn: { backgroundColor: "#fff" },
+    followingBtn: { backgroundColor: "#fff" },
+    followingBtnText: { color: "#1a73e8" },
+    actionBtnText: {
+        fontSize: 13,
+        fontWeight: "600",
+        marginLeft: 5,
+        color: "#1a73e8",
     },
-    notFollowing: {
-        backgroundColor: "#007bff",
-    },
-    followText: {
-        color: "#fff",
-        fontWeight: "bold",
-    },
+    messageBtn: { backgroundColor: "#0a66c2" },
+    content: { padding: 15 },
     card: {
         backgroundColor: "#fff",
         borderRadius: 12,
-        padding: 15,
+        padding: 16,
         marginBottom: 15,
-        shadowColor: "#000",
-        shadowOpacity: 0.05,
-        shadowRadius: 5,
-        elevation: 3,
+        elevation: 2,
     },
-    sectionTitle: {
+    cardTitle: {
         fontSize: 16,
-        fontWeight: "bold",
-        marginBottom: 10,
-        color: "#333",
+        fontWeight: "600",
+        marginBottom: 12,
+        color: "#202124",
     },
-    aboutText: {
+    infoRow: { flexDirection: "row", alignItems: "center", marginVertical: 6 },
+    infoText: { marginLeft: 10, fontSize: 14, color: "#333" },
+    linkText: {
+        marginLeft: 10,
         fontSize: 14,
-        color: "#555",
-        lineHeight: 20,
+        color: "#1a73e8",
+        textDecorationLine: "underline",
     },
-    infoRow: {
-        flexDirection: "row",
+    aboutText: { fontSize: 14, color: "#5f6368", lineHeight: 20 },
+    contactRow: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
+    avatar: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        backgroundColor: "#1a73e8",
+        justifyContent: "center",
         alignItems: "center",
-        marginBottom: 10,
+        marginRight: 10,
     },
-    infoText: {
-        marginLeft: 8,
-        fontSize: 14,
-        color: "#555",
-    },
-    reviewCard: {
-        backgroundColor: "#f9f9f9",
+    contactName: { fontSize: 15, fontWeight: "600", color: "#202124" },
+    contactPosition: { fontSize: 13, color: "#5f6368" },
+    mapPreview: {
+        height: 120,
+        backgroundColor: "#f0f5ff",
         borderRadius: 8,
-        padding: 12,
-        marginBottom: 10,
+        justifyContent: "center",
+        alignItems: "center",
+        marginTop: 12,
     },
-    reviewHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginBottom: 5,
-    },
-    reviewUser: {
-        fontWeight: "bold",
-        fontSize: 14,
-        color: "#333",
-    },
-    reviewRating: {
-        fontSize: 14,
-        color: "#007bff",
-    },
-    reviewComment: {
-        fontSize: 13,
-        color: "#555",
-        lineHeight: 18,
-    },
+    mapText: { fontSize: 13, color: "#1a73e8", marginTop: 5 },
 });
 
 export default CompanyDetailsPage;

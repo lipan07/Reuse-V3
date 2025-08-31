@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Dimensions, ActivityIndicator, Image, Animated } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Dimensions, ActivityIndicator, Image, Animated, Alert, Modal, TouchableWithoutFeedback } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import BottomNavBar from './BottomNavBar';
@@ -7,6 +7,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import moment from 'moment';
 import { createEcho } from '../service/echo';
 import { useNotification } from '../context/NotificationContext';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
+import ModalScreen from './SupportElement/ModalScreen.js';
 
 const { width, height } = Dimensions.get('window');
 const scale = width / 375;
@@ -20,6 +22,11 @@ const ChatList = ({ navigation }) => {
   const [isError, setIsError] = useState(false);
   const [loggedInUserId, setLoggedInUserId] = useState(null);
   const [onlineStatuses, setOnlineStatuses] = useState({});
+  const swipeableRefs = useRef({});
+
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [chatToDelete, setChatToDelete] = useState(null);
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
 
   const { resetNotificationCount } = useNotification();
 
@@ -114,7 +121,6 @@ const ChatList = ({ navigation }) => {
       setIsLoading(true);
       setIsError(false);
       const token = await AsyncStorage.getItem('authToken');
-      // console.log("Fetching chats with token:", token);
       const response = await fetch(`${process.env.BASE_URL}/chats`, {
         method: 'GET',
         headers: {
@@ -127,16 +133,78 @@ const ChatList = ({ navigation }) => {
       const data = await response.json();
       setChats(data.data);
     } catch (error) {
-      // console.error("Error fetching chats:", error);
       setIsError(true);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const deleteChat = async () => {
+    if (!chatToDelete) return;
+
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      console.log('Deleting chat :', `${process.env.BASE_URL}/chats/${chatToDelete.id}`);
+      const response = await fetch(`${process.env.BASE_URL}/chats/${chatToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        setChats(prevChats => prevChats.filter(chat => chat.id !== chatToDelete.id));
+        setSuccessModalVisible(true);
+        setTimeout(() => setSuccessModalVisible(false), 2000);
+      } else {
+        Alert.alert('Error', 'Failed to delete chat');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to delete chat');
+    } finally {
+      setDeleteModalVisible(false);
+      setChatToDelete(null);
+    }
+  };
+
+  const confirmDelete = (chatId, chatTitle) => {
+    setChatToDelete({ id: chatId, title: chatTitle });
+    setDeleteModalVisible(true);
+  };
+
+  const renderRightActions = (progress, dragX, chat) => {
+    const trans = dragX.interpolate({
+      inputRange: [0, 50, 100, 101],
+      outputRange: [0, 0, 0, 1],
+    });
+
+    return (
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={() => {
+          swipeableRefs.current[chat.id]?.close();
+          confirmDelete(chat.id, chat.post?.title || 'Unknown');
+        }}
+      >
+        <Animated.View
+          style={[
+            styles.deleteButtonContent,
+            {
+              transform: [{ translateX: trans }],
+            },
+          ]}
+        >
+          <MaterialIcons name="delete" size={normalize(24)} color="#ff5252" />
+        </Animated.View>
+      </TouchableOpacity>
+    );
+  };
+
   useFocusEffect(
     React.useCallback(() => {
-      getAllChat(); // or your function to refresh the chat list
+      getAllChat();
     }, [])
   );
 
@@ -206,120 +274,124 @@ const ChatList = ({ navigation }) => {
       'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
 
     const isSeen = chat.last_message?.is_seen === 1;
-    const isFromOtherUser = true; // Always true, since you are always chatting with other_person
-
-    // Use real-time status if available, otherwise fallback to API status
+    const isFromOtherUser = true;
     const otherPersonStatusObj = onlineStatuses[chat.other_person?.id] || {};
     const otherPersonStatus = otherPersonStatusObj.status || chat.other_person?.status || 'offline';
-    const lastActivity = chat.other_person?.last_activity;
     const isDeleted = chat.post?.status === 'deleted';
 
     return (
-      <TouchableOpacity
-        style={[
-          styles.chatCard,
-          !isSeen && isFromOtherUser && styles.highlightedCard,
-          isDeleted && styles.deletedCard
-        ]}
-        disabled={isDeleted} // Optionally disable tap
-        onPress={() => {
-          if (!isDeleted) {
-            navigation.navigate('ChatBox', {
-              chatId: chat.id,
-              postId: chat.post_id,
-              postTitle: chat.post.title,
-              postImage: postImage,
-              otherUserId: chat.other_person?.id,
-              otherUserName: chat.other_person?.name,
-            });
-          }
-        }}
+      <Swipeable
+        ref={ref => (swipeableRefs.current[chat.id] = ref)}
+        renderRightActions={(progress, dragX) => renderRightActions(progress, dragX, chat)}
+        rightThreshold={40}
+        enabled={!isDeleted} // Disable swipe for deleted chats
       >
-        {isDeleted && (
-          <View style={styles.deletedOverlay}>
-            <MaterialIcons name="block" size={18} color="#fff" />
-          </View>
-        )}
-        <View style={styles.avatarContainer}>
-          <Image
-            source={{ uri: postImage }}
-            style={styles.avatar}
-          />
-        </View>
-        <View style={styles.chatContent}>
-          <View style={styles.chatHeader}>
-            <Text
-              style={[
-                styles.chatTitle,
-                isSeen ? styles.dimmedText : styles.highlightedText
-              ]}
-              numberOfLines={1}
-            >
-              {chat.post?.title || 'No Title'}
-            </Text>
-          </View>
-          {chat.last_message?.message && (
-            <View style={styles.chatDetails}>
-              <MaterialIcons name="chat" size={normalize(14)} color={isSeen ? "#b0b0b0" : "#666"} />
-              <Text
-                style={[
-                  styles.chatUser,
-                  isSeen ? styles.dimmedText : styles.highlightedText
-                ]}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {chat.last_message.message}
-              </Text>
-              {typeof chat.last_message.is_seen !== 'undefined' && (
-                <MaterialIcons
-                  name={chat.last_message.is_seen ? 'done-all' : 'done'}
-                  size={normalize(14)}
-                  color={chat.last_message.is_seen ? '#4fc3f7' : '#999'}
-                  style={{ marginLeft: 4 }}
-                />
-              )}
+        <TouchableOpacity
+          style={[
+            styles.chatCard,
+            !isSeen && isFromOtherUser && styles.highlightedCard,
+            isDeleted && styles.deletedCard
+          ]}
+          disabled={isDeleted}
+          onPress={() => {
+            if (!isDeleted) {
+              navigation.navigate('ChatBox', {
+                chatId: chat.id,
+                postId: chat.post_id,
+                postTitle: chat.post.title,
+                postImage: postImage,
+                otherUserId: chat.other_person?.id,
+                otherUserName: chat.other_person?.name,
+              });
+            }
+          }}
+        >
+          {isDeleted && (
+            <View style={styles.deletedOverlay}>
+              <MaterialIcons name="block" size={18} color="#fff" />
             </View>
           )}
-          <View style={styles.chatDetails}>
-            <MaterialIcons name="person" size={normalize(14)} color={isSeen ? "#b0b0b0" : "#666"} />
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={styles.avatarContainer}>
+            <Image
+              source={{ uri: postImage }}
+              style={styles.avatar}
+            />
+          </View>
+          <View style={styles.chatContent}>
+            <View style={styles.chatHeader}>
               <Text
                 style={[
-                  styles.chatUser,
+                  styles.chatTitle,
                   isSeen ? styles.dimmedText : styles.highlightedText
                 ]}
                 numberOfLines={1}
               >
-                {chat.other_person?.name}
+                {chat.post?.title || 'No Title'}
               </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}>
-                <View
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: 4,
-                    backgroundColor: otherPersonStatus === 'online' ? 'red' : '#b0b0b0',
-                    marginRight: 4,
-                  }}
-                />
-                {otherPersonStatus === 'online' ? (
-                  <BlinkText>Online</BlinkText>
-                ) : (
-                  <Text style={{
-                    fontSize: normalize(12),
-                    color: '#b0b0b0',
-                    fontWeight: '500',
-                  }}>
-                    Offline
-                  </Text>
+            </View>
+            {chat.last_message?.message && (
+              <View style={styles.chatDetails}>
+                <MaterialIcons name="chat" size={normalize(14)} color={isSeen ? "#b0b0b0" : "#666"} />
+                <Text
+                  style={[
+                    styles.chatUser,
+                    isSeen ? styles.dimmedText : styles.highlightedText
+                  ]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {chat.last_message.message}
+                </Text>
+                {typeof chat.last_message.is_seen !== 'undefined' && (
+                  <MaterialIcons
+                    name={chat.last_message.is_seen ? 'done-all' : 'done'}
+                    size={normalize(14)}
+                    color={chat.last_message.is_seen ? '#4fc3f7' : '#999'}
+                    style={{ marginLeft: 4 }}
+                  />
                 )}
+              </View>
+            )}
+            <View style={styles.chatDetails}>
+              <MaterialIcons name="person" size={normalize(14)} color={isSeen ? "#b0b0b0" : "#666"} />
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text
+                  style={[
+                    styles.chatUser,
+                    isSeen ? styles.dimmedText : styles.highlightedText
+                  ]}
+                  numberOfLines={1}
+                >
+                  {chat.other_person?.name}
+                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}>
+                  <View
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor: otherPersonStatus === 'online' ? 'red' : '#b0b0b0',
+                      marginRight: 4,
+                    }}
+                  />
+                  {otherPersonStatus === 'online' ? (
+                    <BlinkText>Online</BlinkText>
+                  ) : (
+                    <Text style={{
+                      fontSize: normalize(12),
+                      color: '#b0b0b0',
+                      fontWeight: '500',
+                    }}>
+                      Offline
+                    </Text>
+                  )}
+                </View>
               </View>
             </View>
           </View>
-        </View>
-        <MaterialIcons name="chevron-right" size={normalize(20)} color={isSeen ? "#b0b0b0" : "#999"} />
-      </TouchableOpacity>
+          <MaterialIcons name="chevron-right" size={normalize(20)} color={isSeen ? "#b0b0b0" : "#999"} />
+        </TouchableOpacity>
+      </Swipeable>
     );
   };
 
@@ -358,10 +430,53 @@ const ChatList = ({ navigation }) => {
         }
       />
       <BottomNavBar />
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        visible={deleteModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setDeleteModalVisible(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setDeleteModalVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.confirmContainer}>
+              <Text style={styles.confirmTitle}>Are you sure you want to delete this chat?</Text>
+              <Text style={styles.confirmSubtitle}>
+                This will permanently remove the chat for "{chatToDelete?.title || 'Unknown'}"
+              </Text>
+              <View style={styles.buttonRow}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => setDeleteModalVisible(false)}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.confirmButton}
+                  onPress={deleteChat}
+                >
+                  <Text style={styles.confirmButtonText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
+      {/* Success Modal */}
+      <ModalScreen
+        visible={successModalVisible}
+        type="success"
+        title="Chat Deleted"
+        message="The chat has been successfully deleted."
+        onClose={() => setSuccessModalVisible(false)}
+      />
     </View>
   );
 };
 
+// Add these new styles to your existing styles:
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -489,6 +604,88 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 2,
     zIndex: 2,
+  },
+  // New styles for delete functionality
+  deleteButton: {
+    // backgroundColor: '#ff5252',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: normalize(30),
+    height: '50%',
+    borderRadius: normalize(12),
+    marginTop: normalizeVertical(25),
+    marginLeft: normalize(10),
+    marginBottom: normalizeVertical(12),
+  },
+  deleteButtonContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // New modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  confirmContainer: {
+    backgroundColor: '#fff',
+    padding: 24,
+    borderRadius: 15,
+    width: '100%',
+    maxWidth: 350,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 10,
+  },
+  confirmTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  confirmSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 24,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    padding: 14,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  confirmButton: {
+    flex: 1,
+    padding: 14,
+    backgroundColor: '#ff5252',
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    color: '#333',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  confirmButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
   },
 });
 

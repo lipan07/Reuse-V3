@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  StyleSheet,
+  StyleSheet, Switch
 } from 'react-native';
 import { submitForm } from '../../service/apiService';
 import ImagePickerComponent from './SubComponent/ImagePickerComponent';
@@ -29,6 +29,7 @@ const AddOthers = ({ route, navigation }) => {
     images: [],
     deletedImages: [],
     listingType: 'sell',
+    show_phone: false, 
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -114,6 +115,13 @@ const AddOthers = ({ route, navigation }) => {
     }));
   };
 
+  const handleToggleShowPhone = (value) => {
+    setFormData((prev) => ({
+      ...prev,
+      show_phone: value,
+    }));
+  };
+
   return (
     <>
       <KeyboardAvoidingView
@@ -186,6 +194,17 @@ const AddOthers = ({ route, navigation }) => {
               container: { marginBottom: 16 }
             }}
           />
+
+          <Text style={styles.label}>Show Phone Number</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+            <Switch
+              value={formData.show_phone}
+              onValueChange={handleToggleShowPhone}
+            />
+            <Text style={{ marginLeft: 10 }}>
+              Allow buyers to contact me directly by phone
+            </Text>
+          </View>
 
           <ImagePickerComponent formData={formData} setFormData={setFormData} />
         </ScrollView>

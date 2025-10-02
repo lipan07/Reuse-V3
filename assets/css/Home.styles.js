@@ -189,8 +189,8 @@ export default StyleSheet.create({
     fontSize: normalize(10),
     color: '#888',
     flexShrink: 1,
-    marginLeft: normalize(6),
-    fontStyle: 'italic',
+    marginLeft: normalize(4),
+    fontStyle: 'normal',
   },
 
 
@@ -255,6 +255,53 @@ export default StyleSheet.create({
     color: 'white',
     fontSize: 12,
     fontWeight: 'bold',
+  },
+
+  // Distance Badge Styles
+  distanceBadge: {
+    position: 'absolute',
+    top: 3,
+    right: 3,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 10,
+    zIndex: 2,
+  },
+
+  distanceText: {
+    color: '#fff',
+    fontSize: normalize(9),
+    fontWeight: 'bold',
+    marginLeft: 2,
+  },
+
+  // Location and Distance Container
+  locationDistanceContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: normalizeVertical(4),
+    marginBottom: normalizeVertical(2),
+  },
+
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+
+  distanceInfo: {
+    fontSize: normalize(9),
+    color: '#007bff',
+    fontWeight: '600',
+    backgroundColor: '#f0f8ff',
+    paddingHorizontal: normalize(6),
+    paddingVertical: normalize(2),
+    borderRadius: normalize(8),
+    overflow: 'hidden',
   },
 
   // Add to Home.styles.js

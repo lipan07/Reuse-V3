@@ -72,6 +72,10 @@ const Home = () => {
     longitude: route.params?.filters?.longitude || null,
   });
 
+  // State for storing user location and product distances
+  const [userLocation, setUserLocation] = useState(null);
+  const [productDistances, setProductDistances] = useState({});
+
 
   // Categories data
   const categories = [
@@ -307,65 +311,147 @@ const Home = () => {
     fetchProducts(true, cleanParams(param));
   };
 
-  const renderProductItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.productItem}
-      onPress={() => navigation.navigate('ProductDetails', { productDetails: item })}
-    >
-      <View style={styles.imageContainer}>
-        {/* Add the tag container here */}
-        <View style={[
-          styles.productTag,
-          item.type === 'rent' ? styles.rentTag : styles.sellTag
-        ]}>
-          <Text style={styles.tagText}>
-            {item.type === 'rent' ? 'Rent' : 'Sell'}
-          </Text>
-        </View>
+  // Function to calculate distance between two coordinates
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Radius of the Earth in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c; // Distance in kilometers
+    return distance;
+  };
 
-        <Swiper style={styles.swiper} showsPagination={false} autoplay autoplayTimeout={3}>
-          {item.images && item.images.length > 0 ? (
-            item.images.map((imageUri, index) => (
-              <Image
-                key={index}
-                source={{ uri: imageUri }}
-                style={styles.productImage}
-                onError={() => console.warn('Failed to load image:', imageUri)}
-              />
-            ))
-          ) : (
-            <View style={styles.placeholderContainer}>
-              <Text style={styles.placeholderText}>
-                {item.category?.name || 'No image available'}
-              </Text>
+  // Function to format distance text
+  const formatDistance = (distance) => {
+    if (distance < 1) {
+      return `${Math.round(distance * 1000)}m`;
+    } else if (distance < 10) {
+      return `${distance.toFixed(1)}km`;
+    } else {
+      return `${Math.round(distance)}km`;
+    }
+  };
+
+  // Load user location on component mount
+  useEffect(() => {
+    const loadUserLocation = async () => {
+      try {
+        const locationString = await AsyncStorage.getItem('defaultLocation');
+        if (locationString) {
+          const location = JSON.parse(locationString);
+          if (location?.latitude && location?.longitude) {
+            setUserLocation(location);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading user location:', error);
+      }
+    };
+    loadUserLocation();
+  }, []);
+
+  // Calculate distances when products or user location changes
+  useEffect(() => {
+    if (userLocation && products.length > 0) {
+      const distances = {};
+      products.forEach(product => {
+        if (product.latitude && product.longitude) {
+          const distance = calculateDistance(
+            userLocation.latitude,
+            userLocation.longitude,
+            parseFloat(product.latitude),
+            parseFloat(product.longitude)
+          );
+          distances[product.id] = formatDistance(distance);
+        }
+      });
+      setProductDistances(distances);
+    }
+  }, [userLocation, products]);
+
+  const renderProductItem = ({ item }) => {
+    const distance = productDistances[item.id];
+
+    return (
+      <TouchableOpacity
+        style={styles.productItem}
+        onPress={() => navigation.navigate('ProductDetails', { productDetails: item })}
+      >
+        <View style={styles.imageContainer}>
+          {/* Add the tag container here */}
+          <View style={[
+            styles.productTag,
+            item.type === 'rent' ? styles.rentTag : styles.sellTag
+          ]}>
+            <Text style={styles.tagText}>
+              {item.type === 'rent' ? 'Rent' : 'Sell'}
+            </Text>
+          </View>
+
+          {/* Distance badge */}
+          {distance && (
+            <View style={styles.distanceBadge}>
+              <Icon name="location-on" size={normalize(10)} color="#fff" />
+              <Text style={styles.distanceText}>{distance}</Text>
             </View>
           )}
-        </Swiper>
-      </View>
 
-      {/* Compact Text Layout */}
-      <View style={styles.textContainer}>
-        <Text style={styles.productName} numberOfLines={1}>{item.title}</Text>
-        <Text style={styles.details} numberOfLines={2} ellipsizeMode="tail">
-          {item.post_details.description}
-        </Text>
-        <View style={styles.priceAddressContainer}>
-          <Text style={styles.price}>
-            {!(item.category_id >= 9 && item.category_id <= 23) ? (
-              <Text style={styles.priceText}>₹{item.post_details?.amount || 'N/A'}</Text>
+          <Swiper style={styles.swiper} showsPagination={false} autoplay autoplayTimeout={3}>
+            {item.images && item.images.length > 0 ? (
+              item.images.map((imageUri, index) => (
+                <Image
+                  key={index}
+                  source={{ uri: imageUri }}
+                  style={styles.productImage}
+                  onError={() => console.warn('Failed to load image:', imageUri)}
+                />
+              ))
             ) : (
-              <Text style={styles.priceText}>
-                ₹{item.post_details?.salary_from || 'N/A'} - ₹{item.post_details?.salary_to || 'N/A'}
-              </Text>
+              <View style={styles.placeholderContainer}>
+                <Text style={styles.placeholderText}>
+                  {item.category?.name || 'No image available'}
+                </Text>
+              </View>
             )}
-          </Text>
-          <Text style={styles.address} numberOfLines={1}>
-            {item.address || 'Address not available'}
-          </Text>
+          </Swiper>
         </View>
-      </View>
-    </TouchableOpacity>
-  );
+
+        {/* Compact Text Layout */}
+        <View style={styles.textContainer}>
+          <Text style={styles.productName} numberOfLines={1}>{item.title}</Text>
+          <Text style={styles.details} numberOfLines={2} ellipsizeMode="tail">
+            {item.post_details.description}
+          </Text>
+
+          {/* Location and Distance Row */}
+          <View style={styles.locationDistanceContainer}>
+            <View style={styles.locationContainer}>
+              <Icon name="location-on" size={normalize(12)} color="#888" />
+              <Text style={styles.address} numberOfLines={1}>
+                {item.address || 'Address not available'}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.priceAddressContainer}>
+            <Text style={styles.price}>
+              {!(item.category_id >= 9 && item.category_id <= 23) ? (
+                <Text style={styles.priceText}>₹{item.post_details?.amount || 'N/A'}</Text>
+              ) : (
+                <Text style={styles.priceText}>
+                  ₹{item.post_details?.salary_from || 'N/A'} - ₹{item.post_details?.salary_to || 'N/A'}
+                </Text>
+              )}
+            </Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   const handleOutsidePress = () => {
     setShowRecentSearches(false);

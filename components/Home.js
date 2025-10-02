@@ -150,14 +150,25 @@ const Home = () => {
         baseParams.distance = baseParams.distance || 5;
       }
 
-      // Create URLSearchParams correctly
-      const queryParams = new URLSearchParams(
-        Object.fromEntries(
-          Object.entries(baseParams).filter(([_, v]) => v != null)
-        )
-      ).toString();
+      // Create URLSearchParams correctly with array format for priceRange
+      const queryParams = new URLSearchParams();
 
-      apiURL += `?${queryParams}`;
+      Object.entries(baseParams).forEach(([key, value]) => {
+        if (value != null && value !== '') {
+          // Handle priceRange as array
+          if (key === 'priceRange' && Array.isArray(value)) {
+            value.forEach(item => {
+              if (item !== null && item !== '') {
+                queryParams.append(`${key}[]`, item);
+              }
+            });
+          } else {
+            queryParams.append(key, value);
+          }
+        }
+      });
+
+      apiURL += `?${queryParams.toString()}`;
       console.log('Fetching products from:', apiURL);
 
       const response = await fetch(apiURL, {
@@ -192,7 +203,7 @@ const Home = () => {
       setIsLoading(false);
       setRefreshing(false);
     }
-  }, [isLoading, currentPage, activeFilters]);
+  }, [isLoading, currentPage, activeFilters, products]);
 
   const cleanParams = (params) => {
     return Object.entries(params).reduce((acc, [key, value]) => {

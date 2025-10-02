@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   TextInput,
   StyleSheet,
+  Dimensions,
   Platform,
   KeyboardAvoidingView,
   Image,
@@ -17,6 +18,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import moment from 'moment';
 import { createEcho } from '../service/echo';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+
+const { width, height } = Dimensions.get('window');
+const scale = width / 375;
+const verticalScale = height / 812;
+const normalize = (size) => Math.round(scale * size);
+const normalizeVertical = (size) => Math.round(verticalScale * size);
 
 const ChatBox = ({ route }) => {
   const navigation = useNavigation();
@@ -35,6 +42,7 @@ const ChatBox = ({ route }) => {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMorePages, setHasMorePages] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   // Get other user's ID from API response if available, else fallback
   const otherUserId = otherPerson?.id || (loggedInUserId === sellerId?.toString() ? buyerId : sellerId);
@@ -49,6 +57,7 @@ const ChatBox = ({ route }) => {
     AsyncStorage.getItem('userId').then(setLoggedInUserId);
   }, []);
 
+  // Replace your useEffect for WebSocket setup with this:
   useEffect(() => {
     let echoInstance;
     let channelInstances = [];
@@ -69,22 +78,20 @@ const ChatBox = ({ route }) => {
       });
       channelInstances.push(channelOne);
 
-       // Listen for chat events - only if we have a chatId
+        // Listen for chat events - only if we have a chatId
       if (chatId) {
         const channelName = `chat.${chatId}`;
-        const chatChannel = echoInstance.channel(channelName);
 
         // Remove any existing listeners first to avoid duplicates
         echoInstance.leave(channelName);
 
-        // Set up new listeners
+        // Use channel() instead of private() - this matches your working script
+        const chatChannel = echoInstance.channel(channelName);
+
+
         chatChannel.listen('.MessageSent', (data) => {
-          console.log('New message received:', data);
-          setAllMessages(prev => {
-        // Check if message already exists to prevent duplicates
-            if (prev.some(msg => msg.id === data.id)) return prev;
-            return [...prev, data];
-          });
+          console.log('New message received via .MessageSent:', data);
+          handleIncomingMessage(data);
         });
 
         chatChannel.listen('.MessageSeen', (data) => {
@@ -103,17 +110,28 @@ const ChatBox = ({ route }) => {
           }, 2000);
         });
 
-         channelInstances.push(chatChannel);
-         setChannel(chatChannel);
-       }
-     } catch (error) {
-       console.error('Error setting up Echo:', error);
-       // Retry connection after a delay
-       setTimeout(() => {
-         if (chatId) {
-           setupEcho();
-         }
-       }, 3000);
+        // Listen for connection events for debugging
+        if (echoInstance.connector && echoInstance.connector.socket) {
+          echoInstance.connector.socket.on('connect', () => {
+            console.log('WebSocket connected successfully to channel:', channelName);
+          });
+
+          echoInstance.connector.socket.on('error', (error) => {
+            console.log('WebSocket error:', error);
+          });
+        }
+
+          channelInstances.push(chatChannel);
+          setChannel(chatChannel);
+        }
+      } catch (error) {
+        console.error('Error setting up Echo:', error);
+        // Retry connection after a delay
+        setTimeout(() => {
+          if (chatId) {
+            setupEcho();
+          }
+        }, 3000);
       }
     };
 
@@ -125,13 +143,43 @@ const ChatBox = ({ route }) => {
         channelInstances.forEach((channel) => {
           try {
           echoInstance.leave(channel.name);
-         } catch (error) {
-           console.log('Error leaving channel:', error);
-         }
+          } catch (error) {
+            console.log('Error leaving channel:', error);
+          }
         });
       }
     };
   }, [chatId, loggedInUserId, otherUserId]);
+
+  // Add this function to handle incoming messages
+  const handleIncomingMessage = useCallback((data) => {
+    console.log('Processing incoming message:', data);
+
+    setAllMessages(prev => {
+      // Check if message already exists to prevent duplicates
+      const hasMessage = prev.some(msg =>
+        msg.id === data.id ||
+        (msg.is_temp && msg.message === data.message)
+      );
+
+      if (hasMessage) {
+        // Replace temporary message with real one
+        return prev.map(msg =>
+          (msg.is_temp && msg.message === data.message) ? data : msg
+        );
+      }
+
+      // Add new message
+      return [...prev, data];
+    });
+  }, []);
+
+  // Also add this useEffect to debug WebSocket connection
+  useEffect(() => {
+    if (channel) {
+      console.log('Channel created:', channel.name);
+    }
+  }, [channel]);
 
   // Add a useEffect to periodically check connection status
   useEffect(() => {
@@ -180,11 +228,13 @@ const ChatBox = ({ route }) => {
     try {
       if (isInitialLoad) {
         setLoading(true);
+        setIsInitialLoad(true);
       } else {
         setLoadingMore(true);
       }
 
       const token = await AsyncStorage.getItem('authToken');
+      console.log(`${process.env.BASE_URL}/chats/${id}?page=${page}`);
       const response = await fetch(`${process.env.BASE_URL}/chats/${id}?page=${page}`, {
         method: 'GET',
         headers: {
@@ -197,11 +247,12 @@ const ChatBox = ({ route }) => {
       const data = await response.json();
 
       if (isInitialLoad) {
-        // For initial load, set all messages
+        // For initial load, set all messages (most recent first)
         setAllMessages(data.chats.data || []);
         setCurrentPage(data.chats.current_page);
         setLastPage(data.chats.last_page);
         setHasMorePages(data.chats.current_page < data.chats.last_page);
+        setIsInitialLoad(false);
       } else {
         // For pagination, append older messages to the beginning
         const newMessages = data.chats.data || [];
@@ -262,7 +313,20 @@ const ChatBox = ({ route }) => {
           message,
         };
 
+      // Create a temporary message object to show immediately
+      const tempMessage = {
+        id: `temp-${Date.now()}`,
+        user_id: loggedInUserId,
+        message: message,
+        created_at: new Date().toISOString(),
+        is_seen: 0,
+        is_temp: true // Flag to identify temporary messages
+      };
+
+      // Add the temporary message to the list immediately
+      setAllMessages(prev => [...prev, tempMessage]);
       setInputText('');
+
       const response = await fetch(`${process.env.BASE_URL}/send-message`, {
         method: 'POST',
         headers: {
@@ -279,8 +343,19 @@ const ChatBox = ({ route }) => {
         setChatId(data.chat_id);
       }
 
+      // Replace the temporary message with the real one from the server
+      if (data.message) {
+        setAllMessages(prev =>
+          prev.map(msg =>
+            msg.id === tempMessage.id ? { ...data.message, is_temp: false } : msg
+          )
+        );
+      }
+
     } catch (error) {
       console.error("Error sending message:", error);
+      // Remove the temporary message if there was an error
+      setAllMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
     }
   };
 
@@ -329,18 +404,17 @@ const ChatBox = ({ route }) => {
     markMessagesAsSeen();
   }, [allMessages]);
 
-  // Format messages with date separators
+  // Update your getFormattedMessages function to handle inverted order:
   const getFormattedMessages = () => {
     const formattedMessages = [];
     let lastDate = null;
 
-    // Sort messages by created_at (oldest first)
     const sortedMessages = [...allMessages].sort((a, b) =>
-      new Date(a.created_at) - new Date(b.created_at)
+      new Date(normalizeDate(a.created_at)) - new Date(normalizeDate(b.created_at))
     );
 
     sortedMessages.forEach((msg, idx) => {
-      const date = moment.utc(msg.created_at).local().format('YYYY-MM-DD');
+      const date = moment.utc(normalizeDate(msg.created_at)).local().format('YYYY-MM-DD');
       if (date !== lastDate) {
         formattedMessages.push({
           type: 'date',
@@ -356,6 +430,12 @@ const ChatBox = ({ route }) => {
     });
 
     return formattedMessages.reverse();
+  };
+
+  const normalizeDate = (dateStr) => {
+    if (!dateStr) return '';
+    if (dateStr.includes('T')) return dateStr; // Already ISO
+    return dateStr.replace(' ', 'T') + 'Z'; // Convert to ISO
   };
 
   const useBlink = () => {
@@ -374,7 +454,13 @@ const ChatBox = ({ route }) => {
   const BlinkText = ({ children }) => {
     const opacity = useBlink();
     return (
-      <Animated.Text style={{ color: 'red', fontWeight: 'bold', opacity, marginLeft: 4 }}>
+      <Animated.Text style={{
+        color: 'red',
+        fontWeight: 'bold',
+        opacity,
+        marginLeft: normalize(4),
+        fontSize: normalize(13)
+      }}>
         {children}
       </Animated.Text>
     );
@@ -387,6 +473,19 @@ const ChatBox = ({ route }) => {
       <View style={styles.loadMoreContainer}>
         <ActivityIndicator size="small" color="#007AFF" />
         <Text style={styles.loadMoreText}>Loading older messages...</Text>
+      </View>
+    );
+  };
+
+  const renderHeader = () => {
+    if (!loadingMore && !isInitialLoad) return null;
+
+    return (
+      <View style={styles.loadMoreContainer}>
+        <ActivityIndicator size="small" color="#007AFF" />
+        <Text style={styles.loadMoreText}>
+          {isInitialLoad ? 'Loading messages...' : 'Loading more messages...'}
+        </Text>
       </View>
     );
   };
@@ -462,20 +561,21 @@ const ChatBox = ({ route }) => {
               </Text>
               <View
                 style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 4,
+                  width: normalize(8),
+                  height: normalize(8),
+                  borderRadius: normalize(4),
                   backgroundColor: otherPersonStatus === 'online' ? 'red' : '#b0b0b0',
-                  marginLeft: 10,
-                  marginRight: 4,
+                  marginLeft: normalize(10),
+                  marginRight: normalize(4),
                 }}
               />
               {otherPersonStatus === 'online' ? (
                 <BlinkText>Online</BlinkText>
               ) : (
-                <Text style={{ fontSize: 13, color: '#b0b0b0', fontWeight: '500' }}>
-                  Offline
-                </Text>
+
+                  <Text style={{ fontSize: normalize(13), color: '#b0b0b0', fontWeight: '500' }}>
+                    Offline
+                  </Text>
               )}
             </View>
           </View>
@@ -483,7 +583,7 @@ const ChatBox = ({ route }) => {
         </TouchableOpacity>
       </View>
 
-      {loading ? (
+      {loading && isInitialLoad ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#007AFF" />
         </View>
@@ -495,25 +595,42 @@ const ChatBox = ({ route }) => {
             inverted
             contentContainerStyle={styles.chatHistory}
             ListFooterComponent={renderFooter}
+            ListHeaderComponent={renderHeader}
             onEndReached={loadMoreMessages}
             onEndReachedThreshold={0.1}
             maintainVisibleContentPosition={{
               minIndexForVisible: 0,
               autoscrollToTopThreshold: 10,
             }}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
           />
       )}
 
-      <View style={[styles.footer, Platform.OS === 'ios' && { marginBottom: 20 }]}>
-        <TextInput
-          style={styles.input}
-          value={inputText}
-          onChangeText={setInputText}
-          placeholder="Type a message..."
-        />
-        <TouchableOpacity style={styles.sendButton} onPress={handleMessageText}>
-          <Text style={styles.sendButtonText}>Send</Text>
-        </TouchableOpacity>
+      {/* Replace your footer JSX with this: */}
+      <View style={[styles.footer, Platform.OS === 'ios' && styles.iosFooter]}>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            value={inputText}
+            onChangeText={setInputText}
+            placeholder="Type a message..."
+            placeholderTextColor="#888"
+            multiline
+            maxHeight={100}
+          />
+          <TouchableOpacity
+            style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]}
+            onPress={handleMessageText}
+            disabled={!inputText.trim()}
+          >
+            <MaterialIcons
+              name="send"
+              size={normalize(20)}
+              color={inputText.trim() ? "#fff" : "#fff"}
+            />
+          </TouchableOpacity>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
@@ -522,132 +639,159 @@ const ChatBox = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#e9f0f7',
+    backgroundColor: '#fff',
   },
   chatHistory: {
-    padding: 20,
-    paddingTop: 10,
+    padding: normalize(20),
+    paddingTop: normalize(10),
   },
   messageContainer: {
     maxWidth: '80%',
-    padding: 10,
-    borderRadius: 10,
-    marginVertical: 5,
+    padding: normalize(12),
+    borderRadius: normalize(14),
+    marginVertical: normalize(5),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1,
   },
   messageLeft: {
     backgroundColor: '#89bed6',
     alignSelf: 'flex-start',
   },
   messageRight: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#007BFF',
     alignSelf: 'flex-end',
   },
   footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 14,
+    paddingVertical: normalizeVertical(12),
+    paddingHorizontal: normalize(16),
+    backgroundColor: '#fff',
     borderTopWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: '#f8f9fa',
+    borderColor: '#E5E7EB',
+  },
+  iosFooter: {
+    marginBottom: 20,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    backgroundColor: '#F3F4F6',
+    borderRadius: normalize(24),
+    paddingHorizontal: normalize(16),
+    paddingVertical: normalize(8),
   },
   input: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 24,
-    marginRight: 12,
-    backgroundColor: '#fff',
-    fontSize: 16,
+    fontSize: normalize(16),
+    color: '#1F2937',
+    maxHeight: normalize(100),
+    minHeight: normalize(40),
+    paddingVertical: normalize(8),
+    marginRight: normalize(8),
   },
   sendButton: {
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    backgroundColor: '#007AFF',
-    borderRadius: 24,
+    width: normalize(40),
+    height: normalize(40),
+    borderRadius: normalize(20),
+    backgroundColor: '#007BFF',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#007BFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  sendButtonDisabled: {
+    backgroundColor: 'rgba(122, 152, 227, 1)',
   },
   sendButtonText: {
     color: '#fff',
     fontWeight: 'bold',
+    fontSize: normalize(14),
   },
   messageText: {
     color: '#fff',
-    fontSize: 17,
+    fontSize: normalize(15),
   },
   timeText: {
     color: '#eee',
-    fontSize: 11,
-    marginRight: 4,
+    fontSize: normalize(11),
+    marginRight: normalize(4),
   },
   tickText: {
     color: '#eee',
-    fontSize: 11,
+    fontSize: normalize(11),
   },
   tickTextBlue: {
     color: '#4fc3f7',
-    fontSize: 11,
+    fontSize: normalize(11),
   },
   timeTickRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
-    marginLeft: 2,
+    marginTop: normalize(4),
+    marginLeft: normalize(2),
   },
   dateSeparatorContainer: {
     alignItems: 'center',
-    marginVertical: 12,
+    marginVertical: normalize(12),
   },
   dateSeparatorText: {
     backgroundColor: '#dbeafe',
     color: '#333',
-    paddingHorizontal: 16,
-    paddingVertical: 4,
-    borderRadius: 12,
-    fontSize: 13,
+    paddingHorizontal: normalize(16),
+    paddingVertical: normalize(4),
+    borderRadius: normalize(12),
+    fontSize: normalize(13),
     fontWeight: 'bold',
     overflow: 'hidden',
   },
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-    padding: 12,
+    backgroundColor: '#fff',
+    padding: normalize(12),
     borderBottomWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
+    borderColor: '#F3F4F6',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
   },
   headerImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 8,
-    marginRight: 12,
+    width: normalize(48),
+    height: normalize(48),
+    borderRadius: normalize(8),
+    marginRight: normalize(12),
     backgroundColor: '#f0f0f0',
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: normalize(18),
+    fontWeight: '700',
     color: '#222',
     flex: 1,
-    marginTop: 2
+    marginTop: normalize(2)
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#fff',
   },
   loadMoreContainer: {
-    padding: 16,
+    padding: normalize(16),
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
   },
   loadMoreText: {
-    marginLeft: 8,
+    marginLeft: normalize(8),
     color: '#666',
-    fontSize: 14,
+    fontSize: normalize(14),
   },
 });
 

@@ -122,7 +122,37 @@ const EditProfilePage = () => {
     }
   };
 
+  const validateForm = () => {
+    const errors = [];
+
+    if (!userData.firstName.trim()) errors.push('First name is required');
+    if (!userData.lastName.trim()) errors.push('Last name is required');
+    if (!userData.phoneNumber.trim()) errors.push('Phone number is required');
+
+    // Email validation if provided
+    if (userData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userData.email)) {
+      errors.push('Please enter a valid email address');
+    }
+
+    // Website validation if provided
+    if (userData.businessWebsite && !userData.businessWebsite.startsWith('http')) {
+      errors.push('Website must start with http:// or https://');
+    }
+
+    return errors;
+  };
+
   const handleSave = async () => {
+    // Validate form before submission
+    const validationErrors = validateForm();
+    if (validationErrors.length > 0) {
+      setModalType('warning');
+      setModalTitle('Validation Error');
+      setModalMessage(validationErrors.join('\n'));
+      setModalVisible(true);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const token = await AsyncStorage.getItem('authToken');
@@ -150,7 +180,8 @@ const EditProfilePage = () => {
       formData.append('company_detail[contact_person_email]', userData.contactPersonEmail);
       formData.append('company_detail[contact_person_phone]', userData.contactPersonPhone);
 
-      if (userData.profileImage) {
+      // Handle profile image upload
+      if (userData.profileImage && userData.profileImage.startsWith('file://')) {
         formData.append('profile_image', {
           uri: userData.profileImage,
           type: 'image/jpeg',
@@ -159,27 +190,51 @@ const EditProfilePage = () => {
       }
 
       const response = await fetch(apiUrl, {
-        method: 'POST',
+        method: 'POST', // Keep as POST but add _method override
         body: formData,
         headers: {
           Accept: 'application/json',
-          'Content-Type': 'multipart/form-data',
+          // Don't set Content-Type for FormData, let browser set it
           Authorization: `Bearer ${token}`,
         },
       });
 
       const responseData = await response.json();
+      console.log('API Response:', responseData); // For debugging
+
       if (response.ok) {
         setModalType('success');
         setModalTitle('Success');
         setModalMessage('Profile updated successfully!');
         setModalVisible(true);
+
+        // Update local storage with new data
         await AsyncStorage.setItem('userName', `${userData.firstName} ${userData.lastName}`);
-        await AsyncStorage.setItem('userImage', userData.profileImage || '');
+        if (userData.profileImage) {
+          await AsyncStorage.setItem('userImage', userData.profileImage);
+        }
+
+        // Update local state with response data if needed
+        if (responseData.user) {
+          const updatedUser = responseData.user;
+          // Update profile image URL if returned from server
+          if (updatedUser.images?.url) {
+            setUserData(prev => ({ ...prev, profileImage: updatedUser.images.url }));
+          }
+        }
       } else {
+        // Handle validation errors
+        let errorMessage = responseData.message || 'Something went wrong!';
+
+        // Handle Laravel validation errors
+        if (responseData.errors) {
+          const errorMessages = Object.values(responseData.errors).flat();
+          errorMessage = errorMessages.join('\n');
+        }
+
         setModalType('warning');
         setModalTitle('Validation Error');
-        setModalMessage(responseData.message || 'Something went wrong!');
+        setModalMessage(errorMessage);
         setModalVisible(true);
       }
     } catch (error) {

@@ -18,7 +18,7 @@ export default StyleSheet.create({
     },
     searchInput: {
         backgroundColor: '#F5F7FA',
-        borderRadius: normalize(14),
+        borderRadius: normalize(7),
         padding: normalize(12),
         marginBottom: normalizeVertical(18),
         fontSize: normalize(12),
@@ -35,7 +35,7 @@ export default StyleSheet.create({
     },
     addressInput: {
         backgroundColor: '#F5F7FA',
-        borderRadius: normalize(14),
+        borderRadius: normalize(7),
         padding: normalize(12),
         fontSize: normalize(12),
         color: '#222',
@@ -65,7 +65,7 @@ export default StyleSheet.create({
         paddingVertical: normalize(7),
         paddingHorizontal: normalize(15),
         borderWidth: 1,
-        borderColor: '#007BFF',
+        borderColor: '#E5E7EB',
         marginRight: normalize(10),
         marginBottom: normalize(10),
         minWidth: 90,
@@ -77,7 +77,7 @@ export default StyleSheet.create({
     },
     filterText: {
         fontSize: normalize(12),
-        color: '#007BFF',
+        color: '#6B7280',
         fontWeight: '500',
     },
     filterTextSelected: {
@@ -95,7 +95,7 @@ export default StyleSheet.create({
         paddingVertical: normalize(7),
         paddingHorizontal: normalize(15),
         borderWidth: 1,
-        borderColor: '#007BFF',
+        borderColor: '#E5E7EB',
         marginRight: normalize(10),
         marginBottom: normalize(10),
         minWidth: 90,
@@ -108,7 +108,7 @@ export default StyleSheet.create({
     },
     categoryText: {
         fontSize: normalize(12),
-        color: '#007BFF',
+        color: '#6B7280',
         fontWeight: '500',
     },
     categoryTextSelected: {

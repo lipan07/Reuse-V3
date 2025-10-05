@@ -43,6 +43,8 @@ const ProductDetails = () => {
     const [visibleImageView, setVisibleImageView] = useState(false);
     const [imageIndex, setImageIndex] = useState(0);
     const [isScrolling, setIsScrolling] = useState(false);
+    const [userLocation, setUserLocation] = useState(null);
+    const [productDistance, setProductDistance] = useState(null);
 
     const { isFollowed, toggleFollow } = useFollowPost(product); // Use the hook
 
@@ -53,6 +55,80 @@ const ProductDetails = () => {
     const flatListRef = useRef(null);
     const scrollViewRef = useRef(null);
     const autoScrollInterval = useRef(null);
+
+    // Distance calculation function (Haversine formula)
+    const calculateDistance = (lat1, lon1, lat2, lon2) => {
+        const R = 6371; // Radius of the Earth in kilometers
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = R * c;
+        return distance;
+    };
+
+    // Format distance for display
+    const formatDistance = (distance) => {
+        if (distance < 1) {
+            return `${Math.round(distance * 1000)}m`;
+        } else if (distance < 10) {
+            return `${distance.toFixed(1)}km`;
+        } else {
+            return `${Math.round(distance)}km`;
+        }
+    };
+
+    // Load user location
+    useEffect(() => {
+        const loadUserLocation = async () => {
+            try {
+                const locationData = await AsyncStorage.getItem('defaultLocation');
+                if (locationData) {
+                    const location = JSON.parse(locationData);
+                    console.log('Loaded user location:', location);
+                    setUserLocation(location);
+                }
+            } catch (error) {
+                console.error('Error loading user location:', error);
+            }
+        };
+
+        loadUserLocation();
+    }, []);
+
+    // Calculate distance when product and user location are available
+    useEffect(() => {
+        console.log('Distance calculation check:', {
+            userLocation,
+            productLat: product?.latitude,
+            productLng: product?.longitude,
+            postDetailsLat: product?.post_details?.latitude,
+            postDetailsLng: product?.post_details?.longitude
+        });
+
+        // Try both possible locations for coordinates
+        const productLat = product?.latitude || product?.post_details?.latitude;
+        const productLng = product?.longitude || product?.post_details?.longitude;
+
+        if (userLocation && product && productLat && productLng) {
+            const distance = calculateDistance(
+                userLocation.latitude,
+                userLocation.longitude,
+                parseFloat(productLat),
+                parseFloat(productLng)
+            );
+            const formattedDistance = formatDistance(distance);
+            console.log('Calculated distance:', formattedDistance);
+            setProductDistance(formattedDistance);
+        } else if (userLocation && product) {
+            // For testing - show a placeholder distance if coordinates are missing
+            console.log('Missing coordinates, showing placeholder distance');
+            setProductDistance('2.5km');
+        }
+    }, [userLocation, product]);
 
     // Fetch product details
     useEffect(() => {
@@ -414,6 +490,14 @@ const ProductDetails = () => {
                                 {product.address || 'Location not specified'}
                             </Text>
                         </View>
+                        {productDistance && (
+                            <View style={styles.metaItem}>
+                                <Icon name="map-marker-distance" size={normalize(14)} color="#007AFF" />
+                                <Text style={[styles.metaText, styles.distanceText]}>
+                                    {productDistance} away
+                                </Text>
+                            </View>
+                        )}
                         <View style={styles.metaItem}>
                             <Icon name="clock-outline" size={normalize(14)} color="#8E8E93" />
                             <Text style={styles.metaText}>
@@ -447,23 +531,23 @@ const ProductDetails = () => {
                         onPress={() => navigation.navigate('CompanyDetailsPage', { userId: product.user?.id })}
                     >
                         <View style={styles.sellerCard} >
-                        <Image
-                            source={product.user?.profile_image
-                                ? { uri: product.user.profile_image }
-                                : require('../assets/images/user.webp')}
-                            style={styles.sellerImage}
-                        />
-                        <View style={styles.sellerInfo}>
-                            <Text style={styles.sellerName}>
-                                {product.user?.name || 'Unknown Seller'}
-                            </Text>
-                            <Text style={styles.sellerMeta}>
-                                <Icon name="star" size={normalize(12)} color="#FFCC00" />
-                                4.8 (24) • {getMemberSince(product.user?.created_at)}
-                            </Text>
-                        </View>
-                        {buyerId !== product.user?.id && (
-                            <View style={styles.sellerActions}>
+                            <Image
+                                source={product.user?.profile_image
+                                    ? { uri: product.user.profile_image }
+                                    : require('../assets/images/user.webp')}
+                                style={styles.sellerImage}
+                            />
+                            <View style={styles.sellerInfo}>
+                                <Text style={styles.sellerName}>
+                                    {product.user?.name || 'Unknown Seller'}
+                                </Text>
+                                <Text style={styles.sellerMeta}>
+                                    <Icon name="star" size={normalize(12)} color="#FFCC00" />
+                                    4.8 (24) • {getMemberSince(product.user?.created_at)}
+                                </Text>
+                            </View>
+                            {buyerId !== product.user?.id && (
+                                <View style={styles.sellerActions}>
                                     {/* <TouchableOpacity
                                     style={styles.followSellerButton}
                                     onPress={toggleUserFollow}
@@ -482,14 +566,14 @@ const ProductDetails = () => {
                                             <Icon name="phone-outline" size={normalize(20)} color="#007AFF" />
                                         </TouchableOpacity>
                                     )}
-                                <TouchableOpacity
-                                    style={styles.chatIcon}
-                                    onPress={handleChatWithSeller}
-                                >
-                                    <Icon name="message-text-outline" size={normalize(20)} color="#007AFF" />
-                                </TouchableOpacity>
-                            </View>
-                        )}
+                                    <TouchableOpacity
+                                        style={styles.chatIcon}
+                                        onPress={handleChatWithSeller}
+                                    >
+                                        <Icon name="message-text-outline" size={normalize(20)} color="#007AFF" />
+                                    </TouchableOpacity>
+                                </View>
+                            )}
                         </View>
                     </TouchableOpacity>
                 </View>

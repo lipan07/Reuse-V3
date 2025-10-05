@@ -12,6 +12,7 @@ const staticCategories = [
     parent_id: null,
     guard_name: "cars",
     name: "Cars",
+    color: "#dc2626", // Red
     children: [],
   },
   {
@@ -19,6 +20,7 @@ const staticCategories = [
     parent_id: null,
     guard_name: "properties",
     name: "Properties",
+    color: "#16a34a", // Green
     children: [
       {
         id: 3,
@@ -51,6 +53,7 @@ const staticCategories = [
     parent_id: null,
     guard_name: "mobiles",
     name: "Mobiles",
+    color: "#f59e0b", // Amber
     children: [],
   },
   {
@@ -58,6 +61,7 @@ const staticCategories = [
     parent_id: null,
     guard_name: "job",
     name: "Job",
+    color: "#84cc16", // Lime
     children: [
       { id: 9, parent_id: 8, guard_name: "data_entry_back_office", name: "Data entry and Back office" },
       { id: 10, parent_id: 8, guard_name: "sales_marketing", name: "Sales & Marketing" },
@@ -81,6 +85,7 @@ const staticCategories = [
     parent_id: null,
     guard_name: "bikes",
     name: "Bikes",
+    color: "#8b5cf6", // Violet
     children: [
       { id: 25, parent_id: 24, guard_name: "motorcycles", name: "Motorecycles" },
       { id: 26, parent_id: 24, guard_name: "scooters", name: "Scooters" },
@@ -93,6 +98,7 @@ const staticCategories = [
     parent_id: null,
     guard_name: "electronics_appliances",
     name: "Electronics & Appliances",
+    color: "#0ea5e9", // Sky blue
     children: [
       { id: 30, parent_id: 29, guard_name: "computers_laptops", name: "Computers & Laptops" },
       { id: 31, parent_id: 29, guard_name: "tvs_video_audio", name: "TVs, Video & Audio" },
@@ -110,6 +116,7 @@ const staticCategories = [
     parent_id: null,
     guard_name: "commercial_vehicle_spare_part",
     name: "Commercial Vehicle & Spare Parts",
+    color: "#f97316", // Orange
     children: [
       { id: 40, parent_id: 39, guard_name: "commercial_heavy_vehicles", name: "Commercial & Heavy Vehicles" },
       { id: 41, parent_id: 39, guard_name: "vehicle_spare_parts", name: "Spare Parts" },
@@ -120,6 +127,7 @@ const staticCategories = [
     parent_id: null,
     guard_name: "commercial_mechinery_spare_parts",
     name: "Commercial Machinery & Spare Parts",
+    color: "#8b5cf6", // Purple
     children: [
       { id: 43, parent_id: 42, guard_name: "commercial_heavy_machinery", name: "Commercial & Heavy Machinery" },
       { id: 44, parent_id: 42, guard_name: "machinery_spare_parts", name: "Spare Parts" },
@@ -130,6 +138,7 @@ const staticCategories = [
     parent_id: null,
     guard_name: "furniture",
     name: "Furniture",
+    color: "#d97706", // Warm yellow-brown
     children: [
       { id: 46, parent_id: 45, guard_name: "sofa_dining", name: "Sofa & Dining" },
       { id: 47, parent_id: 45, guard_name: "beds_wardrobes", name: "Beds & Wardrobes" },
@@ -143,6 +152,7 @@ const staticCategories = [
     parent_id: null,
     guard_name: "fashion",
     name: "Fashion",
+    color: "#ec4899", // Pink
     children: [
       { id: 52, parent_id: 51, guard_name: "mens_fashion", name: "Men" },
       { id: 53, parent_id: 51, guard_name: "womens_fashion", name: "Women" },
@@ -154,6 +164,7 @@ const staticCategories = [
     parent_id: null,
     guard_name: "books_sports_hobbies",
     name: "Books, Sports & Hobbies",
+    color: "#14b8a6", // Teal
     children: [
       { id: 56, parent_id: 55, guard_name: "books", name: "Books" },
       { id: 57, parent_id: 55, guard_name: "gym_fitness", name: "Gym & Fitness" },
@@ -167,6 +178,7 @@ const staticCategories = [
     parent_id: null,
     guard_name: "pets",
     name: "Pets",
+    color: "#f97316", // Orange
     children: [
       { id: 62, parent_id: 61, guard_name: "dogs", name: "Dogs" },
       { id: 63, parent_id: 61, guard_name: "fish_aquarium", name: "Fish & Aquarium" },
@@ -179,6 +191,7 @@ const staticCategories = [
     parent_id: null,
     guard_name: "services",
     name: "Services",
+    color: "#06b6d4", // Cyan
     children: [
       { id: 67, parent_id: 66, guard_name: "education_classes", name: "Education & Classes" },
       { id: 68, parent_id: 66, guard_name: "tours_travels", name: "Tours & Travels" },

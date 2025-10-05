@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     View,
     Text,
@@ -8,9 +8,13 @@ import {
     TouchableOpacity,
     Linking,
     Dimensions,
-    FlatList
+    FlatList,
+    ActivityIndicator,
+    Alert
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import CustomStatusBar from "./Screens/CustomStatusBar";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get("window");
 const scale = width / 375; // Base width for scaling (iPhone 6/7/8)
@@ -21,22 +25,70 @@ const normalize = (size) => {
     return Math.round(Math.min(newSize, size * 1.2));
 };
 
-const CompanyDetailsPage = () => {
+const CompanyDetailsPage = ({ route }) => {
     const [isFollowing, setIsFollowing] = useState(false);
     const [activeTab, setActiveTab] = useState("products");
+    const [company, setCompany] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    // Mock data
-    const company = {
-        name: "NEXA Technologies",
-        location: "San Francisco, CA",
-        email: "contact@nexatech.com",
-        phone: "+1 (555) 123-4567",
-        website: "www.nexatech.com",
-        postsActive: 47,
-        postsSold: 128,
-        responseTime: "2 hours", // Added response time
-        profileImage: null,
-        about: "Leading innovator in quantum computing and AI solutions. We're transforming industries with cutting-edge technology and neural interfaces."
+    // Get user ID from route params or use a default
+    const userId = route?.params?.userId || '01980f61-6523-7063-9b37-fd08da364792';
+
+    // Fetch company details from API
+    useEffect(() => {
+        fetchCompanyDetails();
+    }, [userId]);
+
+    const fetchCompanyDetails = async () => {
+        try {
+            setLoading(true);
+            const token = await AsyncStorage.getItem('authToken');
+            console.log(userId);
+            const apiUrl = `${process.env.BASE_URL}/seller-info/${userId}`;
+
+            const response = await fetch(apiUrl, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            const responseData = await response.json();
+
+            if (response.ok) {
+                const userData = responseData.data;
+
+                // Transform API data to match component structure
+                const companyData = {
+                    name: userData.name || 'Unknown Company',
+                    location: userData.company_detail?.address || 'Location not specified',
+                    email: userData.email || userData.company_detail?.contact_person_email || 'Email not provided',
+                    phone: userData.phone_no || userData.company_detail?.contact_person_phone || 'Phone not provided',
+                    website: userData.company_detail?.website || 'Website not provided',
+                    postsActive: userData.activePostCount || 0,
+                    postsSold: userData.soldPostCount || 0,
+                    responseTime: userData.last_activity || 'Unknown',
+                    profileImage: userData.images?.url || null,
+                    about: userData.about_me || 'No description available',
+                    companyType: userData.company_detail?.type || 'Not specified',
+                    contactPersonName: userData.company_detail?.contact_person_name || 'Not specified',
+                    contactPersonRole: userData.company_detail?.contact_person_role || 'Not specified',
+                    isFollowing: userData.isFollowing || false
+                };
+
+                setCompany(companyData);
+                setIsFollowing(companyData.isFollowing);
+            } else {
+                setError(responseData.message || 'Failed to fetch company details');
+            }
+        } catch (error) {
+            console.error('Error fetching company details:', error);
+            setError('Network error. Please check your connection.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     // Mock product data
@@ -115,10 +167,88 @@ const CompanyDetailsPage = () => {
         },
     ];
 
-    const handleFollow = () => setIsFollowing(!isFollowing);
+    const handleFollow = async () => {
+        try {
+            const token = await AsyncStorage.getItem('authToken');
+            const apiUrl = `${process.env.BASE_URL}/users/${userId}/follow`;
+            const method = isFollowing ? 'DELETE' : 'POST';
+
+            const response = await fetch(apiUrl, {
+                method: method,
+                headers: {
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (response.ok) {
+                setIsFollowing(!isFollowing);
+                Alert.alert(
+                    !isFollowing ? "Following" : "Unfollowed",
+                    !isFollowing ? "You are now following this company." : "You have unfollowed this company."
+                );
+            } else {
+                Alert.alert("Error", "Failed to update follow status");
+            }
+        } catch (error) {
+            console.error('Error updating follow status:', error);
+            Alert.alert("Error", "Network error. Please try again.");
+        }
+    };
+
     const handleCall = () => Linking.openURL(`tel:${company.phone}`);
     const handleEmail = () => Linking.openURL(`mailto:${company.email}`);
     const handleWebsite = () => Linking.openURL(`https://${company.website}`);
+
+    // Loading state
+    if (loading) {
+        return (
+            <>
+                <CustomStatusBar />
+                <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                    <ActivityIndicator size="large" color="#007BFF" />
+                    <Text style={{ marginTop: 16, fontSize: normalize(16), color: '#666' }}>
+                        Loading company details...
+                    </Text>
+                </View>
+            </>
+        );
+    }
+
+    // Error state
+    if (error) {
+        return (
+            <>
+                <CustomStatusBar />
+                <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 20 }]}>
+                    <Icon name="alert-circle" size={normalize(48)} color="#FF6B6B" />
+                    <Text style={{ marginTop: 16, fontSize: normalize(16), color: '#666', textAlign: 'center' }}>
+                        {error}
+                    </Text>
+                    <TouchableOpacity
+                        style={[styles.followButton, { marginTop: 20 }]}
+                        onPress={fetchCompanyDetails}
+                    >
+                        <Text style={styles.followButtonText}>Retry</Text>
+                    </TouchableOpacity>
+                </View>
+            </>
+        );
+    }
+
+    // No data state
+    if (!company) {
+        return (
+            <>
+                <CustomStatusBar />
+                <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                    <Text style={{ fontSize: normalize(16), color: '#666' }}>
+                        No company data available
+                    </Text>
+                </View>
+            </>
+        );
+    }
 
     const renderProductItem = ({ item }) => (
         <TouchableOpacity style={styles.productItem}>
@@ -147,11 +277,9 @@ const CompanyDetailsPage = () => {
     );
 
     return (
-        <View style={styles.container}>
-            {/* Background */}
-            <View style={styles.backgroundSphere} />
-            <View style={[styles.backgroundSphere, styles.sphereRight]} />
-
+        <>
+            <CustomStatusBar />
+            <View style={styles.container}>
             <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
@@ -202,8 +330,8 @@ const CompanyDetailsPage = () => {
                     <View style={styles.statDivider} />
                     <View style={styles.statItem}>
                         <Icon name="clock-outline" size={normalize(20)} color="#1A1A1A" />
-                        <Text style={styles.statNumber}>{company.responseTime}</Text>
-                        <Text style={styles.statLabel}>Avg Response</Text>
+                            <Text style={styles.statNumberw}>{company.responseTime}</Text>
+                            <Text style={styles.statLabel}>Last Activity</Text>
                     </View>
                 </View>
 
@@ -256,37 +384,90 @@ const CompanyDetailsPage = () => {
                 {/* Info */}
                 {activeTab === "info" && (
                     <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Contact</Text>
+                            <Text style={styles.sectionTitle}>Company Information</Text>
 
-                        <TouchableOpacity style={styles.contactItem} onPress={handleEmail}>
-                            <View style={styles.contactIcon}>
-                                <Icon name="email" size={normalize(18)} color="#1A1A1A" />
+                            {/* Company Type */}
+                            <View style={styles.contactItem}>
+                                <View style={styles.contactIcon}>
+                                    <Icon name="domain" size={normalize(18)} color="#1A1A1A" />
+                                </View>
+                                <View style={styles.contactInfo}>
+                                    <Text style={styles.contactLabel}>Company Type</Text>
+                                    <Text style={styles.contactValue}>{company.companyType}</Text>
+                                </View>
                             </View>
-                            <View style={styles.contactInfo}>
-                                <Text style={styles.contactLabel}>Email</Text>
-                                <Text style={styles.contactValue}>{company.email}</Text>
-                            </View>
-                        </TouchableOpacity>
 
-                        <TouchableOpacity style={styles.contactItem} onPress={handleCall}>
-                            <View style={styles.contactIcon}>
-                                <Icon name="phone" size={normalize(18)} color="#1A1A1A" />
+                            {/* Contact Person */}
+                            <View style={styles.contactItem}>
+                                <View style={styles.contactIcon}>
+                                    <Icon name="account" size={normalize(18)} color="#1A1A1A" />
+                                </View>
+                                <View style={styles.contactInfo}>
+                                    <Text style={styles.contactLabel}>Contact Person</Text>
+                                    <Text style={styles.contactValue}>{company.contactPersonName}</Text>
+                                </View>
                             </View>
-                            <View style={styles.contactInfo}>
-                                <Text style={styles.contactLabel}>Phone</Text>
-                                <Text style={styles.contactValue}>{company.phone}</Text>
-                            </View>
-                        </TouchableOpacity>
 
-                        <TouchableOpacity style={styles.contactItem} onPress={handleWebsite}>
-                            <View style={styles.contactIcon}>
-                                <Icon name="web" size={normalize(18)} color="#1A1A1A" />
+                            {/* Contact Person Role */}
+                            <View style={styles.contactItem}>
+                                <View style={styles.contactIcon}>
+                                    <Icon name="briefcase" size={normalize(18)} color="#1A1A1A" />
+                                </View>
+                                <View style={styles.contactInfo}>
+                                    <Text style={styles.contactLabel}>Role</Text>
+                                    <Text style={styles.contactValue}>{company.contactPersonRole}</Text>
+                                </View>
                             </View>
-                            <View style={styles.contactInfo}>
-                                <Text style={styles.contactLabel}>Website</Text>
-                                <Text style={styles.contactValue}>{company.website}</Text>
+
+                            {/* Email */}
+                            {company.email !== 'Email not provided' && (
+                                <TouchableOpacity style={styles.contactItem} onPress={handleEmail}>
+                                    <View style={styles.contactIcon}>
+                                        <Icon name="email" size={normalize(18)} color="#1A1A1A" />
+                                    </View>
+                                    <View style={styles.contactInfo}>
+                                        <Text style={styles.contactLabel}>Email</Text>
+                                        <Text style={styles.contactValue}>{company.email}</Text>
+                                    </View>
+                                </TouchableOpacity>
+                            )}
+
+                            {/* Phone */}
+                            {company.phone !== 'Phone not provided' && (
+                                <TouchableOpacity style={styles.contactItem} onPress={handleCall}>
+                                    <View style={styles.contactIcon}>
+                                        <Icon name="phone" size={normalize(18)} color="#1A1A1A" />
+                                    </View>
+                                    <View style={styles.contactInfo}>
+                                        <Text style={styles.contactLabel}>Phone</Text>
+                                        <Text style={styles.contactValue}>{company.phone}</Text>
+                                    </View>
+                                </TouchableOpacity>
+                            )}
+
+                            {/* Website */}
+                            {company.website !== 'Website not provided' && (
+                                <TouchableOpacity style={styles.contactItem} onPress={handleWebsite}>
+                                    <View style={styles.contactIcon}>
+                                        <Icon name="web" size={normalize(18)} color="#1A1A1A" />
+                                    </View>
+                                    <View style={styles.contactInfo}>
+                                        <Text style={styles.contactLabel}>Website</Text>
+                                        <Text style={styles.contactValue}>{company.website}</Text>
+                                    </View>
+                                </TouchableOpacity>
+                            )}
+
+                            {/* Location */}
+                            <View style={styles.contactItem}>
+                                <View style={styles.contactIcon}>
+                                    <Icon name="map-marker" size={normalize(18)} color="#1A1A1A" />
+                                </View>
+                                <View style={styles.contactInfo}>
+                                    <Text style={styles.contactLabel}>Location</Text>
+                                    <Text style={styles.contactValue}>{company.location}</Text>
+                                </View>
                             </View>
-                        </TouchableOpacity>
                     </View>
                 )}
 
@@ -305,34 +486,30 @@ const CompanyDetailsPage = () => {
                     <Text style={styles.actionButtonText}>Message</Text>
                 </TouchableOpacity>
             </View>
-        </View>
+            </View>
+        </>
     );
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#FFF", paddingTop: 40 },
-    backgroundSphere: {
-        position: "absolute",
-        width: normalize(250),
-        height: normalize(250),
-        borderRadius: normalize(125),
-        backgroundColor: "rgba(26,26,26,0.03)",
-        top: normalize(-120),
-        left: normalize(-80),
-    },
-    sphereRight: {
-        right: normalize(-120),
-        top: height / 2,
-    },
+    container: { flex: 1, backgroundColor: "#F5F7FA", paddingTop: 40 },
     scrollContent: {
         padding: normalize(16),
         paddingBottom: normalize(100),
     },
     header: {
+        backgroundColor: '#FFFFFF',
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        marginBottom: normalize(20),
+        marginBottom: normalize(16),
+        padding: normalize(16),
+        borderRadius: normalize(12),
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 3,
     },
     profileContainer: { flexDirection: "row", alignItems: "center", flex: 1 },
     profileImage: { width: normalize(60), height: normalize(60), borderRadius: normalize(30) },
@@ -340,60 +517,70 @@ const styles = StyleSheet.create({
         width: normalize(60),
         height: normalize(60),
         borderRadius: normalize(30),
-        backgroundColor: "rgba(26,26,26,0.05)",
+        backgroundColor: "#F5F5F5",
         justifyContent: "center",
         alignItems: "center",
-        borderWidth: 1,
-        borderColor: "rgba(26,26,26,0.1)",
     },
     headerTextContainer: { marginLeft: normalize(12), flex: 1 },
     companyName: { fontSize: normalize(20), fontWeight: "700", color: "#1A1A1A" },
     locationContainer: { flexDirection: "row", alignItems: "center" },
-    locationText: { fontSize: normalize(13), marginLeft: normalize(4), color: "#1A1A1A", opacity: 0.7 },
+    locationText: { fontSize: normalize(13), marginLeft: normalize(4), color: "#666666" },
     followButton: {
         paddingHorizontal: normalize(14),
         paddingVertical: normalize(8),
         borderRadius: normalize(18),
         backgroundColor: "#007BFF",
     },
-    followingButton: { backgroundColor: "rgba(26,26,26,0.1)" },
+    followingButton: { backgroundColor: "#F0F0F0" },
     followButtonText: { fontSize: normalize(13), fontWeight: "600", color: "#FFF" },
-    followingButtonText: { color: "#1A1A1A" },
+    followingButtonText: { color: "#333333" },
 
     statsContainer: {
         flexDirection: "row",
-        backgroundColor: "rgba(26,26,26,0.03)",
-        borderRadius: normalize(14),
-        padding: normalize(10),
+        backgroundColor: '#FFFFFF',
+        borderRadius: normalize(12),
+        padding: normalize(16),
         marginBottom: normalize(16),
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 3,
     },
     statItem: { flex: 1, alignItems: "center" },
     statNumber: { fontSize: normalize(18), fontWeight: "700", color: "#007BFF" },
-    statLabel: { fontSize: normalize(12), opacity: 0.7 },
-    statDivider: { width: 1, backgroundColor: "rgba(26,26,26,0.1)" },
+    statNumberw: { fontSize: normalize(10), fontWeight: "700", color: "#007BFF" },
+    statLabel: { fontSize: normalize(12), color: '#6B7280', fontWeight: '500' },
+    statDivider: { width: 1, backgroundColor: "#E9ECEF", marginHorizontal: normalize(12) },
 
     section: {
-        backgroundColor: "rgba(26,26,26,0.02)",
-        borderRadius: normalize(14),
+        backgroundColor: '#FFFFFF',
+        borderRadius: normalize(12),
         padding: normalize(16),
         marginBottom: normalize(16),
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 3,
     },
-    sectionTitle: { fontSize: normalize(16), fontWeight: "600", color: "#007BFF", marginBottom: 8 },
-    aboutText: { fontSize: normalize(13), lineHeight: normalize(20), opacity: 0.8 },
+    sectionTitle: { fontSize: normalize(16), fontWeight: "600", color: "#1A1A1A", marginBottom: normalize(12) },
+    aboutText: { fontSize: normalize(13), lineHeight: normalize(20), color: '#4A4A4A' },
 
     tabContainer: {
         flexDirection: "row",
-        backgroundColor: "rgba(26,26,26,0.03)",
+        backgroundColor: '#F8F9FA',
         borderRadius: normalize(12),
         marginBottom: normalize(16),
+        padding: normalize(4),
     },
-    tab: { flex: 1, paddingVertical: normalize(10), alignItems: "center", borderRadius: normalize(10) },
-    activeTab: { backgroundColor: "rgba(26,26,26,0.1)" },
-    tabText: { fontSize: normalize(13), fontWeight: "500", color: "#1A1A1A" },
-    activeTabText: { fontWeight: "600" },
+    tab: { flex: 1, paddingVertical: normalize(10), alignItems: "center", borderRadius: normalize(8) },
+    activeTab: { backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 },
+    tabText: { fontSize: normalize(13), fontWeight: "500", color: "#6B7280" },
+    activeTabText: { fontWeight: "600", color: '#1A1A1A' },
 
     sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-    viewAllText: { fontSize: normalize(12), opacity: 0.7 },
+    viewAllText: { fontSize: normalize(12), color: '#007BFF', fontWeight: '500' },
 
     productItem: {
         flexDirection: "row",
@@ -401,8 +588,9 @@ const styles = StyleSheet.create({
         padding: normalize(12),
         borderRadius: normalize(12),
         marginBottom: normalize(10),
+        backgroundColor: '#F8F9FA',
         borderWidth: 1,
-        borderColor: "rgba(26,26,26,0.05)",
+        borderColor: '#E9ECEF',
     },
     productImageContainer: { marginRight: normalize(12) },
     productImage: { width: normalize(50), height: normalize(50), borderRadius: normalize(10) },
@@ -410,21 +598,26 @@ const styles = StyleSheet.create({
         width: normalize(50),
         height: normalize(50),
         borderRadius: normalize(10),
-        backgroundColor: "rgba(26,26,26,0.05)",
+        backgroundColor: '#FFFFFF',
         justifyContent: "center",
         alignItems: "center",
+        borderWidth: 1,
+        borderColor: '#E9ECEF',
     },
     productDetails: { flex: 1 },
-    productTitle: { fontSize: normalize(14), fontWeight: "600", color: "#007BFF" },
-    productDescription: { fontSize: normalize(12), opacity: 0.7 },
+    productTitle: { fontSize: normalize(14), fontWeight: "600", color: "#1A1A1A", marginBottom: normalize(4) },
+    productDescription: { fontSize: normalize(12), color: '#6B7280', marginBottom: normalize(8) },
     productMeta: { flexDirection: "row", justifyContent: "space-between" },
     productCategory: {
         fontSize: normalize(11),
-        backgroundColor: "rgba(26,26,26,0.05)",
+        backgroundColor: '#E3F2FD',
+        color: '#007BFF',
         paddingHorizontal: normalize(6),
+        paddingVertical: normalize(2),
         borderRadius: normalize(10),
+        fontWeight: '500',
     },
-    postedTime: { fontSize: normalize(11), opacity: 0.5 },
+    postedTime: { fontSize: normalize(11), color: '#9CA3AF', fontWeight: '500' },
     productPrice: { fontSize: normalize(14), fontWeight: "700", color: "#007BFF" },
     productAction: { padding: normalize(6) },
 
@@ -433,19 +626,22 @@ const styles = StyleSheet.create({
         alignItems: "center",
         paddingVertical: normalize(12),
         borderBottomWidth: 1,
-        borderBottomColor: "rgba(26,26,26,0.05)",
+        borderBottomColor: '#F3F4F6',
     },
     contactIcon: {
         width: normalize(38),
         height: normalize(38),
         borderRadius: normalize(19),
-        backgroundColor: "rgba(26,26,26,0.05)",
+        backgroundColor: '#F8F9FA',
         justifyContent: "center",
         alignItems: "center",
         marginRight: normalize(12),
+        borderWidth: 1,
+        borderColor: '#E9ECEF',
     },
-    contactLabel: { fontSize: normalize(11), opacity: 0.7 },
-    contactValue: { fontSize: normalize(14) },
+    contactInfo: { flex: 1 },
+    contactLabel: { fontSize: normalize(11), color: '#6B7280', fontWeight: '500', marginBottom: normalize(2) },
+    contactValue: { fontSize: normalize(14), color: '#1A1A1A', fontWeight: '500' },
 
     actionContainer: {
         position: "absolute",
@@ -454,22 +650,32 @@ const styles = StyleSheet.create({
         right: 0,
         flexDirection: "row",
         padding: normalize(14),
-        backgroundColor: "#FFF",
-        borderTopWidth: 1,
-        borderTopColor: "rgba(26,26,26,0.1)",
+        backgroundColor: '#FFFFFF',
+        borderTopLeftRadius: normalize(20),
+        borderTopRightRadius: normalize(20),
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 8,
     },
     actionButton: {
         flex: 1,
         flexDirection: "row",
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "#007BFF",
+        backgroundColor: '#34C759',
         paddingVertical: normalize(12),
         borderRadius: normalize(12),
         marginHorizontal: normalize(6),
+        shadowColor: '#34C759',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
+        elevation: 3,
     },
-    messageButton: { backgroundColor: "#007BFF" },
-    actionButtonText: { fontSize: normalize(14), fontWeight: "600", marginLeft: normalize(6), color: "#FFF" },
+    messageButton: { backgroundColor: '#007BFF', shadowColor: '#007BFF' },
+    actionButtonText: { fontSize: normalize(14), fontWeight: "600", marginLeft: normalize(6), color: '#FFFFFF' },
 
     bottomPadding: { height: normalize(20) },
 });

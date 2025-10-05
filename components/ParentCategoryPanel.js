@@ -28,8 +28,6 @@ const iconMapping = {
 };
 
 const ParentCategoryPanel = memo(({ categories, onSelectCategory, isLoading, isError, isRefreshing }) => {
-  const rainbowColors = ['#FF6B6B'];
-
   const renderItem = ({ item, index }) => {
     const iconInfo = iconMapping[item.guard_name] || { name: 'tag', type: 'MC' };
 
@@ -67,7 +65,7 @@ const ParentCategoryPanel = memo(({ categories, onSelectCategory, isLoading, isE
             <IconComponent
               name={iconInfo.name}
               size={24}
-              color={rainbowColors[index % rainbowColors.length]}
+              color={item.color || '#FF6B6B'}
               solid
             />
           </View>

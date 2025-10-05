@@ -32,17 +32,23 @@ const FilterScreen = ({ navigation }) => {
         address: route.params?.initialFilters?.address || '',
     });
 
-    // Categories data
+    // Categories data - same as CategoryMenu.js
     const categories = [
-        { id: null, name: 'All', icon: 'apps', color: '#2563eb', type: 'Ion' },
-        { id: '1', name: 'Cars', icon: 'car', color: '#dc2626', type: 'MC' },
-        { id: '2', name: 'Property', icon: 'home', color: '#16a34a', type: 'Ion' },
-        { id: '7', name: 'Phones', icon: 'mobile-alt', color: '#f59e0b', type: 'Fontisto' },
-        { id: '24', name: 'Bikes', icon: 'motorbike', color: '#8b5cf6', type: 'MC' },
-        { id: '29', name: 'Tech', icon: 'laptop', color: '#0ea5e9', type: 'FA5' },
-        { id: '45', name: 'Furniture', icon: 'sofa', color: '#d97706', type: 'MC' },
-        { id: '51', name: 'Fashion', icon: 'tshirt-crew', color: '#ec4899', type: 'MC' },
-        { id: '55', name: 'Books', icon: 'menu-book', color: '#14b8a6', type: 'M' },
+        { id: null, name: 'All', icon: 'apps', color: '#2563eb', type: 'Ion' },         // Blue
+        { id: '1', name: 'Cars', icon: 'car', color: '#dc2626', type: 'MC' },           // Red
+        { id: '2', name: 'Properties', icon: 'home', color: '#16a34a', type: 'Ion' },     // Green
+        { id: '7', name: 'Mobiles', icon: 'mobile-alt', color: '#f59e0b', type: 'Fontisto' }, // Amber
+        { id: '8', name: 'Job', icon: 'briefcase', color: '#84cc16', type: 'Ion' },   // Lime
+        { id: '24', name: 'Bikes', icon: 'motorbike', color: '#8b5cf6', type: 'MC' },   // Violet
+        { id: '29', name: 'Electronics & Appliances', icon: 'laptop', color: '#0ea5e9', type: 'FA5' },      // Sky blue
+        { id: '39', name: 'Commercial Vehicle', icon: 'truck', color: '#f97316', type: 'FA5' },         // Orange
+        { id: '42', name: 'Commercial Machinery', icon: 'cog', color: '#8b5cf6', type: 'FA5' }, // Purple
+        { id: '45', name: 'Furniture', icon: 'sofa', color: '#d97706', type: 'MC' },    // Warm yellow-brown
+        { id: '51', name: 'Fashion', icon: 'tshirt-crew', color: '#ec4899', type: 'MC' }, // Pink
+        { id: '55', name: 'Books, Sports & Hobbies', icon: 'menu-book', color: '#14b8a6', type: 'M' },    // Teal
+        { id: '61', name: 'Pets', icon: 'paw', color: '#f97316', type: 'FA5' },         // Orange
+        { id: '66', name: 'Services', icon: 'tools', color: '#06b6d4', type: 'FA5' },   // Cyan
+        { id: 'other', name: 'Other', icon: 'dots-horizontal', color: '#6b7280', type: 'MC' },   // Gray
     ];
 
     // Available options

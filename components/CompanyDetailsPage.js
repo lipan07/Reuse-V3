@@ -25,6 +25,62 @@ const normalize = (size) => {
     return Math.round(Math.min(newSize, size * 1.2));
 };
 
+// Function to convert timestamp to human readable format
+const getHumanReadableTime = (timestamp) => {
+    if (!timestamp || timestamp === 'Unknown') return 'Unknown';
+
+    try {
+        const now = new Date();
+        const activityDate = new Date(timestamp);
+        const diffInSeconds = Math.floor((now - activityDate) / 1000);
+
+        if (diffInSeconds < 60) {
+            return 'Just now';
+        } else if (diffInSeconds < 3600) {
+            const minutes = Math.floor(diffInSeconds / 60);
+            return `${minutes}m ago`;
+        } else if (diffInSeconds < 86400) {
+            const hours = Math.floor(diffInSeconds / 3600);
+            return `${hours}h ago`;
+        } else if (diffInSeconds < 2592000) {
+            const days = Math.floor(diffInSeconds / 86400);
+            return `${days}d ago`;
+        } else if (diffInSeconds < 31536000) {
+            const months = Math.floor(diffInSeconds / 2592000);
+            return `${months}mo ago`;
+        } else {
+            const years = Math.floor(diffInSeconds / 31536000);
+            return `${years}y ago`;
+        }
+    } catch (error) {
+        console.error('Error parsing timestamp:', error);
+        return 'Unknown';
+    }
+};
+
+// Function to get color based on activity recency
+const getActivityColor = (timestamp) => {
+    if (!timestamp || timestamp === 'Unknown') return '#6B7280';
+
+    try {
+        const now = new Date();
+        const activityDate = new Date(timestamp);
+        const diffInSeconds = Math.floor((now - activityDate) / 1000);
+
+        if (diffInSeconds < 3600) { // Less than 1 hour
+            return '#10B981'; // Green - very recent
+        } else if (diffInSeconds < 86400) { // Less than 1 day
+            return '#007BFF'; // Blue - recent
+        } else if (diffInSeconds < 604800) { // Less than 1 week
+            return '#F59E0B'; // Amber - somewhat recent
+        } else {
+            return '#6B7280'; // Gray - not recent
+        }
+    } catch (error) {
+        return '#6B7280';
+    }
+};
+
 const CompanyDetailsPage = ({ route }) => {
     const [isFollowing, setIsFollowing] = useState(false);
     const [activeTab, setActiveTab] = useState("products");
@@ -296,22 +352,25 @@ const CompanyDetailsPage = ({ route }) => {
                             </View>
                         )}
                         <View style={styles.headerTextContainer}>
-                            <Text style={styles.companyName}>{company.name}</Text>
+                                <View style={styles.nameAndFollowContainer}>
+                                    <Text style={styles.companyName}>{company.name}</Text>
+                                    <TouchableOpacity
+                                        style={styles.followIconButton}
+                                        onPress={handleFollow}
+                                    >
+                                        <Icon
+                                            name={isFollowing ? "account-minus" : "account-plus"}
+                                            size={normalize(20)}
+                                            color={isFollowing ? "#6B7280" : "#007BFF"}
+                                        />
+                                    </TouchableOpacity>
+                                </View>
                             <View style={styles.locationContainer}>
                                 <Icon name="map-marker" size={normalize(14)} color="#1A1A1A" />
                                 <Text style={styles.locationText}>{company.location}</Text>
                             </View>
                         </View>
-                    </View>
-
-                    <TouchableOpacity
-                        style={[styles.followButton, isFollowing && styles.followingButton]}
-                        onPress={handleFollow}
-                    >
-                        <Text style={[styles.followButtonText, isFollowing && styles.followingButtonText]}>
-                            {isFollowing ? "Following" : "Follow"}
-                        </Text>
-                    </TouchableOpacity>
+                        </View>
                 </View>
 
                 {/* Stats */}
@@ -329,8 +388,8 @@ const CompanyDetailsPage = ({ route }) => {
                     </View>
                     <View style={styles.statDivider} />
                     <View style={styles.statItem}>
-                        <Icon name="clock-outline" size={normalize(20)} color="#1A1A1A" />
-                            <Text style={styles.statNumberw}>{company.responseTime}</Text>
+                            <Icon name="clock-outline" size={normalize(20)} color={getActivityColor(company.responseTime)} />
+                            <Text style={[styles.statNumber, { color: getActivityColor(company.responseTime) }]}>{getHumanReadableTime(company.responseTime)}</Text>
                             <Text style={styles.statLabel}>Last Activity</Text>
                     </View>
                 </View>
@@ -474,17 +533,17 @@ const CompanyDetailsPage = ({ route }) => {
                 <View style={styles.bottomPadding} />
             </ScrollView>
 
-            {/* Bottom Actions */}
-            <View style={styles.actionContainer}>
-                <TouchableOpacity style={styles.actionButton} onPress={handleCall}>
+                {/* Floating Action Buttons - Right Side */}
+                <View style={styles.floatingButtonContainer}>
+                    <TouchableOpacity style={[styles.floatingButton, styles.callButton]} onPress={handleCall}>
                     <Icon name="phone" size={normalize(18)} color="#fff" />
-                    <Text style={styles.actionButtonText}>Call</Text>
+                        <Text style={styles.floatingButtonText}>Call</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={[styles.actionButton, styles.messageButton]} onPress={handleEmail}>
-                    <Icon name="email" size={normalize(18)} color="#fff" />
-                    <Text style={styles.actionButtonText}>Message</Text>
-                </TouchableOpacity>
+                    <TouchableOpacity style={[styles.floatingButton, styles.chatButton]} onPress={handleEmail}>
+                        <Icon name="message-text" size={normalize(18)} color="#fff" />
+                        <Text style={styles.floatingButtonText}>Chat</Text>
+                    </TouchableOpacity>
             </View>
             </View>
         </>
@@ -522,18 +581,18 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     headerTextContainer: { marginLeft: normalize(12), flex: 1 },
-    companyName: { fontSize: normalize(20), fontWeight: "700", color: "#1A1A1A" },
+    nameAndFollowContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    companyName: { fontSize: normalize(20), fontWeight: "700", color: "#1A1A1A", flex: 1 },
+    followIconButton: {
+        padding: normalize(4),
+        marginLeft: normalize(8),
+    },
     locationContainer: { flexDirection: "row", alignItems: "center" },
     locationText: { fontSize: normalize(13), marginLeft: normalize(4), color: "#666666" },
-    followButton: {
-        paddingHorizontal: normalize(14),
-        paddingVertical: normalize(8),
-        borderRadius: normalize(18),
-        backgroundColor: "#007BFF",
-    },
-    followingButton: { backgroundColor: "#F0F0F0" },
-    followButtonText: { fontSize: normalize(13), fontWeight: "600", color: "#FFF" },
-    followingButtonText: { color: "#333333" },
 
     statsContainer: {
         flexDirection: "row",
@@ -549,8 +608,11 @@ const styles = StyleSheet.create({
     },
     statItem: { flex: 1, alignItems: "center" },
     statNumber: { fontSize: normalize(18), fontWeight: "700", color: "#007BFF" },
-    statNumberw: { fontSize: normalize(10), fontWeight: "700", color: "#007BFF" },
     statLabel: { fontSize: normalize(12), color: '#6B7280', fontWeight: '500' },
+    lastActivityText: {
+        fontSize: normalize(16),
+        fontWeight: "600",
+    },
     statDivider: { width: 1, backgroundColor: "#E9ECEF", marginHorizontal: normalize(12) },
 
     section: {
@@ -643,39 +705,38 @@ const styles = StyleSheet.create({
     contactLabel: { fontSize: normalize(11), color: '#6B7280', fontWeight: '500', marginBottom: normalize(2) },
     contactValue: { fontSize: normalize(14), color: '#1A1A1A', fontWeight: '500' },
 
-    actionContainer: {
-        position: "absolute",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        flexDirection: "row",
-        padding: normalize(14),
-        backgroundColor: '#FFFFFF',
-        borderTopLeftRadius: normalize(20),
-        borderTopRightRadius: normalize(20),
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 8,
+    floatingButtonContainer: {
+        position: 'absolute',
+        bottom: normalize(30),
+        right: normalize(16),
+        flexDirection: 'row',
+        gap: normalize(12),
     },
-    actionButton: {
-        flex: 1,
-        flexDirection: "row",
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: '#34C759',
+    floatingButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
         paddingVertical: normalize(12),
-        borderRadius: normalize(12),
-        marginHorizontal: normalize(6),
-        shadowColor: '#34C759',
+        paddingHorizontal: normalize(16),
+        borderRadius: normalize(25),
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
+        shadowOpacity: 0.25,
         shadowRadius: 4,
-        elevation: 3,
+        elevation: 5,
+        minWidth: normalize(80),
     },
-    messageButton: { backgroundColor: '#007BFF', shadowColor: '#007BFF' },
-    actionButtonText: { fontSize: normalize(14), fontWeight: "600", marginLeft: normalize(6), color: '#FFFFFF' },
+    callButton: {
+        backgroundColor: '#34C759',
+    },
+    chatButton: {
+        backgroundColor: '#007AFF',
+    },
+    floatingButtonText: {
+        color: '#FFFFFF',
+        fontSize: normalize(12),
+        fontWeight: '600',
+        marginLeft: normalize(6),
+    },
 
     bottomPadding: { height: normalize(20) },
 });

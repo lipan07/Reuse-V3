@@ -139,6 +139,7 @@ const ProductDetails = () => {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const data = await response.json();
+                console.log('ProductDetails', data);
                 setProduct(data.data);
                 setUserFollowed(data.is_following_post_user === true);
             } catch (error) {
@@ -566,12 +567,12 @@ const ProductDetails = () => {
                                             <Icon name="phone-outline" size={normalize(20)} color="#007AFF" />
                                         </TouchableOpacity>
                                     )}
-                                    <TouchableOpacity
+                                    {/* <TouchableOpacity
                                         style={styles.chatIcon}
                                         onPress={handleChatWithSeller}
                                     >
                                         <Icon name="message-text-outline" size={normalize(20)} color="#007AFF" />
-                                    </TouchableOpacity>
+                                    </TouchableOpacity> */}
                                 </View>
                             )}
                         </View>
@@ -616,24 +617,24 @@ const ProductDetails = () => {
                 )}
             </ScrollView>
 
-            {/* Action Buttons */}
+            {/* Action Buttons - Right Side */}
             {buyerId !== product.user?.id && (
-                <View style={styles.actionBar}>
-                    {product.phone && (
+                <View style={styles.floatingButtonContainer}>
+                    {product.show_phone && product.user.phone_no && product.user.phone_no.trim() !== '' && (
                         <TouchableOpacity
-                            style={[styles.actionButton, styles.callButton]}
-                            onPress={() => Linking.openURL(`tel:${product.phone}`)}
+                            style={[styles.floatingButton, styles.callButton]}
+                            onPress={() => Linking.openURL(`tel:${product.user.phone_no}`)}
                         >
                             <Icon name="phone" size={normalize(18)} color="#fff" />
-                            <Text style={styles.actionButtonText}>Call</Text>
+                            <Text style={styles.floatingButtonText}>Call</Text>
                         </TouchableOpacity>
                     )}
                     <TouchableOpacity
-                        style={[styles.actionButton, styles.chatButton]}
+                        style={[styles.floatingButton, styles.chatButton]}
                         onPress={handleChatWithSeller}
                     >
                         <Icon name="message-text" size={normalize(18)} color="#fff" />
-                        <Text style={styles.actionButtonText}>Chat</Text>
+                        <Text style={styles.floatingButtonText}>Chat</Text>
                     </TouchableOpacity>
                 </View>
             )}

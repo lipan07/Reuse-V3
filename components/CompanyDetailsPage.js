@@ -697,7 +697,7 @@ const CompanyDetailsPage = ({ route }) => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#F5F7FA", paddingTop: 20 },
+    container: { flex: 1, backgroundColor: "#F5F7FA", paddingTop: 35 },
     scrollContent: {
         padding: normalize(12),
         paddingBottom: normalize(80),

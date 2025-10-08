@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Modal, TouchableWithoutFeedback, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Modal, TouchableWithoutFeedback, ActivityIndicator, Dimensions, Animated } from 'react-native';
 import BottomNavBar from './BottomNavBar';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
-import ConfettiCannon from 'react-native-confetti-cannon';
 
 const MyAdsPage = ({ navigation }) => {
   const [products, setProducts] = useState([]);
@@ -17,6 +16,8 @@ const MyAdsPage = ({ navigation }) => {
   const [hasMorePages, setHasMorePages] = useState(true);
 
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showBoostSuccess, setShowBoostSuccess] = useState(false);
+  const [confettiParticles, setConfettiParticles] = useState([]);
   const confettiRef = useRef(null);
 
   useEffect(() => {
@@ -239,51 +240,158 @@ const MyAdsPage = ({ navigation }) => {
     return categoryComponentMap[guard_name] || 'AddOthers';
   };
 
+  const ConfettiParticle = ({ particle }) => {
+    const animatedValue = useRef(new Animated.Value(0)).current;
+    const translateY = useRef(new Animated.Value(0)).current;
+    const rotateValue = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+      const startAnimation = () => {
+        Animated.parallel([
+          Animated.timing(animatedValue, {
+            toValue: 1,
+            duration: 2000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(translateY, {
+            toValue: Dimensions.get('window').height + 100,
+            duration: 2000 + Math.random() * 1000,
+            useNativeDriver: true,
+          }),
+          Animated.loop(
+            Animated.timing(rotateValue, {
+              toValue: 1,
+              duration: 1000 + Math.random() * 1000,
+              useNativeDriver: true,
+            })
+          ),
+        ]).start();
+      };
+
+      const timer = setTimeout(startAnimation, particle.delay);
+      return () => clearTimeout(timer);
+    }, [particle.delay]);
+
+    const opacity = animatedValue.interpolate({
+      inputRange: [0, 0.1, 0.9, 1],
+      outputRange: [0, 1, 1, 0],
+    });
+
+    const rotation = rotateValue.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['0deg', '360deg'],
+    });
+
+    return (
+      <Animated.View
+        style={[
+          styles.confettiParticle,
+          {
+            left: particle.x,
+            backgroundColor: particle.color,
+            opacity,
+            transform: [
+              { translateY },
+              { rotate: rotation },
+              { scale: particle.scale },
+            ],
+          },
+        ]}
+      />
+    );
+  };
+
+  const createConfettiParticles = () => {
+    const particles = [];
+    const colors = ['#FFD700', '#FFA500', '#007BFF', '#28A745', '#6F42C1', '#E83E8C'];
+    const { width, height } = Dimensions.get('window');
+
+    for (let i = 0; i < 50; i++) {
+      particles.push({
+        id: i,
+        x: Math.random() * width,
+        y: -50,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rotation: Math.random() * 360,
+        scale: 0.5 + Math.random() * 0.5,
+        delay: Math.random() * 1000,
+      });
+    }
+    return particles;
+  };
+
   const handleBoost = () => {
+    const particles = createConfettiParticles();
+    setConfettiParticles(particles);
     setShowConfetti(true);
     hidePopup();
-    setTimeout(() => setShowConfetti(false), 3000);
+
+    setTimeout(() => {
+      setShowConfetti(false);
+      setConfettiParticles([]);
+      setShowBoostSuccess(true);
+    }, 2000);
+    setTimeout(() => setShowBoostSuccess(false), 5000);
   };
 
   return (
     <View style={styles.container}>
       {showConfetti && (
-        <>
-          {/* Main cannon blast */}
-          <ConfettiCannon
-            count={300}
-            origin={{ x: -50, y: 0 }}
-            explosionSpeed={800}
-            fallSpeed={4000}
-            fadeOut={true}
-            colors={['#FFD700', '#FF5733', '#C70039', '#900C3F', '#00BFFF', '#7CFC00']}
-            particleSize={10}
-          />
+        <View style={styles.confettiContainer}>
+          {confettiParticles.map((particle) => (
+            <ConfettiParticle key={particle.id} particle={particle} />
+          ))}
+        </View>
+      )}
 
-          {/* Additional smaller bursts */}
-          <ConfettiCannon
-            count={150}
-            origin={{ x: Dimensions.get('window').width + 50, y: 0 }}
-            explosionSpeed={600}
-            fallSpeed={3500}
-            fadeOut={true}
-            delay={300}
-            colors={['#FF1493', '#9400D3', '#4B0082', '#FF8C00', '#32CD32']}
-            particleSize={8}
-          />
+      {/* Professional Boost Success Modal */}
+      {showBoostSuccess && (
+        <Modal
+          visible={showBoostSuccess}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowBoostSuccess(false)}
+        >
+          <View style={styles.boostSuccessOverlay}>
+            <View style={styles.boostSuccessContainer}>
+              <View style={styles.boostSuccessIconContainer}>
+                <Icon name="rocket" size={60} color="#FFD700" />
+                <View style={styles.boostSuccessGlow} />
+              </View>
 
-          {/* Vertical burst */}
-          <ConfettiCannon
-            count={100}
-            origin={{ x: Dimensions.get('window').width / 2, y: Dimensions.get('window').height }}
-            explosionSpeed={500}
-            fallSpeed={2500}
-            fadeOut={true}
-            delay={500}
-            colors={['#FFFFFF', '#FF0000', '#0000FF', '#FFFF00', '#FF00FF']}
-            particleSize={12}
-          />
-        </>
+              <Text style={styles.boostSuccessTitle}>🎉 Congratulations!</Text>
+              <Text style={styles.boostSuccessMessage}>
+                Your product "{selectedProduct?.title}" has been successfully boosted!
+              </Text>
+
+              <View style={styles.boostSuccessDetails}>
+                <View style={styles.boostSuccessDetailItem}>
+                  <Icon name="eye" size={20} color="#007BFF" />
+                  <Text style={styles.boostSuccessDetailText}>Increased visibility</Text>
+                </View>
+                <View style={styles.boostSuccessDetailItem}>
+                  <Icon name="trending-up" size={20} color="#28A745" />
+                  <Text style={styles.boostSuccessDetailText}>Higher engagement</Text>
+                </View>
+                <View style={styles.boostSuccessDetailItem}>
+                  <Icon name="star" size={20} color="#FFD700" />
+                  <Text style={styles.boostSuccessDetailText}>Priority placement</Text>
+                </View>
+              </View>
+
+              <Text style={styles.boostSuccessFooter}>
+                Your ad will now appear at the top of search results for the next 24 hours.
+              </Text>
+
+              <TouchableOpacity
+                style={styles.boostSuccessButton}
+                onPress={() => setShowBoostSuccess(false)}
+              >
+                <Text style={styles.boostSuccessButtonText}>Got it!</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       )}
 
       <FlatList
@@ -588,6 +696,122 @@ const styles = StyleSheet.create({
 
   newBoostOption: {
     backgroundColor: '#fff8e1',
+  },
+
+  // Custom Confetti Styles
+  confettiContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1000,
+    pointerEvents: 'none',
+  },
+  confettiParticle: {
+    position: 'absolute',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    top: -50,
+  },
+
+  // Boost Success Modal Styles
+  boostSuccessOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  boostSuccessContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 30,
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 20,
+  },
+  boostSuccessIconContainer: {
+    position: 'relative',
+    marginBottom: 20,
+  },
+  boostSuccessGlow: {
+    position: 'absolute',
+    top: -10,
+    left: -10,
+    right: -10,
+    bottom: -10,
+    backgroundColor: '#FFD700',
+    borderRadius: 50,
+    opacity: 0.3,
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  boostSuccessTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#2C3E50',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  boostSuccessMessage: {
+    fontSize: 16,
+    color: '#34495E',
+    textAlign: 'center',
+    marginBottom: 25,
+    lineHeight: 24,
+  },
+  boostSuccessDetails: {
+    width: '100%',
+    marginBottom: 25,
+  },
+  boostSuccessDetailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 10,
+    marginVertical: 4,
+  },
+  boostSuccessDetailText: {
+    fontSize: 14,
+    color: '#2C3E50',
+    marginLeft: 12,
+    fontWeight: '500',
+  },
+  boostSuccessFooter: {
+    fontSize: 13,
+    color: '#7F8C8D',
+    textAlign: 'center',
+    marginBottom: 25,
+    lineHeight: 20,
+    fontStyle: 'italic',
+  },
+  boostSuccessButton: {
+    backgroundColor: '#007BFF',
+    paddingVertical: 15,
+    paddingHorizontal: 40,
+    borderRadius: 25,
+    shadowColor: '#007BFF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  boostSuccessButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

@@ -646,15 +646,21 @@ const ProductDetails = () => {
             {/* Action Buttons - Right Side */}
             {buyerId !== product.user?.id && (
                 <View style={styles.floatingButtonContainer}>
-                    {product.show_phone && product.user.phone_no && product.user.phone_no.trim() !== '' && (
-                        <TouchableOpacity
-                            style={[styles.floatingButton, styles.callButton]}
-                            onPress={() => Linking.openURL(`tel:${product.user.phone_no}`)}
-                        >
-                            <Icon name="phone" size={normalize(18)} color="#fff" />
-                            <Text style={styles.floatingButtonText}>Call</Text>
-                        </TouchableOpacity>
-                    )}
+                    {(() => {
+                        const shouldShowCallButton = product?.show_phone &&
+                            product?.user?.phone_no &&
+                            product.user.phone_no.trim() !== '';
+
+                        return shouldShowCallButton ? (
+                            <TouchableOpacity
+                                style={[styles.floatingButton, styles.callButton]}
+                                onPress={() => Linking.openURL(`tel:${product.user.phone_no}`)}
+                            >
+                                <Icon name="phone" size={normalize(18)} color="#fff" />
+                                <Text style={styles.floatingButtonText}>Call</Text>
+                            </TouchableOpacity>
+                        ) : null;
+                    })()}
                     <TouchableOpacity
                         style={[styles.floatingButton, styles.chatButton]}
                         onPress={handleChatWithSeller}

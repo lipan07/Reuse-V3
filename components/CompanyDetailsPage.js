@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
     View,
     Text,
@@ -140,6 +140,7 @@ const CompanyDetailsPage = ({ route }) => {
     const [hasMoreProducts, setHasMoreProducts] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [hasReachedEnd, setHasReachedEnd] = useState(false);
+    const isLoadingRef = useRef(false);
 
     // Get user ID from route params or use a default
     const userId = route?.params?.userId || '01980f61-6523-7063-9b37-fd08da364792';
@@ -207,7 +208,14 @@ const CompanyDetailsPage = ({ route }) => {
 
     // Fetch products from API
     const fetchProducts = async (page = 1, refresh = false) => {
+        // Prevent duplicate calls
+        if (isLoadingRef.current && !refresh) {
+            console.log('Already loading, skipping duplicate call');
+            return;
+        }
+
         try {
+            isLoadingRef.current = true;
             if (refresh) {
                 setRefreshing(true);
             } else {
@@ -265,6 +273,7 @@ const CompanyDetailsPage = ({ route }) => {
             setHasMoreProducts(false);
             setHasReachedEnd(true);
         } finally {
+            isLoadingRef.current = false;
             setIsLoadingProducts(false);
             setRefreshing(false);
         }
@@ -272,9 +281,25 @@ const CompanyDetailsPage = ({ route }) => {
 
     // Load more products for pagination
     const loadMoreProducts = () => {
+        console.log('loadMoreProducts called:', {
+            isLoadingRef: isLoadingRef.current,
+            hasMoreProducts,
+            hasReachedEnd,
+            productsLength: products.length,
+            currentPage
+        });
+
         // Only load more if we're not already loading, there are more products available, and we haven't reached the end
-        if (!isLoadingProducts && hasMoreProducts && !hasReachedEnd && products.length > 0) {
+        if (!isLoadingRef.current && hasMoreProducts && !hasReachedEnd && products.length > 0) {
+            console.log('Loading more products, page:', currentPage + 1);
             fetchProducts(currentPage + 1);
+        } else {
+            console.log('Skipping load more:', {
+                isLoadingRef: isLoadingRef.current,
+                hasMoreProducts,
+                hasReachedEnd,
+                productsLength: products.length
+            });
         }
     };
 
@@ -373,53 +398,49 @@ const CompanyDetailsPage = ({ route }) => {
                 console.log('Navigating to ProductDetails with item:', item);
                 navigation.navigate('ProductDetails', { productDetails: item });
             }}
-            activeOpacity={0.7}
+            activeOpacity={0.8}
         >
             <View style={styles.productImageContainer}>
                 {item.images && item.images.length > 0 ? (
                     <Image source={{ uri: item.images[0] }} style={styles.productImage} />
                 ) : (
                     <View style={styles.productImagePlaceholder}>
-                        <Icon name="image" size={normalize(26)} color="#1A1A1A" />
+                            <Icon name="image" size={normalize(20)} color="#9CA3AF" />
                     </View>
                 )}
             </View>
+
             <View style={styles.productDetails}>
-                <Text style={styles.productTitle} numberOfLines={1}>{item.title}</Text>
-                <Text style={styles.productDescription} numberOfLines={2}>
-                    {item.post_details?.description || item.address || 'No description available'}
-                </Text>
-
-                {/* Show brand if available */}
-                {item.post_details?.brand && (
-                    <Text style={styles.productBrand}>Brand: {item.post_details.brand}</Text>
-                )}
-
-                <View style={styles.productMeta}>
-                    <Text style={styles.productCategory}>{item.category?.name || 'Uncategorized'}</Text>
-                    <Text style={styles.postedTime}>
-                        {item.created_at ? getHumanReadableTime(item.created_at) : 'Unknown'}
-                    </Text>
-                </View>
-
-                <View style={styles.priceAndTypeContainer}>
-                    <Text style={styles.productPrice}>
-                        {item.post_details?.amount ? `₹${parseInt(item.post_details.amount).toLocaleString()}` : 'Price not specified'}
-                    </Text>
-                    {/* Show type badge (sell/rent) */}
-                    <View style={styles.typeBadge}>
+                <View style={styles.titleRow}>
+                    <Text style={styles.productTitle} numberOfLines={1}>{item.title}</Text>
+                    <View style={[styles.typeBadge, {
+                        backgroundColor: item.type === 'sell' ? '#E8F5E8' : '#FFF3E0'
+                    }]}>
                         <Text style={[styles.typeBadgeText, {
-                            backgroundColor: item.type === 'sell' ? '#4CAF50' : '#FF9800',
-                            color: '#FFFFFF'
+                            color: item.type === 'sell' ? '#2E7D32' : '#F57C00'
                         }]}>
                             {item.type === 'sell' ? 'Sell' : 'Rent'}
                         </Text>
                     </View>
                 </View>
+
+                <Text style={styles.productDescription} numberOfLines={1}>
+                    {item.post_details?.description || 'No description available'}
+                </Text>
+
+                <View style={styles.priceRow}>
+                    <Text style={styles.productPrice}>
+                        {item.post_details?.amount ? `₹${parseInt(item.post_details.amount).toLocaleString()}` : 'Price not specified'}
+                    </Text>
+                    <Text style={styles.postedTime}>
+                        {item.created_at ? getHumanReadableTime(item.created_at) : 'Unknown'}
+                    </Text>
+                </View>
             </View>
-            <TouchableOpacity style={styles.productAction}>
-                <Icon name="chevron-right" size={normalize(20)} color="#1A1A1A" />
-            </TouchableOpacity>
+
+            <View style={styles.arrowContainer}>
+                <Icon name="chevron-right" size={normalize(16)} color="#9CA3AF" />
+            </View>
         </TouchableOpacity>
     );
 
@@ -528,43 +549,40 @@ const CompanyDetailsPage = ({ route }) => {
                         <View style={styles.section}>
                             <View style={styles.sectionHeader}>
                                 <Text style={styles.sectionTitle}>Active Products</Text>
-                                <TouchableOpacity>
+                                {/* <TouchableOpacity>
                                     <Text style={styles.viewAllText}>View All</Text>
-                                </TouchableOpacity>
+                                </TouchableOpacity> */}
                             </View>
 
-                            <FlatList
-                                data={products}
-                                renderItem={renderProductItem}
-                                keyExtractor={item => item.id.toString()}
-                                scrollEnabled={false}
-                                style={styles.productsList}
-                                onEndReached={loadMoreProducts}
-                                onEndReachedThreshold={0.1}
-                                refreshControl={
-                                    <RefreshControl
-                                        refreshing={refreshing}
-                                        onRefresh={handleRefresh}
-                                        colors={['#007bff']}
-                                        tintColor="#007bff"
-                                    />
-                                }
-                                ListFooterComponent={() => (
-                                    isLoadingProducts ? (
-                                        <View style={styles.loadingContainer}>
-                                            <ActivityIndicator size="small" color="#007bff" />
-                                            <Text style={styles.loadingText}>Loading more products...</Text>
-                                        </View>
-                                    ) : null
-                                )}
-                                ListEmptyComponent={() => (
-                                    <View style={styles.emptyContainer}>
-                                        <Icon name="package-variant" size={normalize(48)} color="#ccc" />
-                                        <Text style={styles.emptyText}>No products found</Text>
-                                        <Text style={styles.emptySubText}>This company hasn't posted any products yet</Text>
+                            {products.length > 0 ? (
+                                products.map((item, index) => (
+                                    <View key={item.id.toString()}>
+                                        {renderProductItem({ item })}
                                     </View>
-                                )}
-                            />
+                                ))
+                            ) : (
+                                <View style={styles.emptyContainer}>
+                                    <Icon name="package-variant" size={normalize(48)} color="#ccc" />
+                                    <Text style={styles.emptyText}>No products found</Text>
+                                    <Text style={styles.emptySubText}>This company hasn't posted any products yet</Text>
+                                </View>
+                            )}
+
+                            {isLoadingProducts && (
+                                <View style={styles.loadingContainer}>
+                                    <ActivityIndicator size="small" color="#007bff" />
+                                    <Text style={styles.loadingText}>Loading more products...</Text>
+                                </View>
+                            )}
+
+                            {hasMoreProducts && !hasReachedEnd && products.length > 0 && !isLoadingProducts && (
+                                <TouchableOpacity
+                                    style={styles.loadMoreButton}
+                                    onPress={loadMoreProducts}
+                                >
+                                    <Text style={styles.loadMoreButtonText}>Load More Products</Text>
+                                </TouchableOpacity>
+                            )}
                         </View>
                     )}
 
@@ -679,72 +697,71 @@ const CompanyDetailsPage = ({ route }) => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#F5F7FA", paddingTop: 40 },
+    container: { flex: 1, backgroundColor: "#F5F7FA", paddingTop: 20 },
     scrollContent: {
-        padding: normalize(16),
-        paddingBottom: normalize(100),
+        padding: normalize(12),
+        paddingBottom: normalize(80),
     },
     header: {
         backgroundColor: '#FFFFFF',
         flexDirection: "row",
-        justifyContent: "space-between",
         alignItems: "center",
-        marginBottom: normalize(16),
-        padding: normalize(16),
-        borderRadius: normalize(12),
+        marginBottom: normalize(12),
+        padding: normalize(12),
+        borderRadius: normalize(8),
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-        elevation: 3,
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 2,
     },
     profileContainer: { flexDirection: "row", alignItems: "center", flex: 1 },
-    profileImage: { width: normalize(60), height: normalize(60), borderRadius: normalize(30) },
+    profileImage: { width: normalize(50), height: normalize(50), borderRadius: normalize(25) },
     profilePlaceholder: {
-        width: normalize(60),
-        height: normalize(60),
-        borderRadius: normalize(30),
+        width: normalize(50),
+        height: normalize(50),
+        borderRadius: normalize(25),
         backgroundColor: "#F5F5F5",
         justifyContent: "center",
         alignItems: "center",
     },
-    headerTextContainer: { marginLeft: normalize(12), flex: 1 },
+    headerTextContainer: { marginLeft: normalize(10), flex: 1 },
     nameAndFollowContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
     },
-    companyName: { fontSize: normalize(20), fontWeight: "700", color: "#1A1A1A", flex: 1 },
+    companyName: { fontSize: normalize(18), fontWeight: "600", color: "#1A1A1A", flex: 1 },
     followIconButton: {
         padding: normalize(4),
-        marginLeft: normalize(8),
+        marginLeft: normalize(6),
     },
-    locationContainer: { flexDirection: "row", alignItems: "center", marginBottom: normalize(8) },
-    locationText: { fontSize: normalize(13), marginLeft: normalize(4), color: "#666666" },
+    locationContainer: { flexDirection: "row", alignItems: "center", marginBottom: normalize(6) },
+    locationText: { fontSize: normalize(12), marginLeft: normalize(4), color: "#666666" },
 
     ratingContainer: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        marginTop: normalize(4),
+        marginTop: normalize(2),
     },
     ratingStars: {
         flexDirection: "row",
         alignItems: "center",
     },
     ratingText: {
-        fontSize: normalize(13),
+        fontSize: normalize(12),
         fontWeight: "600",
         color: "#1A1A1A",
-        marginLeft: normalize(6),
-    },
-    reviewsText: {
-        fontSize: normalize(11),
-        color: "#6B7280",
         marginLeft: normalize(4),
     },
+    reviewsText: {
+        fontSize: normalize(10),
+        color: "#6B7280",
+        marginLeft: normalize(2),
+    },
     memberSinceText: {
-        fontSize: normalize(11),
+        fontSize: normalize(10),
         color: "#6B7280",
         fontWeight: "500",
     },
@@ -752,18 +769,18 @@ const styles = StyleSheet.create({
     statsContainer: {
         flexDirection: "row",
         backgroundColor: '#FFFFFF',
-        borderRadius: normalize(12),
-        padding: normalize(16),
-        marginBottom: normalize(16),
+        borderRadius: normalize(8),
+        padding: normalize(12),
+        marginBottom: normalize(12),
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-        elevation: 3,
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 2,
     },
     statItem: { flex: 1, alignItems: "center" },
-    statNumber: { fontSize: normalize(18), fontWeight: "700", color: "#007BFF" },
-    statLabel: { fontSize: normalize(12), color: '#6B7280', fontWeight: '500' },
+    statNumber: { fontSize: normalize(16), fontWeight: "600", color: "#007BFF" },
+    statLabel: { fontSize: normalize(11), color: '#6B7280', fontWeight: '500', marginTop: normalize(2) },
     lastActivityText: {
         fontSize: normalize(16),
         fontWeight: "600",
@@ -772,136 +789,161 @@ const styles = StyleSheet.create({
 
     section: {
         backgroundColor: '#FFFFFF',
-        borderRadius: normalize(12),
-        padding: normalize(16),
-        marginBottom: normalize(16),
+        borderRadius: normalize(8),
+        padding: normalize(12),
+        marginBottom: normalize(12),
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-        elevation: 3,
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 2,
     },
-    sectionTitle: { fontSize: normalize(16), fontWeight: "600", color: "#1A1A1A", marginBottom: normalize(12) },
-    aboutText: { fontSize: normalize(13), lineHeight: normalize(20), color: '#4A4A4A' },
+    sectionTitle: { fontSize: normalize(15), fontWeight: "600", color: "#1A1A1A", marginBottom: normalize(8) },
+    aboutText: { fontSize: normalize(12), lineHeight: normalize(18), color: '#4A4A4A' },
 
     tabContainer: {
         flexDirection: "row",
         backgroundColor: '#F8F9FA',
-        borderRadius: normalize(12),
-        marginBottom: normalize(16),
-        padding: normalize(4),
+        borderRadius: normalize(8),
+        marginBottom: normalize(12),
+        padding: normalize(3),
     },
-    tab: { flex: 1, paddingVertical: normalize(10), alignItems: "center", borderRadius: normalize(8) },
+    tab: { flex: 1, paddingVertical: normalize(8), alignItems: "center", borderRadius: normalize(6) },
     activeTab: { backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 },
-    tabText: { fontSize: normalize(13), fontWeight: "500", color: "#6B7280" },
+    tabText: { fontSize: normalize(12), fontWeight: "500", color: "#6B7280" },
     activeTabText: { fontWeight: "600", color: '#1A1A1A' },
 
-    sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-    viewAllText: { fontSize: normalize(12), color: '#007BFF', fontWeight: '500' },
+    sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: normalize(8) },
+    viewAllText: { fontSize: normalize(11), color: '#007BFF', fontWeight: '500' },
 
     productItem: {
         flexDirection: "row",
         alignItems: "center",
-        padding: normalize(12),
-        borderRadius: normalize(12),
-        marginBottom: normalize(10),
-        backgroundColor: '#F8F9FA',
+        padding: normalize(10),
+        borderRadius: normalize(8),
+        marginBottom: normalize(8),
+        backgroundColor: '#FFFFFF',
         borderWidth: 1,
-        borderColor: '#E9ECEF',
+        borderColor: '#F1F3F4',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 2,
     },
-    productImageContainer: { marginRight: normalize(12) },
-    productImage: { width: normalize(50), height: normalize(50), borderRadius: normalize(10) },
+    productImageContainer: {
+        marginRight: normalize(10),
+    },
+    productImage: {
+        width: normalize(50),
+        height: normalize(50),
+        borderRadius: normalize(6)
+    },
     productImagePlaceholder: {
         width: normalize(50),
         height: normalize(50),
-        borderRadius: normalize(10),
-        backgroundColor: '#FFFFFF',
+        borderRadius: normalize(6),
+        backgroundColor: '#F8F9FA',
         justifyContent: "center",
         alignItems: "center",
         borderWidth: 1,
-        borderColor: '#E9ECEF',
+        borderColor: '#E5E7EB',
     },
-    productDetails: { flex: 1 },
-    productTitle: { fontSize: normalize(14), fontWeight: "600", color: "#1A1A1A", marginBottom: normalize(4) },
-    productDescription: { fontSize: normalize(12), color: '#6B7280', marginBottom: normalize(8) },
-    productMeta: { flexDirection: "row", justifyContent: "space-between" },
-    productCategory: {
-        fontSize: normalize(11),
-        backgroundColor: '#E3F2FD',
-        color: '#007BFF',
-        paddingHorizontal: normalize(6),
-        paddingVertical: normalize(2),
-        borderRadius: normalize(10),
-        fontWeight: '500',
+    productDetails: {
+        flex: 1,
+        paddingRight: normalize(8)
     },
-    postedTime: { fontSize: normalize(11), color: '#9CA3AF', fontWeight: '500' },
-    productPrice: { fontSize: normalize(14), fontWeight: "700", color: "#007BFF" },
-    productAction: { padding: normalize(6) },
-    productBrand: {
-        fontSize: normalize(12),
-        color: '#6B7280',
-        marginBottom: normalize(4),
-        fontStyle: 'italic',
-    },
-    priceAndTypeContainer: {
+    titleRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginTop: normalize(4),
+        marginBottom: normalize(4)
+    },
+    productTitle: {
+        fontSize: normalize(14),
+        fontWeight: "600",
+        color: "#1A1A1A",
+        flex: 1,
+        marginRight: normalize(8)
+    },
+    productDescription: {
+        fontSize: normalize(12),
+        color: '#6B7280',
+        marginBottom: normalize(6),
+        lineHeight: normalize(16)
+    },
+    priceRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+    },
+    productPrice: {
+        fontSize: normalize(13),
+        fontWeight: "600",
+        color: "#007BFF"
+    },
+    postedTime: {
+        fontSize: normalize(10),
+        color: '#9CA3AF',
+        fontWeight: '500'
+    },
+    arrowContainer: {
+        padding: normalize(4),
+        justifyContent: 'center',
+        alignItems: 'center'
     },
     typeBadge: {
-        // marginTop: normalize(4),
+        paddingHorizontal: normalize(6),
+        paddingVertical: normalize(2),
+        borderRadius: normalize(4),
     },
     typeBadgeText: {
-        fontSize: normalize(10),
+        fontSize: normalize(8),
         fontWeight: '600',
-        paddingHorizontal: normalize(8),
-        paddingVertical: normalize(2),
-        borderRadius: normalize(10),
-        alignSelf: 'flex-start',
+        textAlign: 'center',
     },
 
     contactItem: {
         flexDirection: "row",
         alignItems: "center",
-        paddingVertical: normalize(12),
+        paddingVertical: normalize(10),
         borderBottomWidth: 1,
         borderBottomColor: '#F3F4F6',
     },
     contactIcon: {
-        width: normalize(38),
-        height: normalize(38),
-        borderRadius: normalize(19),
+        width: normalize(32),
+        height: normalize(32),
+        borderRadius: normalize(16),
         backgroundColor: '#F8F9FA',
         justifyContent: "center",
         alignItems: "center",
-        marginRight: normalize(12),
+        marginRight: normalize(10),
         borderWidth: 1,
         borderColor: '#E9ECEF',
     },
     contactInfo: { flex: 1 },
-    contactLabel: { fontSize: normalize(11), color: '#6B7280', fontWeight: '500', marginBottom: normalize(2) },
-    contactValue: { fontSize: normalize(14), color: '#1A1A1A', fontWeight: '500' },
+    contactLabel: { fontSize: normalize(10), color: '#6B7280', fontWeight: '500', marginBottom: normalize(2) },
+    contactValue: { fontSize: normalize(12), color: '#1A1A1A', fontWeight: '500' },
 
     floatingButtonContainer: {
         position: 'absolute',
-        bottom: normalize(30),
-        right: normalize(16),
+        bottom: normalize(20),
+        right: normalize(12),
         flexDirection: 'row',
-        gap: normalize(12),
+        gap: normalize(8),
     },
     floatingButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: normalize(12),
-        paddingHorizontal: normalize(16),
-        borderRadius: normalize(25),
+        paddingVertical: normalize(10),
+        paddingHorizontal: normalize(14),
+        borderRadius: normalize(20),
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 4,
         elevation: 5,
-        minWidth: normalize(80),
+        minWidth: normalize(70),
     },
     callButton: {
         backgroundColor: '#34C759',
@@ -911,9 +953,9 @@ const styles = StyleSheet.create({
     },
     floatingButtonText: {
         color: '#FFFFFF',
-        fontSize: normalize(12),
+        fontSize: normalize(11),
         fontWeight: '600',
-        marginLeft: normalize(6),
+        marginLeft: normalize(4),
     },
 
     bottomPadding: { height: normalize(20) },
@@ -930,20 +972,33 @@ const styles = StyleSheet.create({
         fontSize: normalize(14),
         color: '#6B7280',
     },
+    loadMoreButton: {
+        backgroundColor: '#007BFF',
+        paddingVertical: normalize(12),
+        paddingHorizontal: normalize(20),
+        borderRadius: normalize(8),
+        alignItems: 'center',
+        marginTop: normalize(12),
+    },
+    loadMoreButtonText: {
+        color: '#FFFFFF',
+        fontSize: normalize(14),
+        fontWeight: '600',
+    },
     emptyContainer: {
         alignItems: 'center',
-        paddingVertical: normalize(40),
-        paddingHorizontal: normalize(20),
+        paddingVertical: normalize(30),
+        paddingHorizontal: normalize(16),
     },
     emptyText: {
-        fontSize: normalize(16),
+        fontSize: normalize(14),
         fontWeight: '600',
         color: '#6B7280',
-        marginTop: normalize(12),
+        marginTop: normalize(8),
         textAlign: 'center',
     },
     emptySubText: {
-        fontSize: normalize(14),
+        fontSize: normalize(12),
         color: '#9CA3AF',
         marginTop: normalize(4),
         textAlign: 'center',

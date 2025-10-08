@@ -60,6 +60,48 @@ const getHumanReadableTime = (timestamp) => {
     }
 };
 
+// Function to format member since date
+const formatMemberSince = (dateString) => {
+    if (!dateString || dateString === 'Unknown') return 'Unknown';
+
+    try {
+        const date = new Date(dateString);
+        const year = date.getFullYear();
+        const month = date.toLocaleString('default', { month: 'long' });
+        return `Member since ${month} ${year}`;
+    } catch (error) {
+        return 'Member since Unknown';
+    }
+};
+
+// Function to render star rating
+const renderStars = (rating) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 !== 0;
+
+    for (let i = 0; i < fullStars; i++) {
+        stars.push(
+            <Icon key={i} name="star" size={normalize(14)} color="#FFD700" />
+        );
+    }
+
+    if (hasHalfStar) {
+        stars.push(
+            <Icon key="half" name="star-half-full" size={normalize(14)} color="#FFD700" />
+        );
+    }
+
+    const emptyStars = 5 - Math.ceil(rating);
+    for (let i = 0; i < emptyStars; i++) {
+        stars.push(
+            <Icon key={`empty-${i}`} name="star-outline" size={normalize(14)} color="#E5E7EB" />
+        );
+    }
+
+    return stars;
+};
+
 // Function to get color based on activity recency
 const getActivityColor = (timestamp) => {
     if (!timestamp || timestamp === 'Unknown') return '#6B7280';
@@ -143,7 +185,11 @@ const CompanyDetailsPage = ({ route }) => {
                     companyType: userData.company_detail?.type || 'Not specified',
                     contactPersonName: userData.company_detail?.contact_person_name || 'Not specified',
                     contactPersonRole: userData.company_detail?.contact_person_role || 'Not specified',
-                    isFollowing: userData.isFollowing || false
+                    isFollowing: userData.isFollowing || false,
+                    // Add rating and member since information
+                    rating: userData.rating || 4.5, // Default rating if not available
+                    totalReviews: userData.total_reviews || 0,
+                    memberSince: userData.created_at || userData.updated_at || 'Unknown'
                 };
 
                 setCompany(companyData);
@@ -381,22 +427,22 @@ const CompanyDetailsPage = ({ route }) => {
         <>
             <CustomStatusBar />
             <View style={styles.container}>
-            <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-            >
-                {/* Header */}
-                <View style={styles.header}>
-                    <View style={styles.profileContainer}>
-                        {company.profileImage ? (
-                            <Image source={{ uri: company.profileImage }} style={styles.profileImage} />
-                        ) : (
-                            <View style={styles.profilePlaceholder}>
-                                <Icon name="office-building" size={normalize(34)} color="#1A1A1A" />
-                            </View>
-                        )}
-                        <View style={styles.headerTextContainer}>
+                <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                >
+                    {/* Header */}
+                    <View style={styles.header}>
+                        <View style={styles.profileContainer}>
+                            {company.profileImage ? (
+                                <Image source={{ uri: company.profileImage }} style={styles.profileImage} />
+                            ) : (
+                                <View style={styles.profilePlaceholder}>
+                                    <Icon name="office-building" size={normalize(34)} color="#1A1A1A" />
+                                </View>
+                            )}
+                            <View style={styles.headerTextContainer}>
                                 <View style={styles.nameAndFollowContainer}>
                                     <Text style={styles.companyName}>{company.name}</Text>
                                     <TouchableOpacity
@@ -410,77 +456,89 @@ const CompanyDetailsPage = ({ route }) => {
                                         />
                                     </TouchableOpacity>
                                 </View>
-                            <View style={styles.locationContainer}>
-                                <Icon name="map-marker" size={normalize(14)} color="#1A1A1A" />
-                                <Text style={styles.locationText}>{company.location}</Text>
+                                <View style={styles.locationContainer}>
+                                    <Icon name="map-marker" size={normalize(14)} color="#1A1A1A" />
+                                    <Text style={styles.locationText}>{company.location}</Text>
+                                </View>
+
+                                {/* Rating and Member Since */}
+                                <View style={styles.ratingContainer}>
+                                    <View style={styles.ratingStars}>
+                                        {renderStars(company.rating)}
+                                        <Text style={styles.ratingText}>{company.rating}</Text>
+                                        {company.totalReviews > 0 && (
+                                            <Text style={styles.reviewsText}>({company.totalReviews} reviews)</Text>
+                                        )}
+                                    </View>
+                                    <Text style={styles.memberSinceText}>{formatMemberSince(company.memberSince)}</Text>
+                                </View>
                             </View>
                         </View>
-                        </View>
-                </View>
+                    </View>
 
-                {/* Stats */}
-                <View style={styles.statsContainer}>
-                    <View style={styles.statItem}>
-                        <Icon name="cube-send" size={normalize(20)} color="#1A1A1A" />
-                        <Text style={styles.statNumber}>{company.postsActive}</Text>
-                        <Text style={styles.statLabel}>Active</Text>
-                    </View>
-                    <View style={styles.statDivider} />
-                    <View style={styles.statItem}>
-                        <Icon name="check-circle" size={normalize(20)} color="#1A1A1A" />
-                        <Text style={styles.statNumber}>{company.postsSold}</Text>
-                        <Text style={styles.statLabel}>Sold</Text>
-                    </View>
-                    <View style={styles.statDivider} />
-                    <View style={styles.statItem}>
+                    {/* Stats */}
+                    <View style={styles.statsContainer}>
+                        <View style={styles.statItem}>
+                            <Icon name="cube-send" size={normalize(20)} color="#1A1A1A" />
+                            <Text style={styles.statNumber}>{company.postsActive}</Text>
+                            <Text style={styles.statLabel}>Active</Text>
+                        </View>
+                        <View style={styles.statDivider} />
+                        <View style={styles.statItem}>
+                            <Icon name="check-circle" size={normalize(20)} color="#1A1A1A" />
+                            <Text style={styles.statNumber}>{company.postsSold}</Text>
+                            <Text style={styles.statLabel}>Sold</Text>
+                        </View>
+                        <View style={styles.statDivider} />
+                        <View style={styles.statItem}>
                             <Icon name="clock-outline" size={normalize(20)} color={getActivityColor(company.responseTime)} />
                             <Text style={[styles.statNumber, { color: getActivityColor(company.responseTime) }]}>{getHumanReadableTime(company.responseTime)}</Text>
                             <Text style={styles.statLabel}>Last Activity</Text>
-                    </View>
-                </View>
-
-                {/* About */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>About</Text>
-                    <Text style={styles.aboutText}>{company.about}</Text>
-                </View>
-
-                {/* Tabs */}
-                <View style={styles.tabContainer}>
-                    <TouchableOpacity
-                        style={[styles.tab, activeTab === "products" && styles.activeTab]}
-                        onPress={() => setActiveTab("products")}
-                    >
-                        <Text style={[styles.tabText, activeTab === "products" && styles.activeTabText]}>
-                            Products
-                        </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.tab, activeTab === "info" && styles.activeTab]}
-                        onPress={() => setActiveTab("info")}
-                    >
-                        <Text style={[styles.tabText, activeTab === "info" && styles.activeTabText]}>
-                            Info
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Products */}
-                {activeTab === "products" && (
-                    <View style={styles.section}>
-                        <View style={styles.sectionHeader}>
-                            <Text style={styles.sectionTitle}>Active Products</Text>
-                            <TouchableOpacity>
-                                <Text style={styles.viewAllText}>View All</Text>
-                            </TouchableOpacity>
                         </View>
+                    </View>
 
-                        <FlatList
-                            data={products}
-                            renderItem={renderProductItem}
+                    {/* About */}
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>About</Text>
+                        <Text style={styles.aboutText}>{company.about}</Text>
+                    </View>
+
+                    {/* Tabs */}
+                    <View style={styles.tabContainer}>
+                        <TouchableOpacity
+                            style={[styles.tab, activeTab === "products" && styles.activeTab]}
+                            onPress={() => setActiveTab("products")}
+                        >
+                            <Text style={[styles.tabText, activeTab === "products" && styles.activeTabText]}>
+                                Products
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.tab, activeTab === "info" && styles.activeTab]}
+                            onPress={() => setActiveTab("info")}
+                        >
+                            <Text style={[styles.tabText, activeTab === "info" && styles.activeTabText]}>
+                                Info
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Products */}
+                    {activeTab === "products" && (
+                        <View style={styles.section}>
+                            <View style={styles.sectionHeader}>
+                                <Text style={styles.sectionTitle}>Active Products</Text>
+                                <TouchableOpacity>
+                                    <Text style={styles.viewAllText}>View All</Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            <FlatList
+                                data={products}
+                                renderItem={renderProductItem}
                                 keyExtractor={item => item.id.toString()}
-                            scrollEnabled={false}
-                            style={styles.productsList}
+                                scrollEnabled={false}
+                                style={styles.productsList}
                                 onEndReached={loadMoreProducts}
                                 onEndReachedThreshold={0.1}
                                 refreshControl={
@@ -506,13 +564,13 @@ const CompanyDetailsPage = ({ route }) => {
                                         <Text style={styles.emptySubText}>This company hasn't posted any products yet</Text>
                                     </View>
                                 )}
-                        />
-                    </View>
-                )}
+                            />
+                        </View>
+                    )}
 
-                {/* Info */}
-                {activeTab === "info" && (
-                    <View style={styles.section}>
+                    {/* Info */}
+                    {activeTab === "info" && (
+                        <View style={styles.section}>
                             <Text style={styles.sectionTitle}>Company Information</Text>
 
                             {/* Company Type */}
@@ -597,24 +655,24 @@ const CompanyDetailsPage = ({ route }) => {
                                     <Text style={styles.contactValue}>{company.location}</Text>
                                 </View>
                             </View>
-                    </View>
-                )}
+                        </View>
+                    )}
 
-                <View style={styles.bottomPadding} />
-            </ScrollView>
+                    <View style={styles.bottomPadding} />
+                </ScrollView>
 
                 {/* Floating Action Buttons - Right Side */}
                 <View style={styles.floatingButtonContainer}>
                     <TouchableOpacity style={[styles.floatingButton, styles.callButton]} onPress={handleCall}>
-                    <Icon name="phone" size={normalize(18)} color="#fff" />
+                        <Icon name="phone" size={normalize(18)} color="#fff" />
                         <Text style={styles.floatingButtonText}>Call</Text>
-                </TouchableOpacity>
+                    </TouchableOpacity>
 
                     <TouchableOpacity style={[styles.floatingButton, styles.chatButton]} onPress={handleEmail}>
                         <Icon name="message-text" size={normalize(18)} color="#fff" />
                         <Text style={styles.floatingButtonText}>Chat</Text>
                     </TouchableOpacity>
-            </View>
+                </View>
             </View>
         </>
     );
@@ -661,8 +719,35 @@ const styles = StyleSheet.create({
         padding: normalize(4),
         marginLeft: normalize(8),
     },
-    locationContainer: { flexDirection: "row", alignItems: "center" },
+    locationContainer: { flexDirection: "row", alignItems: "center", marginBottom: normalize(8) },
     locationText: { fontSize: normalize(13), marginLeft: normalize(4), color: "#666666" },
+
+    ratingContainer: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginTop: normalize(4),
+    },
+    ratingStars: {
+        flexDirection: "row",
+        alignItems: "center",
+    },
+    ratingText: {
+        fontSize: normalize(13),
+        fontWeight: "600",
+        color: "#1A1A1A",
+        marginLeft: normalize(6),
+    },
+    reviewsText: {
+        fontSize: normalize(11),
+        color: "#6B7280",
+        marginLeft: normalize(4),
+    },
+    memberSinceText: {
+        fontSize: normalize(11),
+        color: "#6B7280",
+        fontWeight: "500",
+    },
 
     statsContainer: {
         flexDirection: "row",

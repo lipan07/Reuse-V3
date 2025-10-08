@@ -51,10 +51,19 @@ const ProductDetails = () => {
     const navigation = useNavigation();
     const route = useRoute();
     const { productDetails } = route.params;
-    const productId = productDetails.id;
+    const productId = productDetails?.id;
     const flatListRef = useRef(null);
     const scrollViewRef = useRef(null);
     const autoScrollInterval = useRef(null);
+
+    // Set product from productDetails
+    useEffect(() => {
+        if (productDetails) {
+            console.log('ProductDetails received:', productDetails);
+            setProduct(productDetails);
+            setIsLoading(false);
+        }
+    }, [productDetails]);
 
     // Distance calculation function (Haversine formula)
     const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -307,18 +316,10 @@ const ProductDetails = () => {
         }
     };
 
-    if (isLoading) {
+    if (isLoading || !product) {
         return (
             <View style={styles.loaderContainer}>
                 <ActivityIndicator size="large" color="#007bff" />
-            </View>
-        );
-    }
-
-    if (!product) {
-        return (
-            <View style={styles.notFoundContainer}>
-                <Text>Product not found</Text>
             </View>
         );
     }
@@ -451,19 +452,26 @@ const ProductDetails = () => {
                 <View style={styles.headerContainer}>
                     <View style={styles.headerTopRow}>
                         <Text style={styles.priceText}>
-                            {!(product.category_id >= 9 && product.category_id <= 23) ? (
-                                product.post_details?.amount ? (
-                                    <Text style={styles.priceText}>₹{product.post_details.amount}</Text>
-                                ) : '---'
-                            ) : (
-                                product.post_details?.salary_from || product.post_details?.salary_to ? (
-                                    <Text style={styles.priceText}>
-                                        {product.post_details.salary_from ? `₹${product.post_details.salary_from}` : ''}
-                                        {product.post_details.salary_from && product.post_details.salary_to ? ' - ' : ''}
-                                        {product.post_details.salary_to ? `₹${product.post_details.salary_to}` : ''}
-                                    </Text>
-                                ) : '---'
-                            )}
+                            {(() => {
+                                if (!product || !product.post_details) return '---';
+
+                                if (product.category_id >= 9 && product.category_id <= 23) {
+                                    // Job category with salary range
+                                    const from = product.post_details.salary_from;
+                                    const to = product.post_details.salary_to;
+
+                                    if (!from && !to) return '---';
+
+                                    const fromText = from ? `₹${from}` : '';
+                                    const toText = to ? `₹${to}` : '';
+                                    const separator = from && to ? ' - ' : '';
+
+                                    return `${fromText}${separator}${toText}`;
+                                } else {
+                                    // Regular product with amount
+                                    return product.post_details.amount ? `₹${product.post_details.amount}` : '---';
+                                }
+                            })()}
                         </Text>
                         {buyerId !== product.user?.id && (
                             <TouchableOpacity onPress={toggleUserFollow}>
@@ -476,7 +484,7 @@ const ProductDetails = () => {
                         )}
                     </View>
 
-                    <Text style={styles.titleText}>{product.title}</Text>
+                    <Text style={styles.titleText}>{product.title || 'No title'}</Text>
 
                     <View style={styles.metaRow}>
                         <View style={styles.metaItem}>
@@ -509,18 +517,14 @@ const ProductDetails = () => {
                 </View>
 
                 {/* Details Section */}
-                {shouldShowDetails && (
-                    <View style={styles.detailsSection}>
-                        {renderDetails()}
-                    </View>
-                )}
+                {shouldShowDetails && renderDetails()}
 
                 {/* Description Section */}
                 {product.post_details?.description && (
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Description</Text>
                         <Text style={styles.descriptionText}>
-                            {product.post_details.description}
+                            {product.post_details?.description || 'No description available'}
                         </Text>
                     </View>
                 )}
@@ -531,7 +535,7 @@ const ProductDetails = () => {
                     <TouchableOpacity
                         onPress={() => navigation.navigate('CompanyDetailsPage', { userId: product.user?.id })}
                     >
-                        <View style={styles.sellerCard} >
+                        <View style={styles.sellerCard}>
                             <Image
                                 source={product.user?.profile_image
                                     ? { uri: product.user.profile_image }
@@ -539,40 +543,62 @@ const ProductDetails = () => {
                                 style={styles.sellerImage}
                             />
                             <View style={styles.sellerInfo}>
-                                <Text style={styles.sellerName}>
-                                    {product.user?.name || 'Unknown Seller'}
-                                </Text>
-                                <Text style={styles.sellerMeta}>
-                                    <Icon name="star" size={normalize(12)} color="#FFCC00" />
-                                    4.8 (24) • {getMemberSince(product.user?.created_at)}
-                                </Text>
-                            </View>
-                            {buyerId !== product.user?.id && (
-                                <View style={styles.sellerActions}>
-                                    {/* <TouchableOpacity
-                                    style={styles.followSellerButton}
-                                    onPress={toggleUserFollow}
-                                >
-                                    <Icon
-                                        name={userFollowed ? 'heart' : 'heart-outline'}
-                                        size={normalize(20)}
-                                        color={userFollowed ? '#FF3B30' : '#8E8E93'}
-                                    />
-                                </TouchableOpacity> */}
-                                    {product.phone && (
+                                <View style={styles.sellerNameRow}>
+                                    <Text style={styles.sellerName}>
+                                        {product.user?.name || 'Unknown Seller'}
+                                    </Text>
+                                    {buyerId !== product.user?.id && (
                                         <TouchableOpacity
-                                            style={styles.callIcon}
-                                            onPress={() => Linking.openURL(`tel:${product.user?.phone}`)}
+                                            style={styles.followSellerButtonInline}
+                                            onPress={toggleUserFollow}
                                         >
-                                            <Icon name="phone-outline" size={normalize(20)} color="#007AFF" />
+                                            <Icon
+                                                name={userFollowed ? 'heart' : 'heart-outline'}
+                                                size={normalize(18)}
+                                                color={userFollowed ? '#FF3B30' : '#8E8E93'}
+                                            />
                                         </TouchableOpacity>
                                     )}
-                                    {/* <TouchableOpacity
-                                        style={styles.chatIcon}
-                                        onPress={handleChatWithSeller}
+                                </View>
+                                <View style={styles.sellerMeta}>
+                                    <Icon name="star" size={normalize(12)} color="#FFCC00" />
+                                    <Text style={styles.sellerMetaText}>
+                                        4.8 (24) • {getMemberSince(product.user?.created_at)}
+                                    </Text>
+                                </View>
+
+                                {/* Additional Seller Details */}
+                                <View style={styles.sellerDetails}>
+                                    {product.user?.phone && (
+                                        <View style={styles.sellerDetailItem}>
+                                            <Icon name="phone" size={normalize(12)} color="#8E8E93" />
+                                            <Text style={styles.sellerDetailText}>
+                                                {product.user?.phone || 'Phone not available'}
+                                            </Text>
+                                        </View>
+                                    )}
+                                    <View style={styles.sellerDetailItem}>
+                                        <Icon name="clock" size={normalize(12)} color="#8E8E93" />
+                                        <Text style={styles.sellerDetailText}>
+                                            Usually responds within 2 hours
+                                        </Text>
+                                    </View>
+                                    <View style={styles.sellerDetailItem}>
+                                        <Icon name="check-circle" size={normalize(12)} color="#4CAF50" />
+                                        <Text style={styles.sellerDetailText}>
+                                            Verified seller
+                                        </Text>
+                                    </View>
+                                </View>
+                            </View>
+                            {buyerId !== product.user?.id && product.user?.phone && (
+                                <View style={styles.sellerActions}>
+                                    <TouchableOpacity
+                                        style={styles.callIcon}
+                                        onPress={() => Linking.openURL(`tel:${product.user.phone}`)}
                                     >
-                                        <Icon name="message-text-outline" size={normalize(20)} color="#007AFF" />
-                                    </TouchableOpacity> */}
+                                        <Icon name="phone-outline" size={normalize(18)} color="#007AFF" />
+                                    </TouchableOpacity>
                                 </View>
                             )}
                         </View>

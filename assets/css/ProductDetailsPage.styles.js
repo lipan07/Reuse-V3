@@ -103,6 +103,43 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginLeft: normalize(3),
     },
+    // Enhanced seller information styles
+    sellerDetails: {
+        marginTop: normalize(8),
+    },
+    sellerDetailItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: normalize(4),
+    },
+    sellerDetailText: {
+        fontSize: normalize(12),
+        color: '#8E8E93',
+        marginLeft: normalize(6),
+        flex: 1,
+    },
+    followSellerButton: {
+        padding: normalize(8),
+        borderRadius: normalize(20),
+        backgroundColor: '#f0f0f0',
+        marginRight: normalize(8),
+    },
+    sellerNameRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    followSellerButtonInline: {
+        padding: normalize(6),
+        borderRadius: normalize(15),
+        backgroundColor: '#f0f0f0',
+        marginLeft: normalize(8),
+    },
+    callIcon: {
+        padding: normalize(8),
+        borderRadius: normalize(20),
+        backgroundColor: '#f0f0f0',
+    },
     headerContainer: {
         padding: normalize(16),
         backgroundColor: '#FFFFFF',
@@ -161,18 +198,6 @@ const styles = StyleSheet.create({
         shadowRadius: 3,
         elevation: 2,
     },
-    detailsSection: {
-        backgroundColor: '#FFFFFF',
-        padding: normalize(16),
-        marginHorizontal: normalize(16),
-        marginTop: normalize(8),
-        borderRadius: normalize(12),
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.06,
-        shadowRadius: 3,
-        elevation: 2,
-    },
     sectionTitle: {
         fontSize: normalize(14),
         fontWeight: '600',
@@ -203,9 +228,15 @@ const styles = StyleSheet.create({
         marginBottom: normalize(3),
     },
     sellerMeta: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: normalize(3),
+    },
+    sellerMetaText: {
         fontSize: normalize(12),
         color: '#6B7280',
         fontWeight: '500',
+        marginLeft: normalize(4),
     },
     mapContainer: {
         height: normalize(160),

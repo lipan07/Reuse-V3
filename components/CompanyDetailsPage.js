@@ -10,8 +10,10 @@ import {
     Dimensions,
     FlatList,
     ActivityIndicator,
-    Alert
+    Alert,
+    RefreshControl
 } from "react-native";
+import { useNavigation } from '@react-navigation/native';
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import CustomStatusBar from "./Screens/CustomStatusBar";
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -82,11 +84,20 @@ const getActivityColor = (timestamp) => {
 };
 
 const CompanyDetailsPage = ({ route }) => {
+    const navigation = useNavigation();
     const [isFollowing, setIsFollowing] = useState(false);
     const [activeTab, setActiveTab] = useState("products");
     const [company, setCompany] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    // Products state
+    const [products, setProducts] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+    const [hasMoreProducts, setHasMoreProducts] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [hasReachedEnd, setHasReachedEnd] = useState(false);
 
     // Get user ID from route params or use a default
     const userId = route?.params?.userId || '01980f61-6523-7063-9b37-fd08da364792';
@@ -94,6 +105,7 @@ const CompanyDetailsPage = ({ route }) => {
     // Fetch company details from API
     useEffect(() => {
         fetchCompanyDetails();
+        fetchProducts();
     }, [userId]);
 
     const fetchCompanyDetails = async () => {
@@ -147,81 +159,83 @@ const CompanyDetailsPage = ({ route }) => {
         }
     };
 
-    // Mock product data
-    const products = [
-        {
-            id: '1',
-            image: null,
-            title: "Quantum Processor QX-7",
-            description: "Next-gen quantum computing chip with 128 qubits",
-            postedTime: "2 hours ago",
-            price: "$4,299",
-            category: "Electronics"
-        },
-        {
-            id: '2',
-            image: null,
-            title: "Neural Interface Headset",
-            description: "Direct brain-to-computer interface technology",
-            postedTime: "1 day ago",
-            price: "$2,499",
-            category: "Wearables"
-        },
-        {
-            id: '3',
-            image: null,
-            title: "Holographic Display Unit",
-            description: "Full-color 3D holograms without special glasses",
-            postedTime: "3 days ago",
-            price: "$3,899",
-            category: "Displays"
-        },
-        {
-            id: '6',
-            image: null,
-            title: "Holographic Display Unit",
-            description: "Full-color 3D holograms without special glasses",
-            postedTime: "3 days ago",
-            price: "$3,899",
-            category: "Displays"
-        },
-        {
-            id: '7',
-            image: null,
-            title: "Holographic Display Unit",
-            description: "Full-color 3D holograms without special glasses",
-            postedTime: "3 days ago",
-            price: "$3,899",
-            category: "Displays"
-        },
-        {
-            id: '8',
-            image: null,
-            title: "Holographic Display Unit",
-            description: "Full-color 3D holograms without special glasses",
-            postedTime: "3 days ago",
-            price: "$3,899",
-            category: "Displays"
-        },
-        {
-            id: '9',
-            image: null,
-            title: "Holographic Display Unit",
-            description: "Full-color 3D holograms without special glasses",
-            postedTime: "3 days ago",
-            price: "$3,899",
-            category: "Displays"
-        },
-        {
-            id: '10',
-            image: null,
-            title: "Holographic Display Unit",
-            description: "Full-color 3D holograms without special glasses",
-            postedTime: "3 days ago",
-            price: "$3,899",
-            category: "Displays"
-        },
-    ];
+    // Fetch products from API
+    const fetchProducts = async (page = 1, refresh = false) => {
+        try {
+            if (refresh) {
+                setRefreshing(true);
+            } else {
+                setIsLoadingProducts(true);
+            }
+
+            const token = await AsyncStorage.getItem('authToken');
+            const apiUrl = `${process.env.BASE_URL}/posts?page=${page}&user_id=${userId}`;
+            console.log('Products', apiUrl);
+            const response = await fetch(apiUrl, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            const responseData = await response.json();
+            // console.log('Products API Response:', responseData);
+
+            if (response.ok) {
+                // The data is directly in responseData.data (array)
+                const newProducts = responseData.data || [];
+                const meta = responseData.meta || {};
+                const links = responseData.links || {};
+
+                if (page === 1) {
+                    setProducts(newProducts);
+                    setHasReachedEnd(false); // Reset when refreshing
+                } else {
+                    setProducts(prev => [...prev, ...newProducts]);
+                }
+
+                // Use pagination info from API response
+                const hasMore = links.next !== null && newProducts.length > 0;
+                setHasMoreProducts(hasMore);
+                setCurrentPage(page);
+
+                // If we get an empty response or no next page, mark as reached end
+                if (newProducts.length === 0 || links.next === null) {
+                    setHasReachedEnd(true);
+                    console.log('No more products available, stopping pagination');
+                }
+
+                console.log(`Loaded ${newProducts.length} products, hasMore: ${hasMore}, next: ${links.next}`);
+            } else {
+                console.error('Error fetching products:', responseData.message);
+                // Stop pagination on error
+                setHasMoreProducts(false);
+                setHasReachedEnd(true);
+            }
+        } catch (error) {
+            console.error('Error fetching products:', error);
+            // Stop pagination on network error
+            setHasMoreProducts(false);
+            setHasReachedEnd(true);
+        } finally {
+            setIsLoadingProducts(false);
+            setRefreshing(false);
+        }
+    };
+
+    // Load more products for pagination
+    const loadMoreProducts = () => {
+        // Only load more if we're not already loading, there are more products available, and we haven't reached the end
+        if (!isLoadingProducts && hasMoreProducts && !hasReachedEnd && products.length > 0) {
+            fetchProducts(currentPage + 1);
+        }
+    };
+
+    // Handle refresh
+    const handleRefresh = () => {
+        fetchProducts(1, true);
+    };
 
     const handleFollow = async () => {
         try {
@@ -307,10 +321,17 @@ const CompanyDetailsPage = ({ route }) => {
     }
 
     const renderProductItem = ({ item }) => (
-        <TouchableOpacity style={styles.productItem}>
+        <TouchableOpacity
+            style={styles.productItem}
+            onPress={() => {
+                console.log('Navigating to ProductDetails with item:', item);
+                navigation.navigate('ProductDetails', { productDetails: item });
+            }}
+            activeOpacity={0.7}
+        >
             <View style={styles.productImageContainer}>
-                {item.image ? (
-                    <Image source={{ uri: item.image }} style={styles.productImage} />
+                {item.images && item.images.length > 0 ? (
+                    <Image source={{ uri: item.images[0] }} style={styles.productImage} />
                 ) : (
                     <View style={styles.productImagePlaceholder}>
                         <Icon name="image" size={normalize(26)} color="#1A1A1A" />
@@ -319,12 +340,36 @@ const CompanyDetailsPage = ({ route }) => {
             </View>
             <View style={styles.productDetails}>
                 <Text style={styles.productTitle} numberOfLines={1}>{item.title}</Text>
-                <Text style={styles.productDescription} numberOfLines={2}>{item.description}</Text>
+                <Text style={styles.productDescription} numberOfLines={2}>
+                    {item.post_details?.description || item.address || 'No description available'}
+                </Text>
+
+                {/* Show brand if available */}
+                {item.post_details?.brand && (
+                    <Text style={styles.productBrand}>Brand: {item.post_details.brand}</Text>
+                )}
+
                 <View style={styles.productMeta}>
-                    <Text style={styles.productCategory}>{item.category}</Text>
-                    <Text style={styles.postedTime}>{item.postedTime}</Text>
+                    <Text style={styles.productCategory}>{item.category?.name || 'Uncategorized'}</Text>
+                    <Text style={styles.postedTime}>
+                        {item.created_at ? getHumanReadableTime(item.created_at) : 'Unknown'}
+                    </Text>
                 </View>
-                <Text style={styles.productPrice}>{item.price}</Text>
+
+                <View style={styles.priceAndTypeContainer}>
+                    <Text style={styles.productPrice}>
+                        {item.post_details?.amount ? `₹${parseInt(item.post_details.amount).toLocaleString()}` : 'Price not specified'}
+                    </Text>
+                    {/* Show type badge (sell/rent) */}
+                    <View style={styles.typeBadge}>
+                        <Text style={[styles.typeBadgeText, {
+                            backgroundColor: item.type === 'sell' ? '#4CAF50' : '#FF9800',
+                            color: '#FFFFFF'
+                        }]}>
+                            {item.type === 'sell' ? 'Sell' : 'Rent'}
+                        </Text>
+                    </View>
+                </View>
             </View>
             <TouchableOpacity style={styles.productAction}>
                 <Icon name="chevron-right" size={normalize(20)} color="#1A1A1A" />
@@ -433,9 +478,34 @@ const CompanyDetailsPage = ({ route }) => {
                         <FlatList
                             data={products}
                             renderItem={renderProductItem}
-                            keyExtractor={item => item.id}
+                                keyExtractor={item => item.id.toString()}
                             scrollEnabled={false}
                             style={styles.productsList}
+                                onEndReached={loadMoreProducts}
+                                onEndReachedThreshold={0.1}
+                                refreshControl={
+                                    <RefreshControl
+                                        refreshing={refreshing}
+                                        onRefresh={handleRefresh}
+                                        colors={['#007bff']}
+                                        tintColor="#007bff"
+                                    />
+                                }
+                                ListFooterComponent={() => (
+                                    isLoadingProducts ? (
+                                        <View style={styles.loadingContainer}>
+                                            <ActivityIndicator size="small" color="#007bff" />
+                                            <Text style={styles.loadingText}>Loading more products...</Text>
+                                        </View>
+                                    ) : null
+                                )}
+                                ListEmptyComponent={() => (
+                                    <View style={styles.emptyContainer}>
+                                        <Icon name="package-variant" size={normalize(48)} color="#ccc" />
+                                        <Text style={styles.emptyText}>No products found</Text>
+                                        <Text style={styles.emptySubText}>This company hasn't posted any products yet</Text>
+                                    </View>
+                                )}
                         />
                     </View>
                 )}
@@ -682,6 +752,29 @@ const styles = StyleSheet.create({
     postedTime: { fontSize: normalize(11), color: '#9CA3AF', fontWeight: '500' },
     productPrice: { fontSize: normalize(14), fontWeight: "700", color: "#007BFF" },
     productAction: { padding: normalize(6) },
+    productBrand: {
+        fontSize: normalize(12),
+        color: '#6B7280',
+        marginBottom: normalize(4),
+        fontStyle: 'italic',
+    },
+    priceAndTypeContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: normalize(4),
+    },
+    typeBadge: {
+        // marginTop: normalize(4),
+    },
+    typeBadgeText: {
+        fontSize: normalize(10),
+        fontWeight: '600',
+        paddingHorizontal: normalize(8),
+        paddingVertical: normalize(2),
+        borderRadius: normalize(10),
+        alignSelf: 'flex-start',
+    },
 
     contactItem: {
         flexDirection: "row",
@@ -739,6 +832,37 @@ const styles = StyleSheet.create({
     },
 
     bottomPadding: { height: normalize(20) },
+
+    // Loading and empty states
+    loadingContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: normalize(16),
+    },
+    loadingText: {
+        marginLeft: normalize(8),
+        fontSize: normalize(14),
+        color: '#6B7280',
+    },
+    emptyContainer: {
+        alignItems: 'center',
+        paddingVertical: normalize(40),
+        paddingHorizontal: normalize(20),
+    },
+    emptyText: {
+        fontSize: normalize(16),
+        fontWeight: '600',
+        color: '#6B7280',
+        marginTop: normalize(12),
+        textAlign: 'center',
+    },
+    emptySubText: {
+        fontSize: normalize(14),
+        color: '#9CA3AF',
+        marginTop: normalize(4),
+        textAlign: 'center',
+    },
 });
 
 export default CompanyDetailsPage;

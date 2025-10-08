@@ -25,7 +25,9 @@ const Others = ({ product, buyerId }) => {
             key !== 'created_at' &&
             key !== 'updated_at' &&
             value !== null &&
-            value !== ''
+            value !== '' &&
+            value !== undefined &&
+            typeof value !== 'object'
         )
         .map(([key, value]) => ({
             label: key.split('_').map(word =>
@@ -46,54 +48,72 @@ const Others = ({ product, buyerId }) => {
             quantity: 'numeric',
             location: 'map-marker',
             contact: 'phone',
+            brand: 'tag',
+            model: 'tag-outline',
+            year: 'calendar',
+            mileage: 'speedometer',
+            fuel: 'fuel',
+            transmission: 'cog',
+            engine: 'engine',
+            power: 'lightning-bolt',
+            capacity: 'cube-outline',
+            warranty: 'shield-check',
+            features: 'star',
+            accessories: 'package-variant',
+            status: 'check-circle',
+            availability: 'clock',
+            delivery: 'truck-delivery',
+            payment: 'credit-card',
+            negotiable: 'handshake',
+            urgent: 'alert',
+            verified: 'check-decagram',
             default: 'information'
         };
         return iconMap[fieldName] || iconMap.default;
     }
 
-    const isSingleItem = productDetails.length === 1;
+    // Don't show if only one item (as requested)
+    if (productDetails.length <= 1) {
+        return null;
+    }
 
     return (
-        <View style={styles.container}>
-            {productDetails.length > 0 ? (
-                <View style={[
-                    styles.gridContainer,
-                    isSingleItem && styles.fullWidthContainer
-                ]}>
-                    {productDetails.map((detail, index) => (
-                        <View
-                            key={index}
-                            style={[
-                                styles.detailItem,
-                                isSingleItem && styles.fullWidthItem
-                            ]}
-                        >
-                            <View style={styles.iconContainer}>
-                                <Icon
-                                    name={detail.icon}
-                                    size={normalize(16)}
-                                    color={
-                                        detail.label.toLowerCase().includes('price') ? '#4CAF50' : '#666'
-                                    }
-                                />
-                            </View>
-                            <View style={styles.textContainer}>
-                                <Text style={styles.label}>{detail.label}</Text>
-                                <Text style={[
-                                    styles.value,
-                                    detail.label.toLowerCase().includes('price') && styles.highlightValue
-                                ]}>
-                                    {detail.value.toString()}
-                                </Text>
-                            </View>
+        <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Product Details</Text>
+            <View style={styles.othersGrid}>
+                {productDetails.map((detail, index) => (
+                    <View key={index} style={styles.othersItem}>
+                        <View style={styles.othersIconContainer}>
+                            <Icon
+                                name={detail.icon}
+                                size={normalize(14)}
+                                color={getIconColor(detail.label || '')}
+                            />
                         </View>
-                    ))}
-                </View>
-            ) : (
-                <Text style={styles.noDetailsText}>No detailed information available</Text>
-            )}
+                        <View style={styles.othersTextContainer}>
+                            <Text style={styles.othersLabel}>{detail.label || 'Unknown'}</Text>
+                            <Text style={[
+                                styles.othersValue,
+                                detail.label && detail.label.toLowerCase().includes('price') && styles.othersHighlightValue
+                            ]}>
+                                {detail.value ? detail.value.toString() : 'N/A'}
+                            </Text>
+                        </View>
+                    </View>
+                ))}
+            </View>
         </View>
     );
+
+    function getIconColor(label) {
+        const lowerLabel = label.toLowerCase();
+        if (lowerLabel.includes('price') || lowerLabel.includes('amount')) return '#4CAF50';
+        if (lowerLabel.includes('condition') || lowerLabel.includes('status')) return '#2196F3';
+        if (lowerLabel.includes('brand') || lowerLabel.includes('model')) return '#FF9800';
+        if (lowerLabel.includes('year') || lowerLabel.includes('mileage')) return '#9C27B0';
+        if (lowerLabel.includes('warranty') || lowerLabel.includes('verified')) return '#4CAF50';
+        return '#666';
+    }
 };
 
 export default Others;

@@ -207,90 +207,6 @@ export default StyleSheet.create({
         textAlign: 'center',
         padding: 12
     },
-    gridContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between'
-    },
-    detailItem: {
-        width: '48%',
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 8,
-        paddingHorizontal: 4,
-        marginBottom: 8,
-        backgroundColor: '#f9f9f9',
-        borderRadius: 8
-    },
-    iconContainer: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: '#f0f0f0',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 10
-    },
-    textContainer: {
-        flex: 1
-    },
-    label: {
-        fontSize: 12,
-        color: '#666',
-        marginBottom: 2
-    },
-    value: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#333'
-    },
-    container: {
-        padding: 12,
-        backgroundColor: '#fff',
-        borderRadius: 12
-    },
-    gridContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between'
-    },
-    detailItem: {
-        width: '48%',
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 8,
-        paddingHorizontal: 4,
-        marginBottom: 8,
-        backgroundColor: '#f9f9f9',
-        borderRadius: 8
-    },
-    iconContainer: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: '#f0f0f0',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 10
-    },
-    textContainer: {
-        flex: 1
-    },
-    label: {
-        fontSize: 12,
-        color: '#666',
-        marginBottom: 2
-    },
-    value: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#333'
-    },
-    errorText: {
-        color: '#d32f2f',
-        textAlign: 'center',
-        padding: 12
-    },
     landPlotHighlight: {
         color: '#8d6e63',  // Earth tone for land-related highlights
         fontWeight: '700'
@@ -335,10 +251,6 @@ export default StyleSheet.create({
         marginRight: 10
     },
     highlightValue: {
-        color: '#2e7d32',
-        fontWeight: '700'
-    },
-    highlightValue: {
         color: '#2e7d32', // Green for positive highlights
         fontWeight: '700'
     },
@@ -375,27 +287,72 @@ export default StyleSheet.create({
         padding: 12,
         marginBottom: 10,
     },
-    highlightValue: {
-        color: '#4CAF50',
-        fontWeight: '600',
-    },
-    sectionContainer: {
-        marginTop: 20,
-        paddingHorizontal: 15,
+    // Others component styles - using existing section styles
+    section: {
+        backgroundColor: '#FFFFFF',
+        padding: normalize(16),
+        marginHorizontal: normalize(16),
+        marginTop: normalize(8),
+        borderRadius: normalize(12),
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.06,
+        shadowRadius: 3,
+        elevation: 2,
     },
     sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 12,
+        fontSize: normalize(16),
+        fontWeight: '600',
         color: '#333',
-        borderBottomWidth: 1,
-        borderBottomColor: '#ddd',
-        paddingBottom: 8,
+        marginBottom: normalize(8),
     },
-    descriptionText: {
-        fontSize: 15,
-        lineHeight: 22,
-        color: '#444',
-        textAlign: 'justify',
+    othersGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+    },
+    othersItem: {
+        width: '48%',
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: normalize(6),
+        paddingHorizontal: normalize(6),
+        marginBottom: normalize(6),
+        backgroundColor: '#f8f9fa',
+        borderRadius: normalize(6),
+        borderWidth: 0.5,
+        borderColor: '#e9ecef',
+    },
+    othersIconContainer: {
+        width: normalize(24),
+        height: normalize(24),
+        borderRadius: normalize(12),
+        backgroundColor: '#fff',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: normalize(6),
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 0.5 },
+        shadowOpacity: 0.05,
+        shadowRadius: 1,
+        elevation: 1,
+    },
+    othersTextContainer: {
+        flex: 1,
+    },
+    othersLabel: {
+        fontSize: normalize(9),
+        color: '#6c757d',
+        marginBottom: normalize(1),
+        fontWeight: '500',
+    },
+    othersValue: {
+        fontSize: normalize(11),
+        fontWeight: '600',
+        color: '#333',
+    },
+    othersHighlightValue: {
+        color: '#28a745',
+        fontWeight: '700',
     },
 });

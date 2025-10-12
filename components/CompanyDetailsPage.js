@@ -127,6 +127,7 @@ const getActivityColor = (timestamp) => {
 
 const CompanyDetailsPage = ({ route }) => {
     const navigation = useNavigation();
+    const [buyerId, setBuyerId] = useState(null);
     const [isFollowing, setIsFollowing] = useState(false);
     const [activeTab, setActiveTab] = useState("products");
     const [company, setCompany] = useState(null);
@@ -144,6 +145,20 @@ const CompanyDetailsPage = ({ route }) => {
 
     // Get user ID from route params or use a default
     const userId = route?.params?.userId || '01980f61-6523-7063-9b37-fd08da364792';
+
+    // Load buyer ID from AsyncStorage
+    useEffect(() => {
+        const loadBuyerId = async () => {
+            try {
+                const storedBuyerId = await AsyncStorage.getItem('userId');
+                setBuyerId(storedBuyerId);
+            } catch (error) {
+                console.error('Failed to load buyer ID:', error);
+            }
+        };
+
+        loadBuyerId();
+    }, []);
 
     // Fetch company details from API
     useEffect(() => {
@@ -340,6 +355,19 @@ const CompanyDetailsPage = ({ route }) => {
     const handleCall = () => Linking.openURL(`tel:${company.phone}`);
     const handleEmail = () => Linking.openURL(`mailto:${company.email}`);
     const handleWebsite = () => Linking.openURL(`https://${company.website}`);
+
+    const handleChatWithCompany = () => {
+        if (buyerId && company && userId) {
+            navigation.navigate('ChatBox', {
+                sellerId: userId,
+                buyerId,
+                postId: '', // Empty string for company chat (no specific post)
+                postTitle: company.name,
+                postImage: company.profileImage || null,
+                chatId: null
+            });
+        }
+    };
 
     // Loading state
     if (loading) {
@@ -680,17 +708,21 @@ const CompanyDetailsPage = ({ route }) => {
                 </ScrollView>
 
                 {/* Floating Action Buttons - Right Side */}
-                <View style={styles.floatingButtonContainer}>
-                    <TouchableOpacity style={[styles.floatingButton, styles.callButton]} onPress={handleCall}>
-                        <Icon name="phone" size={normalize(18)} color="#fff" />
-                        <Text style={styles.floatingButtonText}>Call</Text>
-                    </TouchableOpacity>
+                {/* {buyerId !== userId && company && (
+                    <View style={styles.floatingButtonContainer}>
+                        {company.phone && company.phone !== 'Phone not provided' && (
+                            <TouchableOpacity style={[styles.floatingButton, styles.callButton]} onPress={handleCall}>
+                                <Icon name="phone" size={normalize(18)} color="#fff" />
+                                <Text style={styles.floatingButtonText}>Call</Text>
+                            </TouchableOpacity>
+                        )}
 
-                    <TouchableOpacity style={[styles.floatingButton, styles.chatButton]} onPress={handleEmail}>
-                        <Icon name="message-text" size={normalize(18)} color="#fff" />
-                        <Text style={styles.floatingButtonText}>Chat</Text>
-                    </TouchableOpacity>
-                </View>
+                        <TouchableOpacity style={[styles.floatingButton, styles.chatButton]} onPress={handleChatWithCompany}>
+                            <Icon name="message-text" size={normalize(18)} color="#fff" />
+                            <Text style={styles.floatingButtonText}>Chat</Text>
+                        </TouchableOpacity>
+                    </View>
+                )} */}
             </View>
         </>
     );

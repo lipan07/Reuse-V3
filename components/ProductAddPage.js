@@ -204,6 +204,14 @@ const staticCategories = [
       { id: 75, parent_id: 66, guard_name: "other_services", name: "Other Services" },
     ],
   },
+  {
+    id: 76,
+    parent_id: null,
+    guard_name: "others",
+    name: "Others",
+    color: "#6b7280", // Gray
+    children: [],
+  },
 ];
 
 const ProductAddPage = () => {
@@ -257,6 +265,12 @@ const ProductAddPage = () => {
           break;
         case 'mobiles':
           navigation.navigate('AddMobileTablets', {
+            category: category,
+            subcategory: category
+          });
+          break;
+        case 'others':
+          navigation.navigate('AddOthers', {
             category: category,
             subcategory: category
           });

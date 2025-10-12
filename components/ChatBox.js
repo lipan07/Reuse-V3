@@ -281,6 +281,17 @@ const ChatBox = ({ route }) => {
   const openChat = async (sellerId, buyerId, postId) => {
     try {
       const token = await AsyncStorage.getItem('authToken');
+
+      // Prepare the request body - only include post_id if it's not empty
+      const requestBody = {
+        seller_id: sellerId,
+        buyer_id: buyerId
+      };
+
+      if (postId && postId.trim() !== '') {
+        requestBody.post_id = postId;
+      }
+
       const response = await fetch(`${process.env.BASE_URL}/open-chat`, {
         method: 'POST',
         headers: {
@@ -288,7 +299,7 @@ const ChatBox = ({ route }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ seller_id: sellerId, buyer_id: buyerId, post_id: postId }),
+        body: JSON.stringify(requestBody),
       });
       const data = await response.json();
       setChatId(data.chat.id);
@@ -309,8 +320,8 @@ const ChatBox = ({ route }) => {
         ? { chat_id: chatId, message }
         : {
           receiver_id: sellerId,
-          post_id: postId,
           message,
+          ...(postId && postId.trim() !== '' && { post_id: postId }),
         };
 
       // Create a temporary message object to show immediately

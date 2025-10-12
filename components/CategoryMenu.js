@@ -29,13 +29,13 @@ const CategoryMenu = ({ onCategorySelect, selectedCategory }) => {
     { id: '55', name: 'Books, Sports & Hobbies', icon: 'menu-book', color: '#14b8a6', type: 'M' },    // Teal
     { id: '61', name: 'Pets', icon: 'paw', color: '#f97316', type: 'FA5' },         // Orange
     { id: '66', name: 'Services', icon: 'tools', color: '#06b6d4', type: 'FA5' },   // Cyan
-    { id: 'other', name: 'Other', icon: 'dots-horizontal', color: '#6b7280', type: 'MC' },   // Gray
+    { id: '76', name: 'Others', icon: 'dots-horizontal', color: '#6b7280', type: 'MC' },   // Gray
   ];
 
   // Show only first 11 categories initially, rest when "Show All" is clicked
   // When expanded, show all parent categories + Other category
-  const parentCategories = allCategories.filter(cat => cat.id !== 'other');
-  const otherCategory = allCategories.find(cat => cat.id === 'other');
+  const parentCategories = allCategories.filter(cat => cat.id !== '76');
+  const otherCategory = allCategories.find(cat => cat.id === '76');
 
   const visibleCategories = showAll
     ? [...parentCategories, otherCategory]

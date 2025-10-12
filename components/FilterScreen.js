@@ -48,7 +48,7 @@ const FilterScreen = ({ navigation }) => {
         { id: '55', name: 'Books, Sports & Hobbies', icon: 'menu-book', color: '#14b8a6', type: 'M' },    // Teal
         { id: '61', name: 'Pets', icon: 'paw', color: '#f97316', type: 'FA5' },         // Orange
         { id: '66', name: 'Services', icon: 'tools', color: '#06b6d4', type: 'FA5' },   // Cyan
-        { id: 'other', name: 'Other', icon: 'dots-horizontal', color: '#6b7280', type: 'MC' },   // Gray
+        { id: '76', name: 'Others', icon: 'dots-horizontal', color: '#6b7280', type: 'MC' },   // Gray
     ];
 
     // Available options

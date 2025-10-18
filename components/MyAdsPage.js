@@ -140,7 +140,7 @@ const MyAdsPage = ({ navigation }) => {
         )}
         <View style={styles.productDetails}>
           <Text style={styles.productName}>{item.title}</Text>
-          <Text style={styles.productDesc}>{item.post_details.description}</Text>
+          <Text style={styles.productDesc}>{item.post_details?.description || item.description || ''}</Text>
           <Text style={styles.price}>Price: ${item.post_details.amount}</Text>
         </View>
         <Icon name="angle-right" size={24} color="#007BFF" style={styles.arrowIcon} />

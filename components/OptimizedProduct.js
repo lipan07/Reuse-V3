@@ -107,15 +107,9 @@ const OptimizedProduct = memo(({ item, distance }) => {
         {/* Price */}
         <View style={styles.priceContainer}>
           <Text style={styles.price}>
-            {!(item.category_id >= 9 && item.category_id <= 23) ? (
               <Text style={styles.priceText}>
                 ₹{item.post_details?.amount || 'N/A'}
-              </Text>
-            ) : (
-              <Text style={styles.priceText}>
-                ₹{item.post_details?.salary_from || 'N/A'} - ₹{item.post_details?.salary_to || 'N/A'}
-              </Text>
-            )}
+            </Text>
           </Text>
         </View>
       </View>

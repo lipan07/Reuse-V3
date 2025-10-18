@@ -430,7 +430,7 @@ const Home = () => {
         <View style={styles.textContainer}>
           <Text style={styles.productName} numberOfLines={1}>{item.title}</Text>
           <Text style={styles.details} numberOfLines={2} ellipsizeMode="tail">
-            {item.post_details.description}
+            {item.post_details?.description || item.description || ''}
           </Text>
 
           {/* Location and Distance Row */}
@@ -445,13 +445,7 @@ const Home = () => {
 
           <View style={styles.priceAddressContainer}>
             <Text style={styles.price}>
-              {!(item.category_id >= 9 && item.category_id <= 23) ? (
-                <Text style={styles.priceText}>₹{item.post_details?.amount || 'N/A'}</Text>
-              ) : (
-                <Text style={styles.priceText}>
-                  ₹{item.post_details?.salary_from || 'N/A'} - ₹{item.post_details?.salary_to || 'N/A'}
-                </Text>
-              )}
+              <Text style={styles.priceText}>₹{item.post_details?.amount || 'N/A'}</Text>
             </Text>
           </View>
         </View>

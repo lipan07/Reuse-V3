@@ -424,26 +424,7 @@ const ProductDetails = () => {
                 <View style={styles.headerContainer}>
                     <View style={styles.headerTopRow}>
                         <Text style={styles.priceText}>
-                            {(() => {
-                                if (!product || !product.post_details) return '---';
-
-                                if (product.category_id >= 9 && product.category_id <= 23) {
-                                    // Job category with salary range
-                                    const from = product.post_details.salary_from;
-                                    const to = product.post_details.salary_to;
-
-                                    if (!from && !to) return '---';
-
-                                    const fromText = from ? `₹${from}` : '';
-                                    const toText = to ? `₹${to}` : '';
-                                    const separator = from && to ? ' - ' : '';
-
-                                    return `${fromText}${separator}${toText}`;
-                                } else {
-                                    // Regular product with amount
-                                    return product.post_details.amount ? `₹${product.post_details.amount}` : '---';
-                                }
-                            })()}
+                            {product?.post_details?.amount ? `₹${product.post_details.amount}` : '---'}
                         </Text>
                         {buyerId !== product.user?.id && (
                             <TouchableOpacity onPress={() => {
@@ -499,7 +480,7 @@ const ProductDetails = () => {
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Description</Text>
                         <Text style={styles.descriptionText}>
-                            {product.post_details?.description || 'No description available'}
+                            {product.post_details?.description || product.description || 'No description available'}
                         </Text>
                     </View>
                 )}

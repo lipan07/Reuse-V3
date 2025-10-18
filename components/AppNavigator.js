@@ -9,7 +9,7 @@ import Home from './Home';
 import FilterScreen from './FilterScreen';
 import ProductDetails from './ProductDetailsPage';
 import FullScreenMap from './FullScreenMap';
-import ImageViewer from './ImageViewer';
+import ImageZoomViewerScreen from './ImageZoomViewerScreen';
 import ChatBox from './ChatBox';
 import ChatList from './ChatList';
 import MyAdsPage from './MyAdsPage';
@@ -87,7 +87,7 @@ const AppNavigator = () => {
         />
         <Stack.Screen
           name="ImageViewer"
-          component={ImageViewer}
+          component={ImageZoomViewerScreen}
           options={{ headerShown: false }}
         />
         <Stack.Screen

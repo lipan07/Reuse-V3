@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Dialog, ALERT_TYPE } from 'react-native-alert-notification';
 
 // Function to handle follow/unfollow API call
-export const toggleFollow = async (companyId, isFollowing, setIsFollowing) => {
+export const toggleFollow = async (postId, isFollowing, setIsFollowing) => {
     try {
         const token = await AsyncStorage.getItem('authToken');
         if (!token) {
@@ -15,7 +15,7 @@ export const toggleFollow = async (companyId, isFollowing, setIsFollowing) => {
             return;
         }
 
-        const apiUrl = `${process.env.BASE_URL}/follow-user`;
+        const apiUrl = `${process.env.BASE_URL}/follow-post`;
 
         const response = await fetch(apiUrl, {
             method: 'POST',
@@ -23,7 +23,7 @@ export const toggleFollow = async (companyId, isFollowing, setIsFollowing) => {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({ following_id: companyId }),
+            body: JSON.stringify({ post_id: postId }),
         });
 
         const result = await response.json();

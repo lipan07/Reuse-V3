@@ -9,10 +9,12 @@ const useFollowPost = (product) => {
     }, [product]);
 
     const toggleFollow = async () => {
-        console.log('Toggling follow for post:', product.id);
+        console.log('[FOLLOW][POST] Toggling follow for post:', product.id);
         try {
             const token = await AsyncStorage.getItem('authToken');
-            const response = await fetch(`${process.env.BASE_URL}/follow-post`, {
+            const url = `${process.env.BASE_URL}/follow-post`;
+            console.log('[FOLLOW][POST] Request →', url, { post_id: product.id });
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -23,11 +25,14 @@ const useFollowPost = (product) => {
 
             if (response.ok) {
                 setIsFollowed((prev) => !prev);
+                const json = await response.json().catch(() => null);
+                console.log('[FOLLOW][POST] Response ←', { status: response.status, ok: response.ok, body: json });
             } else {
-                console.error('Failed to follow/unfollow.');
+                const text = await response.text();
+                console.error('[FOLLOW][POST] Failed', { status: response.status, body: text });
             }
         } catch (error) {
-            console.error('Error in toggleFollow:', error);
+            console.error('[FOLLOW][POST] Error', error);
         }
     };
 

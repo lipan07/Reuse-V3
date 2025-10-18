@@ -17,7 +17,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MapView, { Marker } from 'react-native-maps';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import ImageView from 'react-native-image-viewing';
+// import ImageView from 'react-native-image-viewing'; // Replaced with custom EnhancedImageViewer
 import Others from './ProductDetails/Others';
 import ReportPostModal from './ReportPostModal';
 import ModalScreen from './SupportElement/ModalScreen';
@@ -31,7 +31,6 @@ const normalize = (size) => Math.round(scale * size);
 
 const ProductDetails = () => {
     const [buyerId, setBuyerId] = useState(null);
-    const [userFollowed, setUserFollowed] = useState(false);
     const [product, setProduct] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -40,13 +39,12 @@ const ProductDetails = () => {
     const [modalType, setModalType] = useState('info');
     const [modalTitle, setModalTitle] = useState('');
     const [modalMessage, setModalMessage] = useState('');
-    const [visibleImageView, setVisibleImageView] = useState(false);
-    const [imageIndex, setImageIndex] = useState(0);
     const [isScrolling, setIsScrolling] = useState(false);
     const [userLocation, setUserLocation] = useState(null);
     const [productDistance, setProductDistance] = useState(null);
 
-    const { isFollowed, toggleFollow } = useFollowPost(product); // Use the hook
+    // Separate states for post follow vs user follow
+    const { isFollowed: isPostFollowed, toggleFollow: togglePostFollow } = useFollowPost(product);
 
     const navigation = useNavigation();
     const route = useRoute();
@@ -150,7 +148,6 @@ const ProductDetails = () => {
                 const data = await response.json();
                 console.log('ProductDetails', data);
                 setProduct(data.data);
-                setUserFollowed(data.is_following_post_user === true);
             } catch (error) {
                 console.error('Error:', error);
             } finally {
@@ -216,34 +213,7 @@ const ProductDetails = () => {
     const handleTouchStart = () => setIsScrolling(true);
     const handleTouchEnd = () => setIsScrolling(false);
 
-    const toggleUserFollow = async () => {
-        try {
-            const token = await AsyncStorage.getItem('authToken');
-            const response = await fetch(`${process.env.BASE_URL}/follow-user`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({ following_id: product.user?.id }),
-            });
-
-            const result = await response.json();
-
-            if (response.ok) {
-                const newStatus = result.data?.is_following ?? !userFollowed;
-                setUserFollowed(newStatus);
-                setProduct(prev => ({
-                    ...prev,
-                    is_following_post_user: newStatus
-                }));
-            } else {
-                throw new Error(result.message || 'Failed to toggle follow status');
-            }
-        } catch (error) {
-            console.error('Error in toggleFollow:', error);
-        }
-    };
+    // Removed user follow from ProductDetails
 
     const handleChatWithSeller = () => {
         if (buyerId && product?.user?.id && product?.id) {
@@ -306,8 +276,10 @@ const ProductDetails = () => {
     };
 
     const openImageViewer = (index) => {
-        setImageIndex(index);
-        setVisibleImageView(true);
+        navigation.navigate('ImageViewer', {
+            images: product.images,
+            selectedIndex: index
+        });
     };
 
     const renderDetails = () => {
@@ -474,11 +446,14 @@ const ProductDetails = () => {
                             })()}
                         </Text>
                         {buyerId !== product.user?.id && (
-                            <TouchableOpacity onPress={toggleUserFollow}>
+                            <TouchableOpacity onPress={() => {
+                                console.log('[FOLLOW][POST] Request →', `${process.env.BASE_URL}/follow-post`, { post_id: product.id });
+                                togglePostFollow();
+                            }}>
                                 <Icon
-                                    name={userFollowed ? 'heart' : 'heart-outline'}
+                                    name={isPostFollowed ? 'heart' : 'heart-outline'}
                                     size={normalize(22)}
-                                    color={userFollowed ? '#FF3B30' : '#8E8E93'}
+                                    color={isPostFollowed ? '#FF3B30' : '#8E8E93'}
                                 />
                             </TouchableOpacity>
                         )}
@@ -547,18 +522,7 @@ const ProductDetails = () => {
                                     <Text style={styles.sellerName}>
                                         {product.user?.name || 'Unknown Seller'}
                                     </Text>
-                                    {buyerId !== product.user?.id && (
-                                        <TouchableOpacity
-                                            style={styles.followSellerButtonInline}
-                                            onPress={toggleUserFollow}
-                                        >
-                                            <Icon
-                                                name={userFollowed ? 'heart' : 'heart-outline'}
-                                                size={normalize(18)}
-                                                color={userFollowed ? '#FF3B30' : '#8E8E93'}
-                                            />
-                                        </TouchableOpacity>
-                                    )}
+                                    {/* User follow removed from Product Details */}
                                 </View>
                                 <View style={styles.sellerMeta}>
                                     <Icon name="star" size={normalize(12)} color="#FFCC00" />
@@ -671,17 +635,7 @@ const ProductDetails = () => {
                 </View>
             )}
 
-            {/* Image Viewer Modal - Exactly as before */}
-            {product.images?.length > 0 && (
-                <ImageView
-                    images={product.images.map(img => ({ uri: img }))}
-                    imageIndex={imageIndex}
-                    visible={visibleImageView}
-                    onRequestClose={() => setVisibleImageView(false)}
-                    presentationStyle="overFullScreen"
-                    animationType="fade"
-                />
-            )}
+            {/* Image Viewer now uses navigation to EnhancedImageViewer */}
 
             {/* Keep all your modals exactly as before */}
             <ReportPostModal

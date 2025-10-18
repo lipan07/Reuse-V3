@@ -326,29 +326,28 @@ const CompanyDetailsPage = ({ route }) => {
     const handleFollow = async () => {
         try {
             const token = await AsyncStorage.getItem('authToken');
-            const apiUrl = `${process.env.BASE_URL}/users/${userId}/follow`;
-            const method = isFollowing ? 'DELETE' : 'POST';
-
-            const response = await fetch(apiUrl, {
-                method: method,
+            const url = `${process.env.BASE_URL}/follow-user`;
+            console.log('[FOLLOW][USER][CompanyDetails] Request →', url, { following_id: userId });
+            const response = await fetch(url, {
+                method: 'POST',
                 headers: {
                     'Accept': 'application/json',
+                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`,
                 },
+                body: JSON.stringify({ following_id: userId })
             });
 
             if (response.ok) {
                 setIsFollowing(!isFollowing);
-                Alert.alert(
-                    !isFollowing ? "Following" : "Unfollowed",
-                    !isFollowing ? "You are now following this company." : "You have unfollowed this company."
-                );
+                const json = await response.json().catch(() => null);
+                console.log('[FOLLOW][USER][CompanyDetails] Response ←', { status: response.status, ok: response.ok, body: json });
             } else {
-                Alert.alert("Error", "Failed to update follow status");
+                const text = await response.text();
+                console.log('[FOLLOW][USER][CompanyDetails] Failed', { status: response.status, body: text });
             }
         } catch (error) {
-            console.error('Error updating follow status:', error);
-            Alert.alert("Error", "Network error. Please try again.");
+            console.error('[FOLLOW][USER][CompanyDetails] Error', error);
         }
     };
 
@@ -499,9 +498,9 @@ const CompanyDetailsPage = ({ route }) => {
                                         onPress={handleFollow}
                                     >
                                         <Icon
-                                            name={isFollowing ? "account-minus" : "account-plus"}
+                                            name={isFollowing ? 'heart' : 'heart-outline'}
                                             size={normalize(20)}
-                                            color={isFollowing ? "#6B7280" : "#007BFF"}
+                                            color={isFollowing ? '#FF3B30' : '#8E8E93'}
                                         />
                                     </TouchableOpacity>
                                 </View>

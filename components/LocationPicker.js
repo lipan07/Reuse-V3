@@ -130,8 +130,6 @@ const LocationPicker = ({ navigation }) => {
         }
     };
 
-    // Removed: handleMapRegionChange was causing constant re-renders
-
     const handleMarkerDragEnd = (e) => {
         const newCoord = e.nativeEvent.coordinate;
         if (newCoord.latitude && newCoord.longitude) {
@@ -255,10 +253,19 @@ const LocationPicker = ({ navigation }) => {
     return (
         <AlertNotificationRoot>
             <CustomStatusBar />
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={styles.container}
-            >
+            <View style={styles.container}>
+                {/* Header */}
+                <View style={styles.header}>
+                    <TouchableOpacity
+                        style={styles.backButton}
+                        onPress={handleCancel}
+                    >
+                        <Icon name="arrow-left" size={normalize(24)} color="#333" />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Select Location</Text>
+                    <View style={styles.headerPlaceholder} />
+                </View>
+
                 <MapView
                     ref={mapRef}
                     style={styles.map}
@@ -276,32 +283,37 @@ const LocationPicker = ({ navigation }) => {
                     showsUserLocation={false}
                     showsMyLocationButton={false}
                 >
-                    {/* Marker - render first */}
-                    <Marker
-                        coordinate={{
-                            latitude: location.latitude,
-                            longitude: location.longitude
-                        }}
-                        draggable
-                        onDragEnd={handleMarkerDragEnd}
-                    >
-                        <View style={styles.markerContainer}>
-                            <View style={styles.markerPin} />
-                            <View style={styles.markerBase} />
-                        </View>
-                    </Marker>
-
-                    {/* 500-meter radius circle - render after marker */}
+                    {/* 500-meter radius circle */}
                     <Circle
                         center={{
                             latitude: location.latitude,
                             longitude: location.longitude
                         }}
                         radius={500}
-                        fillColor="rgba(74, 144, 226, 0.15)"
-                        strokeColor="rgba(74, 144, 226, 0.7)"
+                        fillColor="rgba(0, 122, 255, 0.15)"
+                        strokeColor="rgba(0, 122, 255, 0.5)"
                         strokeWidth={2}
                     />
+
+                    {/* Custom Marker */}
+                    {location.latitude && location.longitude && (
+                        <Marker
+                            coordinate={{
+                                latitude: location.latitude,
+                                longitude: location.longitude
+                            }}
+                            draggable
+                            onDragEnd={handleMarkerDragEnd}
+                            anchor={{ x: 0.5, y: 0.5 }}
+                        >
+                            <View style={styles.markerContainer}>
+                                <View style={styles.markerPulse} />
+                                <View style={styles.markerPin}>
+                                    <Icon name="map-marker" size={normalize(20)} color="#fff" />
+                                </View>
+                            </View>
+                        </Marker>
+                    )}
                 </MapView>
 
                 {/* Search Container */}
@@ -310,7 +322,7 @@ const LocationPicker = ({ navigation }) => {
                         <Icon name="magnify" size={normalize(20)} color="#666" style={styles.searchIcon} />
                         <TextInput
                             style={styles.searchInput}
-                            placeholder="Search location..."
+                            placeholder="Search for a location..."
                             placeholderTextColor="#999"
                             value={searchQuery}
                             onChangeText={(text) => {
@@ -327,64 +339,63 @@ const LocationPicker = ({ navigation }) => {
                                 }}
                                 style={styles.clearButton}
                             >
-                                <Icon name="close" size={normalize(16)} color="#666" />
+                                <Icon name="close-circle" size={normalize(18)} color="#999" />
                             </TouchableOpacity>
                         )}
                     </View>
 
                     {isLoading && (
-                        <ActivityIndicator
-                            size="small"
-                            color="#4A90E2"
-                            style={styles.loader}
-                        />
-                    )}
-
-                    {predictions.length > 0 && (
-                        <View style={styles.predictionsContainer}>
-                            <FlatList
-                                data={predictions}
-                                keyExtractor={(item) => item.place_id}
-                                renderItem={({ item }) => (
-                                    <TouchableOpacity
-                                        style={styles.predictionItem}
-                                        onPress={() => handlePlaceSelect(item.place_id)}
-                                    >
-                                        <Icon name="map-marker" size={normalize(18)} color="#4A90E2" />
-                                        <Text style={styles.predictionText} numberOfLines={2}>
-                                            {item.description}
-                                        </Text>
-                                    </TouchableOpacity>
-                                )}
-                                ItemSeparatorComponent={() => <View style={styles.separator} />}
-                                keyboardShouldPersistTaps="always"
-                                showsVerticalScrollIndicator={false}
-                            />
+                        <View style={styles.loaderContainer}>
+                            <ActivityIndicator size="small" color="#007AFF" />
                         </View>
                     )}
                 </View>
 
-                {/* Location Info Card */}
-                {/* <View style={styles.locationInfoContainer}>
-                    <View style={styles.locationInfo}>
-                        <Icon name="information-outline" size={normalize(16)} color="#4A90E2" />
-                        <Text style={styles.locationInfoText}>
-                            Drag the marker or search to set your exact location. The circle shows 500-meter radius.
-                        </Text>
+                {/* Predictions List */}
+                {predictions.length > 0 && (
+                    <View style={styles.predictionsContainer}>
+                        <FlatList
+                            data={predictions}
+                            keyExtractor={(item) => item.place_id}
+                            renderItem={({ item }) => (
+                                <TouchableOpacity
+                                    style={styles.predictionItem}
+                                    onPress={() => handlePlaceSelect(item.place_id)}
+                                >
+                                    <Icon name="map-marker-outline" size={normalize(18)} color="#007AFF" />
+                                    <View style={styles.predictionTextContainer}>
+                                        <Text style={styles.predictionPrimary} numberOfLines={1}>
+                                            {item.structured_formatting?.main_text || item.description}
+                                        </Text>
+                                        <Text style={styles.predictionSecondary} numberOfLines={1}>
+                                            {item.structured_formatting?.secondary_text}
+                                        </Text>
+                                    </View>
+                                </TouchableOpacity>
+                            )}
+                            ItemSeparatorComponent={() => <View style={styles.separator} />}
+                            keyboardShouldPersistTaps="always"
+                            showsVerticalScrollIndicator={false}
+                        />
                     </View>
-                </View> */}
+                )}
 
-                {/* Action Buttons */}
-                <View style={styles.buttonContainer}>
+                {/* Selected Address Display */}
+                <View style={styles.addressContainer}>
+                    <View style={styles.addressHeader}>
+                        <Icon name="check-circle" size={normalize(16)} color="#4CAF50" />
+                        <Text style={styles.addressTitle}>Selected Location</Text>
+                    </View>
+                    <Text style={styles.addressText} numberOfLines={2}>
+                        {searchQuery || location.addressText}
+                    </Text>
+                </View>
+
+                {/* Action Button */}
+                <View style={styles.actionContainer}>
                     <TouchableOpacity
-                        onPress={handleCancel}
-                        style={styles.cancelButton}
-                    >
-                        <Text style={styles.cancelButtonText}>Cancel</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        onPress={handleConfirmLocation}
                         style={styles.confirmButton}
+                        onPress={handleConfirmLocation}
                     >
                         <Text style={styles.confirmButtonText}>Confirm Location</Text>
                     </TouchableOpacity>
@@ -397,7 +408,7 @@ const LocationPicker = ({ navigation }) => {
                     message={errorMessage}
                     onClose={() => setShowErrorModal(false)}
                 />
-            </KeyboardAvoidingView>
+            </View>
         </AlertNotificationRoot>
     );
 };
@@ -405,260 +416,293 @@ const LocationPicker = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: '#fff',
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: normalize(20),
+        paddingTop: Platform.OS === 'ios' ? normalizeVertical(50) : (StatusBar.currentHeight || 24) + normalizeVertical(16),
+        paddingBottom: normalizeVertical(16),
+        backgroundColor: '#fff',
+        borderBottomWidth: 0.5,
+        borderBottomColor: '#e0e0e0',
+        zIndex: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 2,
+    },
+    backButton: {
+        padding: normalize(4),
+    },
+    headerTitle: {
+        fontSize: normalize(18),
+        fontWeight: '600',
+        color: '#333',
+    },
+    headerPlaceholder: {
+        width: normalize(32),
     },
     map: {
-        ...StyleSheet.absoluteFillObject,
+        flex: 1,
     },
     searchContainer: {
         position: 'absolute',
-        top: Platform.select({
-            ios: normalizeVertical(50),
-            android: (StatusBar.currentHeight || 24) + normalizeVertical(16),
-        }),
-        width: '90%',
-        alignSelf: 'center',
-        backgroundColor: 'white',
-        borderRadius: normalize(12),
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 8,
+        top: Platform.OS === 'ios' ? normalizeVertical(120) : (StatusBar.currentHeight || 24) + normalizeVertical(86),
+        left: normalize(16),
+        right: normalize(16),
         zIndex: 10,
-        padding: normalize(8),
     },
     searchInputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#f0f0f0',
-        borderRadius: normalize(8),
-        paddingHorizontal: normalize(12),
+        backgroundColor: '#fff',
+        borderRadius: normalize(16),
+        paddingHorizontal: normalize(16),
+        paddingVertical: normalizeVertical(14),
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 4,
+        borderWidth: 0.5,
+        borderColor: '#e8e8e8',
     },
     searchIcon: {
-        marginRight: normalize(8),
+        marginRight: normalize(12),
     },
     searchInput: {
         flex: 1,
-        paddingVertical: normalize(12),
-        fontSize: normalize(14),
+        fontSize: normalize(16),
         color: '#333',
+        padding: 0,
     },
     clearButton: {
         padding: normalize(4),
+        marginLeft: normalize(8),
+    },
+    loaderContainer: {
+        position: 'absolute',
+        right: normalize(16),
+        top: normalizeVertical(14),
     },
     predictionsContainer: {
+        position: 'absolute',
+        top: Platform.OS === 'ios' ? normalizeVertical(190) : (StatusBar.currentHeight || 24) + normalizeVertical(156),
+        left: normalize(20),
+        right: normalize(20),
+        backgroundColor: '#fff',
+        borderRadius: normalize(16),
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 4,
         maxHeight: normalizeVertical(200),
-        marginTop: normalizeVertical(8),
-        borderRadius: normalize(8),
-        backgroundColor: 'white',
-        borderWidth: 1,
-        borderColor: '#e0e0e0',
+        borderWidth: 0.5,
+        borderColor: '#e8e8e8',
+        zIndex: 15,
     },
     predictionItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: normalize(12),
+        padding: normalizeVertical(16),
     },
-    predictionText: {
+    predictionTextContainer: {
         flex: 1,
+        marginLeft: normalize(12),
+    },
+    predictionPrimary: {
         fontSize: normalize(14),
+        fontWeight: '500',
         color: '#333',
-        marginLeft: normalize(8),
+        marginBottom: normalizeVertical(2),
+    },
+    predictionSecondary: {
+        fontSize: normalize(12),
+        color: '#666',
     },
     separator: {
         height: 1,
-        backgroundColor: '#f0f0f0',
-        marginLeft: normalize(40),
+        backgroundColor: '#f5f5f5',
+        marginLeft: normalize(46),
     },
-    loader: {
+    addressContainer: {
         position: 'absolute',
-        right: normalize(16),
-        top: normalize(12),
+        bottom: normalizeVertical(90),
+        left: normalize(20),
+        right: normalize(20),
+        backgroundColor: '#fff',
+        borderRadius: normalize(20),
+        padding: normalizeVertical(16),
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 4,
+        borderWidth: 0.5,
+        borderColor: '#e8e8e8',
+        zIndex: 10,
     },
-    locationInfoContainer: {
-        position: 'absolute',
-        top: Platform.select({
-            ios: normalizeVertical(130),
-            android: (StatusBar.currentHeight || 24) + normalizeVertical(96),
-        }),
-        width: '90%',
-        alignSelf: 'center',
-        zIndex: 5,
-    },
-    locationInfo: {
+    addressHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        padding: normalize(12),
-        borderRadius: normalize(8),
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 4,
+        marginBottom: normalizeVertical(8),
     },
-    locationInfoText: {
-        flex: 1,
+    addressTitle: {
         fontSize: normalize(12),
-        color: '#666',
-        marginLeft: normalize(8),
-        lineHeight: normalize(16),
+        fontWeight: '600',
+        color: '#4CAF50',
+        marginLeft: normalize(6),
+        textTransform: 'uppercase',
     },
-    buttonContainer: {
+    addressText: {
+        fontSize: normalize(14),
+        color: '#333',
+        lineHeight: normalizeVertical(20),
+    },
+    actionContainer: {
         position: 'absolute',
         bottom: normalizeVertical(30),
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: '90%',
-        alignSelf: 'center',
-    },
-    cancelButton: {
-        backgroundColor: 'white',
-        paddingVertical: normalizeVertical(12),
-        paddingHorizontal: normalize(24),
-        borderRadius: normalize(25),
-        borderWidth: 1,
-        borderColor: '#e0e0e0',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-        minWidth: normalize(100),
+        left: normalize(20),
+        right: normalize(20),
+        zIndex: 10,
     },
     confirmButton: {
-        backgroundColor: '#4A90E2',
+        backgroundColor: '#007AFF',
         paddingVertical: normalizeVertical(12),
         paddingHorizontal: normalize(24),
         borderRadius: normalize(25),
-        shadowColor: '#4A90E2',
+        alignItems: 'center',
+        shadowColor: '#007AFF',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
+        shadowOpacity: 0.2,
         shadowRadius: 4,
         elevation: 3,
         minWidth: normalize(120),
     },
-    cancelButtonText: {
-        fontSize: normalize(14),
-        fontWeight: '600',
-        color: '#666',
-        textAlign: 'center',
-    },
     confirmButtonText: {
         fontSize: normalize(14),
         fontWeight: '600',
-        color: 'white',
-        textAlign: 'center',
+        color: '#fff',
     },
     markerContainer: {
         alignItems: 'center',
         justifyContent: 'center',
     },
+    markerPulse: {
+        width: normalize(32),
+        height: normalizeVertical(32),
+        borderRadius: normalize(16),
+        backgroundColor: 'rgba(0, 122, 255, 0.15)',
+        position: 'absolute',
+    },
     markerPin: {
-        width: normalize(20),
-        height: normalize(20),
-        borderRadius: normalize(10),
-        backgroundColor: '#4A90E2',
-        borderWidth: 3,
-        borderColor: 'white',
+        width: normalize(40),
+        height: normalizeVertical(40),
+        borderRadius: normalize(20),
+        backgroundColor: '#007AFF',
+        alignItems: 'center',
+        justifyContent: 'center',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 3,
-        elevation: 5,
-    },
-    markerBase: {
-        width: normalize(12),
-        height: normalize(12),
-        borderRadius: normalize(6),
-        backgroundColor: 'rgba(74, 144, 226, 0.4)',
-        position: 'absolute',
-        bottom: normalize(-6),
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 4,
+        borderWidth: 2,
+        borderColor: '#fff',
     },
 });
 
 const mapStyle = [
     {
-        "featureType": "all",
         "elementType": "geometry",
-        "stylers": [
-            {
-                "color": "#f5f5f5"
-            }
-        ]
+        "stylers": [{ "color": "#f5f5f5" }]
     },
     {
-        "featureType": "all",
+        "elementType": "labels.icon",
+        "stylers": [{ "visibility": "on" }]
+    },
+    {
         "elementType": "labels.text.fill",
-        "stylers": [
-            {
-                "color": "#616161"
-            }
-        ]
+        "stylers": [{ "color": "#616161" }]
+    },
+    {
+        "elementType": "labels.text.stroke",
+        "stylers": [{ "color": "#f5f5f5" }]
+    },
+    {
+        "featureType": "administrative.land_parcel",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#bdbdbd" }]
+    },
+    {
+        "featureType": "poi",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#eeeeee" }]
     },
     {
         "featureType": "poi",
         "elementType": "labels.text.fill",
-        "stylers": [
-            {
-                "color": "#757575"
-            }
-        ]
+        "stylers": [{ "color": "#757575" }]
     },
     {
         "featureType": "poi.park",
         "elementType": "geometry",
-        "stylers": [
-            {
-                "color": "#e5e5e5"
-            }
-        ]
+        "stylers": [{ "color": "#e5e5e5" }]
+    },
+    {
+        "featureType": "poi.park",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#9e9e9e" }]
     },
     {
         "featureType": "road",
         "elementType": "geometry",
-        "stylers": [
-            {
-                "color": "#ffffff"
-            }
-        ]
+        "stylers": [{ "color": "#ffffff" }]
     },
     {
         "featureType": "road.arterial",
         "elementType": "labels.text.fill",
-        "stylers": [
-            {
-                "color": "#757575"
-            }
-        ]
+        "stylers": [{ "color": "#757575" }]
     },
     {
         "featureType": "road.highway",
         "elementType": "geometry",
-        "stylers": [
-            {
-                "color": "#dadada"
-            }
-        ]
+        "stylers": [{ "color": "#dadada" }]
+    },
+    {
+        "featureType": "road.highway",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#616161" }]
+    },
+    {
+        "featureType": "road.local",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#9e9e9e" }]
     },
     {
         "featureType": "transit.line",
         "elementType": "geometry",
-        "stylers": [
-            {
-                "color": "#e5e5e5"
-            }
-        ]
+        "stylers": [{ "color": "#e5e5e5" }]
+    },
+    {
+        "featureType": "transit.station",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#eeeeee" }]
     },
     {
         "featureType": "water",
         "elementType": "geometry",
-        "stylers": [
-            {
-                "color": "#c9c9c9"
-            }
-        ]
+        "stylers": [{ "color": "#c9c9c9" }]
+    },
+    {
+        "featureType": "water",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#9e9e9e" }]
     }
 ];
 

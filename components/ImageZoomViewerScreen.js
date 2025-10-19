@@ -1,24 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, TouchableOpacity, Text, StatusBar, Platform, StyleSheet } from 'react-native';
 import ImageView from 'react-native-image-viewing';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const ImageZoomViewerScreen = ({ route, navigation }) => {
     const { images = [], selectedIndex = 0 } = route.params || {};
+    const [currentImageIndex, setCurrentImageIndex] = useState(selectedIndex);
 
-    const imageSources = Array.isArray(images)
-        ? images.map((uri) => ({ uri }))
+    console.log('ImageZoomViewerScreen - Received images:', images);
+    console.log('ImageZoomViewerScreen - Selected index:', selectedIndex);
+
+    const imageSources = Array.isArray(images) 
+        ? images.map((imageUrl) => ({ uri: imageUrl }))
         : [];
+
+    console.log('ImageZoomViewerScreen - Processed imageSources:', imageSources);
 
     const handleClose = () => {
         navigation.goBack();
     };
 
-    const renderHeader = (currentIndex) => (
+    const renderHeader = (imageIndex) => (
         <View style={styles.header}>
             <View style={styles.counterContainer}>
                 <Text style={styles.counterText}>
-                    {currentIndex + 1} / {imageSources.length}
+                    {imageIndex + 1} / {imageSources.length}
                 </Text>
             </View>
 
@@ -32,6 +38,25 @@ const ImageZoomViewerScreen = ({ route, navigation }) => {
         </View>
     );
 
+    // If no images, show error message
+    if (imageSources.length === 0) {
+        return (
+            <View style={styles.container}>
+                <StatusBar
+                    backgroundColor="#000000"
+                    barStyle="light-content"
+                    translucent={Platform.OS === 'android'}
+                />
+                <View style={styles.errorContainer}>
+                    <Text style={styles.errorText}>No images available</Text>
+                    <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+                        <Icon name="close" size={28} color="#fff" />
+                    </TouchableOpacity>
+                </View>
+            </View>
+        );
+    }
+
     return (
         <View style={styles.container}>
             <StatusBar
@@ -42,12 +67,22 @@ const ImageZoomViewerScreen = ({ route, navigation }) => {
 
             <ImageView
                 images={imageSources}
-                imageIndex={selectedIndex}
+                imageIndex={currentImageIndex}
                 visible={true}
                 onRequestClose={handleClose}
+                onImageIndexChange={setCurrentImageIndex}
                 presentationStyle="overFullScreen"
                 animationType="fade"
+                doubleTapToZoomEnabled={true}
+                swipeToCloseEnabled={true}
                 HeaderComponent={({ imageIndex }) => renderHeader(imageIndex)}
+                FooterComponent={({ imageIndex }) => (
+                    <View style={styles.footer}>
+                        <Text style={styles.footerText}>
+                            Pinch to zoom • Double tap to zoom • Swipe to navigate
+                        </Text>
+                    </View>
+                )}
             />
         </View>
     );
@@ -87,6 +122,45 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
         fontWeight: '600',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.9)',
+    },
+    loadingText: {
+        color: '#fff',
+        fontSize: 16,
+        marginTop: 10,
+    },
+    errorContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.9)',
+    },
+    errorText: {
+        color: '#fff',
+        fontSize: 18,
+        marginBottom: 20,
+    },
+    footer: {
+        position: 'absolute',
+        bottom: Platform.OS === 'ios' ? 50 : 30,
+        left: 0,
+        right: 0,
+        alignItems: 'center',
+        paddingHorizontal: 20,
+    },
+    footerText: {
+        color: 'rgba(255, 255, 255, 0.8)',
+        fontSize: 12,
+        textAlign: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 15,
     },
 });
 

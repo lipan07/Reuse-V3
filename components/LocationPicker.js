@@ -40,9 +40,10 @@ const LocationPicker = ({ navigation }) => {
     const [predictions, setPredictions] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [mapReady, setMapReady] = useState(false);
-    const mapRef = useRef(null);
     const [showErrorModal, setShowErrorModal] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
     const skipNextApiCallRef = useRef(false);
+    const mapRef = useRef(null);
 
     const API_KEY = process.env.GOOGLE_MAP_API_KEY || 'your_fallback_key';
     const DEBOUNCE_TIME = 300;
@@ -70,9 +71,16 @@ const LocationPicker = ({ navigation }) => {
             const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(text)}&key=${API_KEY}&components=country:in`;
             const response = await fetch(url);
             const json = await response.json();
-            setPredictions(json.predictions || []);
+
+            if (json.status === 'OK') {
+                setPredictions(json.predictions || []);
+            } else {
+                console.warn('Places API returned status:', json.status);
+                setPredictions([]);
+            }
         } catch (error) {
             console.error('Prediction error:', error);
+            setErrorMessage('Failed to fetch locations. Please check your internet connection.');
             setShowErrorModal(true);
         } finally {
             setIsLoading(false);
@@ -89,8 +97,10 @@ const LocationPicker = ({ navigation }) => {
             if (json.result?.geometry?.location) {
                 const { lat, lng } = json.result.geometry.location;
                 const addressText = json.result.formatted_address || '';
+
                 skipNextApiCallRef.current = true;
                 setSearchQuery(addressText);
+
                 const newLocation = {
                     latitude: lat,
                     longitude: lng,
@@ -98,74 +108,149 @@ const LocationPicker = ({ navigation }) => {
                     longitudeDelta: 0.01,
                     addressText,
                 };
+
                 setLocation(newLocation);
                 setPredictions([]);
 
-                // Animate map to new location immediately
+                // Animate map to new location
                 if (mapRef.current) {
-                    mapRef.current.animateToRegion(newLocation, 1000);
+                    setTimeout(() => {
+                        mapRef.current.animateToRegion(newLocation, 1000);
+                    }, 100);
                 }
+            } else {
+                throw new Error('Invalid location data received');
             }
         } catch (error) {
             console.error('Details error:', error);
+            setErrorMessage('Failed to get location details. Please try again.');
             setShowErrorModal(true);
         } finally {
             setIsLoading(false);
         }
     };
 
+    // Removed: handleMapRegionChange was causing constant re-renders
+
+    const handleMarkerDragEnd = (e) => {
+        const newCoord = e.nativeEvent.coordinate;
+        if (newCoord.latitude && newCoord.longitude) {
+            const updatedLocation = {
+                ...location,
+                latitude: newCoord.latitude,
+                longitude: newCoord.longitude
+            };
+            setLocation(updatedLocation);
+
+            // Reverse geocode to get address when marker is dragged
+            reverseGeocode(newCoord.latitude, newCoord.longitude);
+        }
+    };
+
+    const reverseGeocode = async (lat, lng) => {
+        try {
+            const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${API_KEY}`;
+            const response = await fetch(url);
+            const json = await response.json();
+
+            if (json.status === 'OK' && json.results.length > 0) {
+                const address = json.results[0].formatted_address;
+                setSearchQuery(address);
+                setLocation(prev => ({
+                    ...prev,
+                    addressText: address
+                }));
+            }
+        } catch (error) {
+            console.error('Reverse geocoding error:', error);
+        }
+    };
+
     const handleConfirmLocation = async () => {
         if (!location?.addressText || location.addressText.trim() === '' || searchQuery.trim() === '') {
+            setErrorMessage('Please select a valid location before confirming.');
             setShowErrorModal(true);
             return;
         }
 
         try {
-            await AsyncStorage.setItem('defaultLocation', JSON.stringify({
+            const locationData = {
                 address: location.addressText,
                 latitude: location.latitude,
                 longitude: location.longitude
-            }));
+            };
 
+            await AsyncStorage.setItem('defaultLocation', JSON.stringify(locationData));
             await AsyncStorage.setItem('defaultAddress', JSON.stringify(location));
+
+            console.log('Location saved successfully:', locationData);
             navigation.navigate('Home');
         } catch (error) {
             console.error('Error saving address:', error);
+            setErrorMessage('Failed to save location. Please try again.');
             setShowErrorModal(true);
         }
     };
 
-    useEffect(() => {
-        const loadSavedLocation = async () => {
-            try {
-                const saved = await AsyncStorage.getItem('defaultLocation');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    if (parsed?.latitude && parsed?.longitude) {
-                        setLocation({
-                            latitude: parsed.latitude,
-                            longitude: parsed.longitude,
-                            latitudeDelta: 0.01,
-                            longitudeDelta: 0.01,
-                            addressText: parsed.address || 'New Delhi, India',
-                        });
-                        setSearchQuery(parsed.address || '');
+    const loadSavedLocation = async () => {
+        try {
+            const saved = await AsyncStorage.getItem('defaultLocation');
+            console.log('Saved location from storage:', saved);
+
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                console.log('Parsed saved location:', parsed);
+
+                if (parsed?.latitude && parsed?.longitude) {
+                    const savedLocation = {
+                        latitude: parseFloat(parsed.latitude),
+                        longitude: parseFloat(parsed.longitude),
+                        latitudeDelta: 0.01,
+                        longitudeDelta: 0.01,
+                        addressText: parsed.address || 'Selected Location',
+                    };
+
+                    setLocation(savedLocation);
+                    setSearchQuery(parsed.address || 'Selected Location');
+
+                    console.log('Setting location to saved location:', savedLocation);
+
+                    // Animate to saved location when map is ready
+                    if (mapRef.current) {
+                        setTimeout(() => {
+                            mapRef.current.animateToRegion(savedLocation, 1000);
+                        }, 500);
                     }
                 }
-            } catch (error) {
-                console.error('Failed to load saved location:', error);
+            } else {
+                console.log('No saved location found, using default');
             }
-        };
+        } catch (error) {
+            console.error('Failed to load saved location:', error);
+        }
+    };
 
+    useEffect(() => {
         loadSavedLocation();
     }, []);
 
     // Center map to location when map is ready
     useEffect(() => {
         if (mapReady && location && mapRef.current) {
-            mapRef.current.animateToRegion(location, 1000);
+            console.log('Map ready, animating to location:', location);
+            setTimeout(() => {
+                mapRef.current.animateToRegion(location, 1000);
+            }, 300);
         }
-    }, [mapReady, location]);
+    }, [mapReady]);
+
+    const handleCancel = () => {
+        if (navigation.canGoBack()) {
+            navigation.goBack();
+        } else {
+            navigation.navigate('Home');
+        }
+    };
 
     return (
         <AlertNotificationRoot>
@@ -174,56 +259,52 @@ const LocationPicker = ({ navigation }) => {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.container}
             >
-                {location && (
-                    <MapView
-                        ref={mapRef}
-                        key={`${location.latitude}_${location.longitude}`}
-                        style={styles.map}
-                        region={location}
-                        customMapStyle={mapStyle}
-                        onMapReady={() => setMapReady(true)}
-                        onError={(error) => {
-                            console.log('Map error:', error);
-                            setShowErrorModal(true);
+                <MapView
+                    ref={mapRef}
+                    style={styles.map}
+                    initialRegion={location}
+                    customMapStyle={mapStyle}
+                    onMapReady={() => {
+                        console.log('Map is ready');
+                        setMapReady(true);
+                    }}
+                    onError={(error) => {
+                        console.log('Map error:', error);
+                        setErrorMessage('Map loading failed. Please check your connection.');
+                        setShowErrorModal(true);
+                    }}
+                    showsUserLocation={false}
+                    showsMyLocationButton={false}
+                >
+                    {/* Marker - render first */}
+                    <Marker
+                        coordinate={{
+                            latitude: location.latitude,
+                            longitude: location.longitude
                         }}
+                        draggable
+                        onDragEnd={handleMarkerDragEnd}
                     >
-                        <Marker
-                            coordinate={{
-                                latitude: location.latitude,
-                                longitude: location.longitude
-                            }}
-                            draggable
-                            onDragEnd={(e) => {
-                                const newCoord = e.nativeEvent.coordinate;
-                                if (newCoord.latitude && newCoord.longitude) {
-                                    setLocation({
-                                        ...location,
-                                        latitude: newCoord.latitude,
-                                        longitude: newCoord.longitude
-                                    });
-                                }
-                            }}
-                        >
-                            <View style={styles.markerContainer}>
-                                <View style={styles.markerPin} />
-                                <View style={styles.markerBase} />
-                            </View>
-                        </Marker>
+                        <View style={styles.markerContainer}>
+                            <View style={styles.markerPin} />
+                            <View style={styles.markerBase} />
+                        </View>
+                    </Marker>
 
-                        {/* Add this Circle component */}
-                        <Circle
-                            center={{
-                                latitude: location.latitude,
-                                longitude: location.longitude
-                            }}
-                            radius={200} // 1km in meters
-                            fillColor="rgba(74, 144, 226, 0.2)" // Transparent blue
-                            strokeColor="rgba(74, 145, 226, 0.3)" // Slightly more opaque for the border
-                            strokeWidth={1}
-                        />
-                    </MapView>
-                )}
+                    {/* 500-meter radius circle - render after marker */}
+                    <Circle
+                        center={{
+                            latitude: location.latitude,
+                            longitude: location.longitude
+                        }}
+                        radius={500}
+                        fillColor="rgba(74, 144, 226, 0.15)"
+                        strokeColor="rgba(74, 144, 226, 0.7)"
+                        strokeWidth={2}
+                    />
+                </MapView>
 
+                {/* Search Container */}
                 <View style={styles.searchContainer}>
                     <View style={styles.searchInputContainer}>
                         <Icon name="magnify" size={normalize(20)} color="#666" style={styles.searchIcon} />
@@ -277,14 +358,26 @@ const LocationPicker = ({ navigation }) => {
                                 )}
                                 ItemSeparatorComponent={() => <View style={styles.separator} />}
                                 keyboardShouldPersistTaps="always"
+                                showsVerticalScrollIndicator={false}
                             />
                         </View>
                     )}
                 </View>
 
+                {/* Location Info Card */}
+                {/* <View style={styles.locationInfoContainer}>
+                    <View style={styles.locationInfo}>
+                        <Icon name="information-outline" size={normalize(16)} color="#4A90E2" />
+                        <Text style={styles.locationInfoText}>
+                            Drag the marker or search to set your exact location. The circle shows 500-meter radius.
+                        </Text>
+                    </View>
+                </View> */}
+
+                {/* Action Buttons */}
                 <View style={styles.buttonContainer}>
                     <TouchableOpacity
-                        onPress={() => navigation.goBack()}
+                        onPress={handleCancel}
                         style={styles.cancelButton}
                     >
                         <Text style={styles.cancelButtonText}>Cancel</Text>
@@ -293,7 +386,7 @@ const LocationPicker = ({ navigation }) => {
                         onPress={handleConfirmLocation}
                         style={styles.confirmButton}
                     >
-                        <Text style={styles.confirmButtonText}>Confirm</Text>
+                        <Text style={styles.confirmButtonText}>Confirm Location</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -301,7 +394,7 @@ const LocationPicker = ({ navigation }) => {
                     visible={showErrorModal}
                     type="error"
                     title="Error"
-                    message="An error occurred while processing your request. Please try again."
+                    message={errorMessage}
                     onClose={() => setShowErrorModal(false)}
                 />
             </KeyboardAvoidingView>
@@ -359,6 +452,8 @@ const styles = StyleSheet.create({
         marginTop: normalizeVertical(8),
         borderRadius: normalize(8),
         backgroundColor: 'white',
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
     },
     predictionItem: {
         flexDirection: 'row',
@@ -381,19 +476,47 @@ const styles = StyleSheet.create({
         right: normalize(16),
         top: normalize(12),
     },
+    locationInfoContainer: {
+        position: 'absolute',
+        top: Platform.select({
+            ios: normalizeVertical(130),
+            android: (StatusBar.currentHeight || 24) + normalizeVertical(96),
+        }),
+        width: '90%',
+        alignSelf: 'center',
+        zIndex: 5,
+    },
+    locationInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        padding: normalize(12),
+        borderRadius: normalize(8),
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 4,
+    },
+    locationInfoText: {
+        flex: 1,
+        fontSize: normalize(12),
+        color: '#666',
+        marginLeft: normalize(8),
+        lineHeight: normalize(16),
+    },
     buttonContainer: {
         position: 'absolute',
         bottom: normalizeVertical(30),
         flexDirection: 'row',
-        justifyContent: 'flex-end', // Changed from 'space-between' to 'flex-end'
+        justifyContent: 'space-between',
         width: '90%',
         alignSelf: 'center',
-        gap: normalize(10), // Add some space between buttons
     },
     cancelButton: {
         backgroundColor: 'white',
-        paddingVertical: normalizeVertical(10), // Reduced from 14
-        paddingHorizontal: normalize(20), // Reduced from 24
+        paddingVertical: normalizeVertical(12),
+        paddingHorizontal: normalize(24),
         borderRadius: normalize(25),
         borderWidth: 1,
         borderColor: '#e0e0e0',
@@ -402,46 +525,59 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,
+        minWidth: normalize(100),
     },
     confirmButton: {
         backgroundColor: '#4A90E2',
-        paddingVertical: normalizeVertical(10), // Reduced from 14
-        paddingHorizontal: normalize(20), // Reduced from 24
+        paddingVertical: normalizeVertical(12),
+        paddingHorizontal: normalize(24),
         borderRadius: normalize(25),
         shadowColor: '#4A90E2',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.3,
         shadowRadius: 4,
         elevation: 3,
+        minWidth: normalize(120),
     },
     cancelButtonText: {
-        fontSize: normalize(13), // Reduced from 14
+        fontSize: normalize(14),
         fontWeight: '600',
         color: '#666',
+        textAlign: 'center',
     },
     confirmButtonText: {
-        fontSize: normalize(13), // Reduced from 14
+        fontSize: normalize(14),
         fontWeight: '600',
         color: 'white',
+        textAlign: 'center',
     },
     markerContainer: {
         alignItems: 'center',
+        justifyContent: 'center',
     },
     markerPin: {
-        width: normalize(8),
-        height: normalize(8),
-        borderRadius: normalize(4),
+        width: normalize(20),
+        height: normalize(20),
+        borderRadius: normalize(10),
         backgroundColor: '#4A90E2',
+        borderWidth: 3,
+        borderColor: 'white',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 3,
+        elevation: 5,
     },
     markerBase: {
-        width: normalize(24),
-        height: normalize(24),
-        borderRadius: normalize(12),
-        backgroundColor: 'rgba(74, 144, 226, 0.2)',
+        width: normalize(12),
+        height: normalize(12),
+        borderRadius: normalize(6),
+        backgroundColor: 'rgba(74, 144, 226, 0.4)',
         position: 'absolute',
-        top: normalize(-8),
+        bottom: normalize(-6),
     },
 });
+
 const mapStyle = [
     {
         "featureType": "all",

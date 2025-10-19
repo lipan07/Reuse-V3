@@ -108,7 +108,7 @@ const OptimizedProduct = memo(({ item, distance }) => {
         <View style={styles.priceContainer}>
           <Text style={styles.price}>
               <Text style={styles.priceText}>
-                ₹{item.post_details?.amount || 'N/A'}
+              ₹{item.amount ?? item.post_details?.amount ?? 'N/A'}
             </Text>
           </Text>
         </View>

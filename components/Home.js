@@ -445,7 +445,7 @@ const Home = () => {
 
           <View style={styles.priceAddressContainer}>
             <Text style={styles.price}>
-              <Text style={styles.priceText}>₹{item.post_details?.amount || 'N/A'}</Text>
+              <Text style={styles.priceText}>₹{item.amount ?? item.post_details?.amount ?? 'N/A'}</Text>
             </Text>
           </View>
         </View>

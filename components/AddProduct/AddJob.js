@@ -12,8 +12,7 @@ const AddJob = ({ route, navigation }) => {
   const [formData, setFormData] = useState({
     salaryPeriod: 'Monthly',
     positionType: 'Full-time',
-    salaryFrom: '',
-    salaryTo: '',
+    amount: '',
     adTitle: '',
     description: '',
     address: '',
@@ -174,24 +173,14 @@ const AddJob = ({ route, navigation }) => {
             ))}
           </View>
 
-          {/* Salary From Field */}
-          <Text style={styles.label}>Salary From *</Text>
+          {/* Salary Field (single amount) */}
+          <Text style={styles.label}>Salary *</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter Salary From"
+            placeholder="Enter Salary"
             keyboardType="numeric"
-            value={formData.salaryFrom}
-            onChangeText={(value) => handleChange('salaryFrom', value)}
-          />
-
-          {/* Salary To Field */}
-          <Text style={styles.label}>Salary To *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Salary To"
-            keyboardType="numeric"
-            value={formData.salaryTo}
-            onChangeText={(value) => handleChange('salaryTo', value)}
+            value={String(formData.amount ?? '')}
+            onChangeText={(value) => handleChange('amount', value)}
           />
 
           {/* Title Field */}

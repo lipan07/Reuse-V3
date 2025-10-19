@@ -424,7 +424,7 @@ const ProductDetails = () => {
                 <View style={styles.headerContainer}>
                     <View style={styles.headerTopRow}>
                         <Text style={styles.priceText}>
-                            {product?.post_details?.amount ? `₹${product.post_details.amount}` : '---'}
+                            {product?.amount ? `₹${product.amount}` : (product?.post_details?.amount ? `₹${product.post_details.amount}` : '---')}
                         </Text>
                         {buyerId !== product.user?.id && (
                             <TouchableOpacity onPress={() => {

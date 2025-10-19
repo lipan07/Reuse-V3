@@ -36,6 +36,14 @@ const FollowingPage = ({ navigation }) => {
         setIsLoading(true);
         let endpoint = followingFilter === 'Post' ? `/post/following` : `/user/following`;
 
+        // Try to get BASE_URL from different sources
+        const baseUrl = process.env.BASE_URL || 'https://mk.co.in/api';
+        const fullUrl = `${baseUrl}${endpoint}`;
+
+        console.log('[FollowingPage] BASE_URL:', process.env.BASE_URL);
+        console.log('[FollowingPage] Using URL:', fullUrl);
+        console.log('[FollowingPage] Filter:', followingFilter);
+
         try {
             const authToken = await AsyncStorage.getItem('authToken');
             if (!authToken) {
@@ -44,7 +52,7 @@ const FollowingPage = ({ navigation }) => {
                 return;
             }
 
-            const response = await fetch(`${process.env.BASE_URL}${endpoint}`, {
+            const response = await fetch(fullUrl, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -52,13 +60,48 @@ const FollowingPage = ({ navigation }) => {
                 },
             });
 
+            console.log('[FollowingPage] Response status:', response.status);
+            console.log('[FollowingPage] Response headers:', response.headers);
+
+            // Get response text first to check what we're dealing with
+            const responseText = await response.text();
+            console.log('[FollowingPage] Raw response:', responseText.substring(0, 200) + '...');
+
             if (!response.ok) {
                 console.error('Failed to fetch data:', response.status);
+                console.error('Error response:', responseText);
+                Alert.alert('Error', `Server error: ${response.status}`);
                 setIsLoading(false);
                 return;
             }
 
-            const result = await response.json();
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                console.error('Non-JSON response received:', responseText);
+                Alert.alert('Error', 'Server returned invalid response format');
+                setIsLoading(false);
+                return;
+            }
+
+            let result;
+            try {
+                result = JSON.parse(responseText);
+            } catch (jsonError) {
+                console.error('JSON parse error:', jsonError);
+                console.error('Response that failed to parse:', responseText);
+                Alert.alert('Error', 'Invalid response format from server');
+                setIsLoading(false);
+                return;
+            }
+
+            // Validate result structure
+            if (!result) {
+                console.error('Empty result received');
+                setData([]);
+                setIsLoading(false);
+                return;
+            }
 
             if (followingFilter === 'Company') {
                 const formattedData = (result.following || []).map((item) => ({
@@ -70,24 +113,79 @@ const FollowingPage = ({ navigation }) => {
                 }));
                 setData(formattedData);
             } else {
-                const formattedData = result.map((item) => {
-                    const source = item.post;
+                // Handle both array and object responses
+                const dataArray = Array.isArray(result) ? result : (result.data || result.following || []);
+                const formattedData = dataArray.map((item) => {
+                    const source = item.post || item;
+
+                    // Convert images from objects to URL strings (matching Home.js structure)
+                    const imageUrls = source.images ? source.images.map(img => img.url) : [];
+
+                    // Extract post_details based on category (matching Home.js logic)
+                    let postDetails = {};
+                    if (source.mobile) postDetails = source.mobile;
+                    else if (source.car) postDetails = source.car;
+                    else if (source.housesApartment) postDetails = source.housesApartment;
+                    else if (source.landPlots) postDetails = source.landPlots;
+                    else if (source.fashion) postDetails = source.fashion;
+                    else if (source.bikes) postDetails = source.bikes;
+                    else if (source.jobs) postDetails = source.jobs;
+                    else if (source.pets) postDetails = source.pets;
+
                     return {
-                        id: item.id,
-                        postId: item.post_id,
-                        userId: item.user_id,
-                        title: source.title,
-                        address: source.address,
-                        images: source.images || [],
-                        distance: '5km' || '10km',
-                        createdAt: source.created_at,
+                        // Basic product fields (matching Home.js structure exactly)
+                        id: source.id,
+                        category_id: source.category_id,
+                        user_id: source.user_id,
+                        title: source.title || 'No Title',
+                        address: source.address || 'No Address',
+                        latitude: source.latitude || null,
+                        longitude: source.longitude || null,
+                        amount: source.amount || 0,
+                        type: source.type || 'sell',
+                        status: source.status || 'active',
+                        show_phone: source.show_phone || false,
+                        post_time: source.post_time,
+                        created_at: source.created_at,
+                        updated_at: source.updated_at,
+
+                        // Images as URL strings (matching Home.js)
+                        images: imageUrls,
+
+                        // User object (matching Home.js structure)
+                        user: {
+                            id: source.user?.id || source.user_id,
+                            name: source.user?.name || 'Unknown User',
+                            status: source.user?.status || 'offline',
+                            last_activity: source.user?.last_activity || null,
+                        },
+
+                        // Category object (matching Home.js structure)
+                        category: {
+                            id: source.category?.id || source.category_id,
+                            name: source.category?.name || 'Unknown Category',
+                        },
+
+                        // Follower status (always true for following page)
+                        follower: true,
+
+                        // Post details structure (matching Home.js)
+                        post_details: postDetails
                     };
                 });
                 setData(formattedData);
             }
         } catch (error) {
             console.error('Error fetching data:', error);
-            Alert.alert('Error', 'Failed to load following data');
+            console.error('Error details:', error.message);
+
+            // Show empty data instead of blocking the user
+            setData([]);
+
+            // Only show alert for network errors, not for empty data
+            if (error.message.includes('Network') || error.message.includes('fetch')) {
+                Alert.alert('Network Error', 'Please check your internet connection and try again.');
+            }
         } finally {
             setIsLoading(false);
         }
@@ -116,7 +214,8 @@ const FollowingPage = ({ navigation }) => {
             }
 
             const itemId = followingFilter === 'Post' ? selectedItem.postId : selectedItem.id;
-            const response = await fetch(`${process.env.BASE_URL}${endpoint}`, {
+            const baseUrl = process.env.BASE_URL || 'https://mk.co.in/api';
+            const response = await fetch(`${baseUrl}${endpoint}`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${authToken}`,
@@ -133,8 +232,21 @@ const FollowingPage = ({ navigation }) => {
                 );
                 Alert.alert('Success', `You have unfollowed this ${followingFilter === 'Post' ? 'post' : 'user'}`);
             } else {
-                const errorData = await response.json();
-                Alert.alert('Error', errorData?.message || 'Failed to unfollow.');
+                // Handle non-JSON error responses
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    try {
+                        const errorData = await response.json();
+                        Alert.alert('Error', errorData?.message || 'Failed to unfollow.');
+                    } catch (jsonError) {
+                        console.error('Error parsing error response:', jsonError);
+                        Alert.alert('Error', 'Failed to unfollow.');
+                    }
+                } else {
+                    const errorText = await response.text();
+                    console.error('Non-JSON error response:', errorText);
+                    Alert.alert('Error', 'Failed to unfollow.');
+                }
             }
         } catch (error) {
             console.error('Failed to unfollow:', error);
@@ -142,38 +254,57 @@ const FollowingPage = ({ navigation }) => {
         }
     };
 
+    const handleItemPress = (item) => {
+        if (followingFilter === 'Post') {
+            // Navigate to ProductDetails - same as Home.js
+            navigation.navigate('ProductDetails', { productDetails: item });
+        } else {
+            // Navigate to CompanyDetailsPage
+            navigation.navigate('CompanyDetailsPage', {
+                userId: item.id,
+                user: item
+            });
+        }
+    };
+
     const renderItem = ({ item }) => (
         <View style={[styles.itemContainer, darkMode && styles.darkItemContainer]}>
-            <View style={styles.imageContainer}>
-                <Image
-                    source={{ uri: item.images?.[0]?.url || 'https://via.placeholder.com/60' }}
-                    style={styles.itemImage}
-                />
-                <View style={[styles.statusIndicator, darkMode && styles.darkStatusIndicator]}>
-                    <Icon
-                        name={followingFilter === 'Post' ? 'post' : 'account'}
-                        size={normalize(8)}
-                        color="#fff"
+            <TouchableOpacity
+                style={styles.itemContent}
+                onPress={() => handleItemPress(item)}
+                activeOpacity={0.7}
+            >
+                <View style={styles.imageContainer}>
+                    <Image
+                        source={{ uri: item.images?.[0]?.url || 'https://via.placeholder.com/60' }}
+                        style={styles.itemImage}
                     />
+                    <View style={[styles.statusIndicator, darkMode && styles.darkStatusIndicator]}>
+                        <Icon
+                            name={followingFilter === 'Post' ? 'post' : 'account'}
+                            size={normalize(8)}
+                            color="#fff"
+                        />
+                    </View>
                 </View>
-            </View>
-            <View style={styles.itemInfo}>
-                <Text style={[styles.itemTitle, darkMode && styles.darkText]} numberOfLines={1}>
-                    {item.title || 'No Name'}
-                </Text>
-                <View style={styles.itemMeta}>
-                    <Icon name="map-marker" size={normalize(12)} color={darkMode ? "#aaa" : "#666"} />
-                    <Text style={[styles.itemSubtitle, darkMode && styles.darkSubtitle]} numberOfLines={1}>
-                        {item.address || 'No Address'}
+                <View style={styles.itemInfo}>
+                    <Text style={[styles.itemTitle, darkMode && styles.darkText]} numberOfLines={1}>
+                        {item.title || 'No Name'}
                     </Text>
+                    <View style={styles.itemMeta}>
+                        <Icon name="map-marker" size={normalize(12)} color={darkMode ? "#aaa" : "#666"} />
+                        <Text style={[styles.itemSubtitle, darkMode && styles.darkSubtitle]} numberOfLines={1}>
+                            {item.address || 'No Address'}
+                        </Text>
+                    </View>
+                    <View style={styles.itemMeta}>
+                        <Icon name="clock-outline" size={normalize(12)} color={darkMode ? "#aaa" : "#666"} />
+                        <Text style={[styles.itemDistance, darkMode && styles.darkSubtitle]}>
+                            {item.distance} away
+                        </Text>
+                    </View>
                 </View>
-                <View style={styles.itemMeta}>
-                    <Icon name="clock-outline" size={normalize(12)} color={darkMode ? "#aaa" : "#666"} />
-                    <Text style={[styles.itemDistance, darkMode && styles.darkSubtitle]}>
-                        {item.distance} away
-                    </Text>
-                </View>
-            </View>
+            </TouchableOpacity>
             <AnimatedUnfollowButton
                 onPress={() => handleUnfollow(item)}
                 text="Following"
@@ -479,6 +610,11 @@ const styles = StyleSheet.create({
     darkItemContainer: {
         backgroundColor: '#1E1E1E',
         borderColor: 'rgba(255, 255, 255, 0.1)',
+    },
+    itemContent: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     imageContainer: {
         position: 'relative',

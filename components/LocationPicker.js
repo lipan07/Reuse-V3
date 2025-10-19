@@ -40,6 +40,7 @@ const LocationPicker = ({ navigation }) => {
     const [predictions, setPredictions] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [mapReady, setMapReady] = useState(false);
+    const mapRef = useRef(null);
     const [showErrorModal, setShowErrorModal] = useState(false);
     const skipNextApiCallRef = useRef(false);
 
@@ -90,14 +91,20 @@ const LocationPicker = ({ navigation }) => {
                 const addressText = json.result.formatted_address || '';
                 skipNextApiCallRef.current = true;
                 setSearchQuery(addressText);
-                setLocation({
+                const newLocation = {
                     latitude: lat,
                     longitude: lng,
                     latitudeDelta: 0.01,
                     longitudeDelta: 0.01,
                     addressText,
-                });
+                };
+                setLocation(newLocation);
                 setPredictions([]);
+
+                // Animate map to new location immediately
+                if (mapRef.current) {
+                    mapRef.current.animateToRegion(newLocation, 1000);
+                }
             }
         } catch (error) {
             console.error('Details error:', error);
@@ -153,6 +160,13 @@ const LocationPicker = ({ navigation }) => {
         loadSavedLocation();
     }, []);
 
+    // Center map to location when map is ready
+    useEffect(() => {
+        if (mapReady && location && mapRef.current) {
+            mapRef.current.animateToRegion(location, 1000);
+        }
+    }, [mapReady, location]);
+
     return (
         <AlertNotificationRoot>
             <CustomStatusBar />
@@ -162,6 +176,7 @@ const LocationPicker = ({ navigation }) => {
             >
                 {location && (
                     <MapView
+                        ref={mapRef}
                         key={`${location.latitude}_${location.longitude}`}
                         style={styles.map}
                         region={location}

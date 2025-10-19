@@ -17,6 +17,7 @@ import { useNavigation } from '@react-navigation/native';
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import CustomStatusBar from "./Screens/CustomStatusBar";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import AnimatedFollowButton from './AnimatedFollowButton';
 
 const { width, height } = Dimensions.get("window");
 const scale = width / 375; // Base width for scaling (iPhone 6/7/8)
@@ -457,7 +458,7 @@ const CompanyDetailsPage = ({ route }) => {
 
                 <View style={styles.priceRow}>
                     <Text style={styles.productPrice}>
-                        {item.post_details?.amount ? `₹${parseInt(item.post_details.amount).toLocaleString()}` : 'Price not specified'}
+                        {item.amount ? `₹${parseInt(item.amount).toLocaleString()}` : 'Price not specified'}
                     </Text>
                     <Text style={styles.postedTime}>
                         {item.created_at ? getHumanReadableTime(item.created_at) : 'Unknown'}
@@ -493,16 +494,12 @@ const CompanyDetailsPage = ({ route }) => {
                             <View style={styles.headerTextContainer}>
                                 <View style={styles.nameAndFollowContainer}>
                                     <Text style={styles.companyName}>{company.name}</Text>
-                                    <TouchableOpacity
-                                        style={styles.followIconButton}
+                                    <AnimatedFollowButton
+                                        isFollowing={isFollowing}
                                         onPress={handleFollow}
-                                    >
-                                        <Icon
-                                            name={isFollowing ? 'heart' : 'heart-outline'}
-                                            size={normalize(20)}
-                                            color={isFollowing ? '#FF3B30' : '#8E8E93'}
-                                        />
-                                    </TouchableOpacity>
+                                        size={20}
+                                        style={styles.followButtonContainer}
+                                    />
                                 </View>
                                 <View style={styles.locationContainer}>
                                     <Icon name="map-marker" size={normalize(14)} color="#1A1A1A" />
@@ -763,8 +760,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     companyName: { fontSize: normalize(18), fontWeight: "600", color: "#1A1A1A", flex: 1 },
-    followIconButton: {
-        padding: normalize(4),
+    followButtonContainer: {
         marginLeft: normalize(6),
     },
     locationContainer: { flexDirection: "row", alignItems: "center", marginBottom: normalize(6) },

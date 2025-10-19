@@ -24,6 +24,7 @@ import ModalScreen from './SupportElement/ModalScreen';
 import CustomStatusBar from './Screens/CustomStatusBar';
 import styles from '../assets/css/ProductDetailsPage.styles';
 import useFollowPost from '../hooks/useFollowPost'; // Import the hook
+import AnimatedFollowButton from './AnimatedFollowButton';
 
 const { width, height } = Dimensions.get('window');
 const scale = width / 375;
@@ -427,16 +428,14 @@ const ProductDetails = () => {
                             {product?.amount ? `₹${product.amount}` : (product?.post_details?.amount ? `₹${product.post_details.amount}` : '---')}
                         </Text>
                         {buyerId !== product.user?.id && (
-                            <TouchableOpacity onPress={() => {
-                                console.log('[FOLLOW][POST] Request →', `${process.env.BASE_URL}/follow-post`, { post_id: product.id });
-                                togglePostFollow();
-                            }}>
-                                <Icon
-                                    name={isPostFollowed ? 'heart' : 'heart-outline'}
-                                    size={normalize(22)}
-                                    color={isPostFollowed ? '#FF3B30' : '#8E8E93'}
-                                />
-                            </TouchableOpacity>
+                            <AnimatedFollowButton
+                                isFollowing={isPostFollowed}
+                                onPress={() => {
+                                    console.log('[FOLLOW][POST] Request →', `${process.env.BASE_URL}/follow-post`, { post_id: product.id });
+                                    togglePostFollow();
+                                }}
+                                size={22}
+                            />
                         )}
                     </View>
 

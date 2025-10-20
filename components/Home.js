@@ -40,6 +40,7 @@ const Home = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [hasInitialLoad, setHasInitialLoad] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(route.params?.filters?.category || null);
   const [search, setSearch] = useState(route.params?.filters?.search || '');
   const [showMenu, setShowMenu] = useState(true);
@@ -113,6 +114,7 @@ const Home = () => {
     if (route.params?.products) {
       setProducts(route.params.products);
       setHasMore(false);
+      setHasInitialLoad(true); // Mark as loaded when products are passed from route
     }
   }, [route.params]);
 
@@ -120,14 +122,22 @@ const Home = () => {
     useCallback(() => {
       console.log('Home Screen Focused');
       const fetchInitialData = async () => {
-        if (!route.params?.products) {
+        // Only fetch data if:
+        // 1. No products passed from route params AND
+        // 2. Haven't done initial load yet AND
+        // 3. No existing products in state
+        if (!route.params?.products && !hasInitialLoad && products.length === 0) {
+          console.log('Fetching initial data...');
           await fetchProducts(true, cleanParams(activeFilters));
+          setHasInitialLoad(true);
+        } else {
+          console.log('Preserving existing data, no fetch needed');
         }
       };
 
       const timer = setTimeout(fetchInitialData, 100); // Small delay to avoid race conditions
       return () => clearTimeout(timer);
-    }, [activeFilters, route.params?.products])
+    }, [activeFilters, route.params?.products, hasInitialLoad, products.length])
   );
 
   const fetchProducts = useCallback(async (reset = false, param = null) => {
@@ -254,6 +264,7 @@ const Home = () => {
       // No need to manually check location here
       if (!route.params?.products) {
         fetchProducts(true); // Location will be added automatically if exists
+        setHasInitialLoad(true);
       }
     };
 
@@ -274,6 +285,7 @@ const Home = () => {
     setSelectedCategory(categoryId);
     selectedCategoryRef.current = categoryId;
     setActiveFilters(newFilters);
+    setHasInitialLoad(false); // Reset flag to allow fresh fetch
 
     // Fetch with new filters
     fetchProducts(true, cleanParams(newFilters));
@@ -286,6 +298,7 @@ const Home = () => {
       ...prev,
       search: searchTerm
     }));
+    setHasInitialLoad(false); // Reset flag to allow fresh fetch
 
     const params = {
       search: searchTerm,
@@ -298,6 +311,7 @@ const Home = () => {
   const handleRefresh = async () => {
     console.log('Handle refresh product fetch');
     setRefreshing(true);
+    setHasInitialLoad(false); // Reset flag to allow fresh fetch
     fetchProducts(true, {
       ...activeFilters,
       page: 1
@@ -313,6 +327,7 @@ const Home = () => {
       search: ''
     }));
     searchRef.current = '';
+    setHasInitialLoad(false); // Reset flag to allow fresh fetch
     const param = selectedCategory ? { category: selectedCategory } : {};
     fetchProducts(true, cleanParams(param));
   };
@@ -574,6 +589,7 @@ const Home = () => {
     }
 
     setActiveFilters(newFilters);
+    setHasInitialLoad(false); // Reset flag to allow fresh fetch
     fetchProducts(true, cleanParams(newFilters));
   };
 
@@ -662,6 +678,7 @@ const Home = () => {
               setActiveFilters(resetFilters);
               setSearch('');
               setSelectedCategory(null);
+              setHasInitialLoad(false); // Reset flag to allow fresh fetch
               fetchProducts(true, cleanParams(resetFilters));
             }}
           >

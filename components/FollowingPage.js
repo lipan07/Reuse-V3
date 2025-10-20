@@ -275,10 +275,20 @@ const FollowingPage = ({ navigation }) => {
                 activeOpacity={0.7}
             >
                 <View style={styles.imageContainer}>
-                    <Image
-                        source={{ uri: item.images?.[0]?.url || 'https://via.placeholder.com/60' }}
-                        style={styles.itemImage}
-                    />
+                    {item.images?.[0] ? (
+                        <Image
+                            source={{ uri: item.images[0] }}
+                            style={styles.itemImage}
+                        />
+                    ) : (
+                        <View style={[styles.itemImage, styles.defaultIconContainer]}>
+                            <Icon
+                                name={followingFilter === 'Post' ? 'image' : 'domain'}
+                                size={normalize(24)}
+                                color={darkMode ? "#666" : "#999"}
+                            />
+                        </View>
+                    )}
                     <View style={[styles.statusIndicator, darkMode && styles.darkStatusIndicator]}>
                         <Icon
                             name={followingFilter === 'Post' ? 'post' : 'account'}
@@ -298,9 +308,9 @@ const FollowingPage = ({ navigation }) => {
                         </Text>
                     </View>
                     <View style={styles.itemMeta}>
-                        <Icon name="clock-outline" size={normalize(12)} color={darkMode ? "#aaa" : "#666"} />
+                        <Icon name="circle" size={normalize(8)} color={item.status === 'active' ? '#4CAF50' : '#FF9800'} />
                         <Text style={[styles.itemDistance, darkMode && styles.darkSubtitle]}>
-                            {item.distance} away
+                            {item.status === 'active' ? 'Active' : 'Inactive'}
                         </Text>
                     </View>
                 </View>
@@ -624,6 +634,11 @@ const styles = StyleSheet.create({
         height: normalize(60),
         borderRadius: normalize(30),
         backgroundColor: '#eee',
+    },
+    defaultIconContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#f0f0f0',
     },
     statusIndicator: {
         position: 'absolute',

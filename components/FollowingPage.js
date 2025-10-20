@@ -12,7 +12,8 @@ import {
     StatusBar,
     SafeAreaView,
     Platform,
-    ActivityIndicator
+    ActivityIndicator,
+    Animated
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -31,13 +32,44 @@ const FollowingPage = ({ navigation }) => {
     const [selectedItem, setSelectedItem] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [darkMode, setDarkMode] = useState(false);
+    const [showSweetAlert, setShowSweetAlert] = useState(false);
+    const [sweetAlertMessage, setSweetAlertMessage] = useState('');
+    const [sweetAlertOpacity] = useState(new Animated.Value(0));
+
+    // Sweet Alert functions
+    const showSweetAlertMessage = (message) => {
+        setSweetAlertMessage(message);
+        setShowSweetAlert(true);
+
+        // Animate in
+        Animated.timing(sweetAlertOpacity, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+        }).start();
+
+        // Auto hide after 1 second
+        setTimeout(() => {
+            hideSweetAlert();
+        }, 1000);
+    };
+
+    const hideSweetAlert = () => {
+        Animated.timing(sweetAlertOpacity, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+        }).start(() => {
+            setShowSweetAlert(false);
+        });
+    };
 
     const fetchData = async () => {
         setIsLoading(true);
         let endpoint = followingFilter === 'Post' ? `/post/following` : `/user/following`;
 
         // Try to get BASE_URL from different sources
-        const baseUrl = process.env.BASE_URL || 'https://mk.co.in/api';
+        const baseUrl = process.env.BASE_URL;
         const fullUrl = `${baseUrl}${endpoint}`;
 
         console.log('[FollowingPage] BASE_URL:', process.env.BASE_URL);
@@ -133,6 +165,8 @@ const FollowingPage = ({ navigation }) => {
                     else if (source.pets) postDetails = source.pets;
 
                     return {
+                        // Follow relationship ID (needed for unfollow)
+                        followId: item.id,
                         // Basic product fields (matching Home.js structure exactly)
                         id: source.id,
                         category_id: source.category_id,
@@ -213,8 +247,9 @@ const FollowingPage = ({ navigation }) => {
                 return;
             }
 
-            const itemId = followingFilter === 'Post' ? selectedItem.postId : selectedItem.id;
-            const baseUrl = process.env.BASE_URL || 'https://mk.co.in/api';
+            // For posts, we need to send the post_id, for users we send the user_id
+            const itemId = followingFilter === 'Post' ? selectedItem.id : selectedItem.id;
+            const baseUrl = process.env.BASE_URL;
             const response = await fetch(`${baseUrl}${endpoint}`, {
                 method: 'POST',
                 headers: {
@@ -227,10 +262,11 @@ const FollowingPage = ({ navigation }) => {
             if (response.ok) {
                 setData((prevData) =>
                     prevData.filter((item) =>
-                        followingFilter === 'Post' ? item.postId !== itemId : item.id !== itemId
+                        followingFilter === 'Post' ? item.followId !== selectedItem.followId : item.followId !== selectedItem.followId
                     )
                 );
-                Alert.alert('Success', `You have unfollowed this ${followingFilter === 'Post' ? 'post' : 'user'}`);
+                // Show sweet alert success message
+                showSweetAlertMessage(`Unfollowed ${followingFilter === 'Post' ? 'post' : 'user'} successfully`);
             } else {
                 // Handle non-JSON error responses
                 const contentType = response.headers.get('content-type');
@@ -460,6 +496,34 @@ const FollowingPage = ({ navigation }) => {
                     </View>
                 </View>
             </Modal>
+
+            {/* Sweet Alert */}
+            {showSweetAlert && (
+                <TouchableOpacity
+                    style={styles.sweetAlertOverlay}
+                    activeOpacity={1}
+                    onPress={hideSweetAlert}
+                >
+                    <Animated.View
+                        style={[
+                            styles.sweetAlertContainer,
+                            { opacity: sweetAlertOpacity }
+                        ]}
+                    >
+                        <View style={styles.sweetAlertContent}>
+                            <Icon
+                                name="check-circle"
+                                size={normalize(32)}
+                                color="#4CAF50"
+                                style={styles.sweetAlertIcon}
+                            />
+                            <Text style={styles.sweetAlertText}>
+                                {sweetAlertMessage}
+                            </Text>
+                        </View>
+                    </Animated.View>
+                </TouchableOpacity>
+            )}
         </SafeAreaView>
     );
 };
@@ -799,6 +863,43 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
+    },
+    sweetAlertOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000,
+    },
+    sweetAlertContainer: {
+        backgroundColor: '#fff',
+        borderRadius: normalize(16),
+        padding: normalize(24),
+        marginHorizontal: normalize(40),
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 8,
+        maxWidth: normalize(280),
+    },
+    sweetAlertContent: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    sweetAlertIcon: {
+        marginBottom: normalize(12),
+    },
+    sweetAlertText: {
+        fontSize: normalize(16),
+        fontWeight: '600',
+        color: '#333',
+        textAlign: 'center',
+        lineHeight: normalize(22),
     },
 });
 

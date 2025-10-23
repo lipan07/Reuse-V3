@@ -44,8 +44,8 @@ const ProductDetails = () => {
     const [userLocation, setUserLocation] = useState(null);
     const [productDistance, setProductDistance] = useState(null);
 
-    // Separate states for post follow vs user follow
-    const { isFollowed: isPostFollowed, toggleFollow: togglePostFollow } = useFollowPost(product);
+    // Separate states for post like vs user follow
+    const { isLiked, likeCount, toggleFollow: togglePostLike } = useFollowPost(product);
 
     const navigation = useNavigation();
     const route = useRoute();
@@ -148,7 +148,18 @@ const ProductDetails = () => {
                 });
                 const data = await response.json();
                 console.log('ProductDetails', data);
-                setProduct(data.data);
+                console.log('API is_liked status:', data.is_liked);
+                console.log('API like_count:', data.data.like_count);
+
+                // Update product with fresh data including like status
+                const updatedProduct = {
+                    ...data.data,
+                    is_liked: data.is_liked,
+                    like_count: data.data.like_count
+                };
+
+                console.log('Updated product with like status:', updatedProduct);
+                setProduct(updatedProduct);
             } catch (error) {
                 console.error('Error:', error);
             } finally {
@@ -226,6 +237,31 @@ const ProductDetails = () => {
                 postImage: product.images?.[0] || null,
                 chatId: null
             });
+        }
+    };
+
+    const markAsSold = async () => {
+        try {
+            const token = await AsyncStorage.getItem('authToken');
+            const response = await fetch(`${process.env.BASE_URL}/posts/${product.id}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ status: 'sold' }),
+            });
+
+            if (response.ok) {
+                Alert.alert('Success', 'Item marked as sold successfully');
+                // Update the product status locally
+                setProduct(prev => ({ ...prev, status: 'sold' }));
+            } else {
+                Alert.alert('Error', 'Failed to mark item as sold');
+            }
+        } catch (error) {
+            console.error('Error marking as sold:', error);
+            Alert.alert('Error', 'Failed to mark item as sold');
         }
     };
 
@@ -419,6 +455,51 @@ const ProductDetails = () => {
                             {product.type === 'rent' ? 'RENT' : 'SELL'}
                         </Text>
                     </View>
+
+                    {/* Like Button - Top Right Corner */}
+                    {buyerId !== product.user?.id && (
+                        <View style={styles.likeButtonTopRight}>
+                            <AnimatedFollowButton
+                                isLiked={isLiked}
+                                onPress={async () => {
+                                    console.log('[LIKE][POST] Request →', `${process.env.BASE_URL}/follow-post`, { post_id: product.id });
+                                    const updatedData = await togglePostLike();
+
+                                    // Update product with fresh counts from API response
+                                    if (updatedData) {
+                                        console.log('[LIKE][POST] Updating product with fresh counts:', updatedData);
+                                        setProduct(prev => ({
+                                            ...prev,
+                                            is_liked: updatedData.is_liked,
+                                            like_count: updatedData.like_count
+                                            // Note: view_count should not be updated during like/unlike operations
+                                        }));
+                                    }
+                                }}
+                                size={24}
+                            />
+                        </View>
+                    )}
+                </View>
+
+                {/* Stats Card */}
+                <View style={styles.statsCard}>
+                    <View style={styles.statsRow}>
+                        <Text style={styles.statsTitle}>Engagement</Text>
+                        <View style={styles.statsContent}>
+                            <View style={styles.statItem}>
+                                <Icon name="eye" size={normalize(16)} color="#34C759" />
+                                <Text style={styles.statNumber}>{product?.view_count || 0}</Text>
+                                <Text style={styles.statLabel}>Views</Text>
+                            </View>
+                            <View style={styles.statDivider} />
+                            <View style={styles.statItem}>
+                                <Icon name="heart" size={normalize(16)} color="#FF3B30" />
+                                <Text style={styles.statNumber}>{likeCount}</Text>
+                                <Text style={styles.statLabel}>Likes</Text>
+                            </View>
+                        </View>
+                    </View>
                 </View>
 
                 {/* Compact Product Header */}
@@ -427,16 +508,6 @@ const ProductDetails = () => {
                         <Text style={styles.priceText}>
                             {product?.amount ? `₹${product.amount}` : (product?.post_details?.amount ? `₹${product.post_details.amount}` : '---')}
                         </Text>
-                        {buyerId !== product.user?.id && (
-                            <AnimatedFollowButton
-                                isFollowing={isPostFollowed}
-                                onPress={() => {
-                                    console.log('[FOLLOW][POST] Request →', `${process.env.BASE_URL}/follow-post`, { post_id: product.id });
-                                    togglePostFollow();
-                                }}
-                                size={22}
-                            />
-                        )}
                     </View>
 
                     <Text style={styles.titleText}>{product.title || 'No title'}</Text>
@@ -588,7 +659,7 @@ const ProductDetails = () => {
             </ScrollView>
 
             {/* Action Buttons - Right Side */}
-            {buyerId !== product.user?.id && (
+            {buyerId !== product.user?.id ? (
                 <View style={styles.floatingButtonContainer}>
                     {(() => {
                         const shouldShowCallButton = product?.show_phone &&
@@ -613,7 +684,35 @@ const ProductDetails = () => {
                         <Text style={styles.floatingButtonText}>Chat</Text>
                     </TouchableOpacity>
                 </View>
+            ) : (
+                // Post owner buttons
+                <View style={styles.floatingButtonContainer}>
+                    <TouchableOpacity
+                        style={[styles.floatingButton, styles.editButton]}
+                        onPress={() => navigation.navigate('EditPost', { product })}
+                    >
+                        <Icon name="pencil" size={normalize(18)} color="#fff" />
+                        <Text style={styles.floatingButtonText}>Edit</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.floatingButton, styles.soldButton]}
+                        onPress={() => {
+                            Alert.alert(
+                                'Mark as Sold',
+                                'Are you sure you want to mark this item as sold?',
+                                [
+                                    { text: 'Cancel', style: 'cancel' },
+                                    { text: 'Mark as Sold', onPress: () => markAsSold() }
+                                ]
+                            );
+                        }}
+                    >
+                        <Icon name="check-circle" size={normalize(18)} color="#fff" />
+                        <Text style={styles.floatingButtonText}>Sold</Text>
+                    </TouchableOpacity>
+                </View>
             )}
+
 
             {/* Image Viewer now uses navigation to EnhancedImageViewer */}
 

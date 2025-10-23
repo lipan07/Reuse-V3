@@ -495,10 +495,11 @@ const CompanyDetailsPage = ({ route }) => {
                                 <View style={styles.nameAndFollowContainer}>
                                     <Text style={styles.companyName}>{company.name}</Text>
                                     <AnimatedFollowButton
-                                        isFollowing={isFollowing}
+                                        isLiked={isFollowing}
                                         onPress={handleFollow}
                                         size={20}
                                         style={styles.followButtonContainer}
+                                        iconType="plus"
                                     />
                                 </View>
                                 <View style={styles.locationContainer}>

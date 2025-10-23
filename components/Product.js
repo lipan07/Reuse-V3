@@ -1,9 +1,12 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import useFollowPost from '../hooks/useFollowPost';
 
 const Product = ({ product }) => {
   const navigation = useNavigation();
+  const { isLiked, likeCount, toggleFollow } = useFollowPost(product);
 
   const handleProductPress = () => {
     navigation.navigate('ProductDetails', { product });
@@ -38,6 +41,21 @@ const Product = ({ product }) => {
         <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">{product.post_details.titile}</Text>
         <Text style={styles.details} numberOfLines={2} ellipsizeMode="tail">{product.post_details.description}</Text>
         <Text style={styles.price}>Price: ₹{product.amount ?? product.post_details?.amount}</Text>
+
+        <View style={styles.statsContainer}>
+          <View style={styles.statItem}>
+            <Icon name="eye" size={16} color="#666" />
+            <Text style={styles.statText}>{product.view_count || 0}</Text>
+          </View>
+          <TouchableOpacity style={styles.statItem} onPress={toggleFollow}>
+            <Icon
+              name={isLiked ? "heart" : "heart-outline"}
+              size={16}
+              color={isLiked ? "#e74c3c" : "#666"}
+            />
+            <Text style={[styles.statText, isLiked && styles.likedText]}>{likeCount}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -92,6 +110,27 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  statText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  likedText: {
+    color: '#e74c3c',
+    fontWeight: 'bold',
   },
 });
 

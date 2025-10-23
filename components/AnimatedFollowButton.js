@@ -24,11 +24,13 @@ const scale = width / 375;
 const normalize = (size) => Math.round(scale * size);
 
 const AnimatedFollowButton = ({
-    isFollowing,
+    isLiked,
     onPress,
     size = 24,
-    style = {}
+    style = {},
+    iconType = 'heart' // 'heart' for posts, 'plus' for users
 }) => {
+
     const [isAnimating, setIsAnimating] = useState(false);
     const [particles, setParticles] = useState([]);
     const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -132,9 +134,12 @@ const AnimatedFollowButton = ({
                     activeOpacity={0.7}
                 >
                     <Icon
-                        name={isFollowing ? 'heart' : 'heart-outline'}
+                        name={iconType === 'heart'
+                            ? (isLiked ? 'heart' : 'heart-outline')
+                            : (isLiked ? 'account-plus' : 'account-plus-outline')
+                        }
                         size={normalize(size)}
-                        color={isFollowing ? '#FF3B30' : '#8E8E93'}
+                        color={isLiked ? '#FF3B30' : '#8E8E93'}
                     />
                 </TouchableOpacity>
             </Animated.View>
@@ -171,9 +176,9 @@ const AnimatedFollowButton = ({
                     easing="ease-out"
                 >
                     <Icon
-                        name="heart"
+                        name={iconType === 'heart' ? 'heart' : 'account-plus'}
                         size={particle.size}
-                        color={isFollowing ? "#FF3B30" : "#FF6B6B"}
+                        color={isLiked ? "#FF3B30" : "#FF6B6B"}
                     />
                 </Animatable.View>
             ))}
@@ -214,7 +219,7 @@ const styles = StyleSheet.create({
         width: normalize(48),
         height: normalize(48),
         borderRadius: normalize(24),
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        backgroundColor: 'rgba(255, 255, 255, 0.74)',
         alignItems: 'center',
         justifyContent: 'center',
         shadowColor: '#000',

@@ -19,7 +19,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Header from './Screens/Header';
 import CustomStatusBar from './Screens/CustomStatusBar';
-import AnimatedUnfollowButton from './AnimatedUnfollowButton';
+import AnimatedFollowButton from './AnimatedFollowButton';
 
 const { width } = Dimensions.get('window');
 const scale = width / 375;
@@ -66,7 +66,7 @@ const FollowingPage = ({ navigation }) => {
 
     const fetchData = async () => {
         setIsLoading(true);
-        let endpoint = followingFilter === 'Post' ? `/post/following` : `/user/following`;
+        let endpoint = followingFilter === 'Post' ? `/post/likes` : `/user/following`;
 
         // Try to get BASE_URL from different sources
         const baseUrl = process.env.BASE_URL;
@@ -266,7 +266,7 @@ const FollowingPage = ({ navigation }) => {
                     )
                 );
                 // Show sweet alert success message
-                showSweetAlertMessage(`Unfollowed ${followingFilter === 'Post' ? 'post' : 'user'} successfully`);
+                showSweetAlertMessage(`${followingFilter === 'Post' ? 'Unliked post' : 'Unfollowed user'} successfully`);
             } else {
                 // Handle non-JSON error responses
                 const contentType = response.headers.get('content-type');
@@ -351,11 +351,12 @@ const FollowingPage = ({ navigation }) => {
                     </View>
                 </View>
             </TouchableOpacity>
-            <AnimatedUnfollowButton
+            <AnimatedFollowButton
+                isLiked={true} // Always true since this is the "Following" page
                 onPress={() => handleUnfollow(item)}
-                text="Following"
-                size="small"
-                style={styles.animatedUnfollowButton}
+                size={20}
+                iconType={followingFilter === 'Post' ? 'heart' : 'plus'}
+                style={styles.animatedFollowButton}
             />
         </View>
     );
@@ -469,10 +470,13 @@ const FollowingPage = ({ navigation }) => {
                             />
                         </View>
                         <Text style={[styles.modalTitle, darkMode && styles.darkModalTitle]}>
-                            Unfollow {followingFilter === 'Post' ? 'Post' : 'User'}?
+                            {followingFilter === 'Post' ? 'Unlike Post?' : 'Unfollow User?'}
                         </Text>
                         <Text style={[styles.modalText, darkMode && styles.darkModalText]}>
-                            You won't see updates from this {followingFilter === 'Post' ? 'post' : 'user'} in your feed anymore.
+                            {followingFilter === 'Post'
+                                ? 'You won\'t see this post in your liked posts anymore.'
+                                : 'You won\'t see updates from this user in your feed anymore.'
+                            }
                         </Text>
                         <View style={styles.modalButtonContainer}>
                             <TouchableOpacity
@@ -488,8 +492,15 @@ const FollowingPage = ({ navigation }) => {
                                 activeOpacity={0.7}
                             >
                                 <View style={styles.confirmButtonContent}>
-                                    <Icon name="heart-broken" size={normalize(16)} color="#fff" style={{ marginRight: normalize(6) }} />
-                                    <Text style={styles.confirmButtonText}>Unfollow</Text>
+                                    <Icon
+                                        name={followingFilter === 'Post' ? 'heart-broken' : 'account-minus'}
+                                        size={normalize(16)}
+                                        color="#fff"
+                                        style={{ marginRight: normalize(6) }}
+                                    />
+                                    <Text style={styles.confirmButtonText}>
+                                        {followingFilter === 'Post' ? 'Unlike' : 'Unfollow'}
+                                    </Text>
                                 </View>
                             </TouchableOpacity>
                         </View>
@@ -747,7 +758,7 @@ const styles = StyleSheet.create({
         color: '#999',
         marginLeft: normalize(6),
     },
-    animatedUnfollowButton: {
+    animatedFollowButton: {
         alignSelf: 'flex-start',
     },
     darkText: {

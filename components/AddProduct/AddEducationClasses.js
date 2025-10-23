@@ -47,12 +47,12 @@ const AddEducationClasses = ({ route, navigation }) => {
           const productData = data.data;
           setFormData({
             id: productData.id,
-            type: productData.post_details?.type || '',
+            type: productData.type || '',
             adTitle: productData.title || '',
             description: productData.post_details?.description || '',
-            address: productData.post_details?.address || '',
-            latitude: productData.post_details?.latitude || null,
-            longitude: productData.post_details?.longitude || null,
+            address: productData.address || '',
+            latitude: productData.latitude || null,
+            longitude: productData.longitude || null,
             images: productData.images?.map((url, index) => ({
               id: index,
               uri: url,

@@ -62,16 +62,17 @@ const AddPgGuestHouse = ({ route, navigation }) => {
             carpetArea: productData.post_details?.carpet_area || '',
             adTitle: productData.title || '',
             description: productData.post_details?.description || '',
-            amount: productData.post_details?.amount?.toString() || '',
-            address: productData.post_details?.address || '', // Initialize address
-            latitude: productData.post_details?.latitude || null, // Initialize latitude
-            longitude: productData.post_details?.longitude || null, // Initialize longitude
+            amount: productData.amount?.toString() || '',
+            address: productData.address || '', // Initialize address
+            latitude: productData.latitude || null, // Initialize latitude
+            longitude: productData.longitude || null, // Initialize longitude
             images: productData.images?.map((url, index) => ({
               id: index,
               uri: url,
               isNew: false,
             })) || [],
             deletedImages: [],
+            listingType: productData.type || 'sell',
           });
         }
       } catch (error) {

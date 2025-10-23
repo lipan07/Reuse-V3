@@ -430,7 +430,7 @@ const FollowingPage = ({ navigation }) => {
                                 onPress={() => navigation.navigate('Home')}
                             >
                                 <Text style={[styles.exploreButtonText, darkMode && styles.darkExploreButtonText]}>
-                                    Explore {followingFilter === 'Post' ? 'Posts' : 'Users'}
+                                    Explore {followingFilter === 'Post' ? 'Posts' : 'Posts'}
                                 </Text>
                             </TouchableOpacity>
                     </View>

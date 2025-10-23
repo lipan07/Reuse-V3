@@ -240,6 +240,106 @@ const ProductDetails = () => {
         }
     };
 
+    const handleEditPost = () => {
+        if (!product) return;
+
+        // Get category and subcategory information
+        const category = product.category;
+        const subcategory = product.category; // For now, using category as subcategory
+
+        // Determine the correct form based on guard_name
+        const guardName = category?.guard_name || 'others';
+
+        let targetRoute = 'AddOthers'; // Default fallback
+
+        switch (guardName) {
+            case 'cars':
+                targetRoute = 'AddCarForm';
+                break;
+            case 'houses_apartments':
+                targetRoute = 'AddHousesApartments';
+                break;
+            case 'land_plots':
+                targetRoute = 'AddLandPlots';
+                break;
+            case 'pg_guest_houses':
+                targetRoute = 'AddPgGuestHouse';
+                break;
+            case 'shop_offices':
+                targetRoute = 'AddShopOffices';
+                break;
+            case 'mobiles':
+                targetRoute = 'AddMobileTablets';
+                break;
+            case 'motorcycles':
+                targetRoute = 'AddMotorcycles';
+                break;
+            case 'scooters':
+                targetRoute = 'AddScooters';
+                break;
+            case 'bicycles':
+                targetRoute = 'AddBycycles';
+                break;
+            case 'data_entry_back_office':
+            case 'sales_marketing':
+            case 'bpo_telecaller':
+            case 'driver':
+            case 'office_assistant':
+            case 'delivery_collection':
+            case 'teacher':
+            case 'cook':
+            case 'receptionist_front_office':
+            case 'operator_technician':
+            case 'engineer_developer':
+            case 'hotel_travel_executive':
+            case 'accountant':
+            case 'designer':
+            case 'other_jobs':
+                targetRoute = 'AddJob';
+                break;
+            case 'education_classes':
+                targetRoute = 'AddEducationClasses';
+                break;
+            case 'tours_travels':
+                targetRoute = 'AddToursTravels';
+                break;
+            case 'electronics_repair_services':
+                targetRoute = 'AddElectronicsRepairServices';
+                break;
+            case 'health_beauty':
+                targetRoute = 'AddHealthBeauty';
+                break;
+            case 'home_renovation_repair':
+                targetRoute = 'AddHomeRenovationRepair';
+                break;
+            case 'cleaning_pest_control':
+                targetRoute = 'AddCleaningPestControl';
+                break;
+            case 'legal_documentation_services':
+                targetRoute = 'AddLegalDocumentationServices';
+                break;
+            case 'vehicle_spare_parts':
+                targetRoute = 'AddVehicleSpareParts';
+                break;
+            case 'commercial_heavy_vehicles':
+                targetRoute = 'AddCommercialHeavyVehicle';
+                break;
+            case 'commercial_heavy_machinery':
+                targetRoute = 'AddCommercialHeavyMachinery';
+                break;
+            default:
+                targetRoute = 'AddOthers';
+                break;
+        }
+
+        // Navigate to the appropriate form with product data for editing
+        navigation.navigate(targetRoute, {
+            category: category,
+            subcategory: subcategory,
+            product: product // Pass the product for editing
+        });
+    };
+
     const markAsSold = async () => {
         try {
             const token = await AsyncStorage.getItem('authToken');
@@ -689,7 +789,7 @@ const ProductDetails = () => {
                 <View style={styles.floatingButtonContainer}>
                     <TouchableOpacity
                         style={[styles.floatingButton, styles.editButton]}
-                        onPress={() => navigation.navigate('EditPost', { product })}
+                            onPress={handleEditPost}
                     >
                         <Icon name="pencil" size={normalize(18)} color="#fff" />
                         <Text style={styles.floatingButtonText}>Edit</Text>

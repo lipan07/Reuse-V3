@@ -70,17 +70,18 @@ const AddCommercialHeavyVehicle = ({ route, navigation }) => {
             description: productData.post_details?.description || '',
             contact_name: productData.post_details?.contact_name || '',
             contact_phone: productData.post_details?.contact_phone || '',
-            amount: productData.post_details?.amount?.toString() || '',
+            amount: productData.amount?.toString() || '',
             kmDriven: productData.post_details?.km_driven?.toString() || '',
-            address: productData.post_details?.address || '',
-            latitude: productData.post_details?.latitude || null,
-            longitude: productData.post_details?.longitude || null,
+            address: productData.address || '',
+            latitude: productData.latitude || null,
+            longitude: productData.longitude || null,
             images: productData.images?.map((url, index) => ({
               id: index,
               uri: url,
               isNew: false,
             })) || [],
             deletedImages: [],
+            listingType: productData.type || 'sell',
           });
         }
       } catch (error) {

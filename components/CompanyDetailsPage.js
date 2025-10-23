@@ -494,13 +494,15 @@ const CompanyDetailsPage = ({ route }) => {
                             <View style={styles.headerTextContainer}>
                                 <View style={styles.nameAndFollowContainer}>
                                     <Text style={styles.companyName}>{company.name}</Text>
-                                    <AnimatedFollowButton
-                                        isLiked={isFollowing}
-                                        onPress={handleFollow}
-                                        size={20}
-                                        style={styles.followButtonContainer}
-                                        iconType="plus"
-                                    />
+                                    {buyerId !== userId && (
+                                        <AnimatedFollowButton
+                                            isLiked={isFollowing}
+                                            onPress={handleFollow}
+                                            size={20}
+                                            style={styles.followButtonContainer}
+                                            iconType="plus"
+                                        />
+                                    )}
                                 </View>
                                 <View style={styles.locationContainer}>
                                     <Icon name="map-marker" size={normalize(14)} color="#1A1A1A" />

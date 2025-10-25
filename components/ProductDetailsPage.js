@@ -316,7 +316,13 @@ const ProductDetails = () => {
                 targetRoute = 'AddCleaningPestControl';
                 break;
             case 'legal_documentation_services':
-                targetRoute = 'AddLegalDocumentationServices';
+                targetRoute = 'AddLegalServicesGeneral';
+                break;
+            case 'packers_movers':
+                targetRoute = 'AddPackersMoversGeneral';
+                break;
+            case 'other_services':
+                targetRoute = 'AddOtherServicesGeneral';
                 break;
             case 'vehicle_spare_parts':
                 targetRoute = 'AddVehicleSpareParts';

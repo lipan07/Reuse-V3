@@ -14,6 +14,8 @@ const SubCategoryScreen = () => {
         // Use parentCategory from route params instead of selectedCategory
         const category = parentCategory;
 
+        console.log('Selected subcategory guard_name:', subcategory?.guard_name);
+
         switch (subcategory?.guard_name) {
             case 'houses_apartments':
                 navigation.navigate('AddHousesApartments', { category, subcategory });
@@ -81,8 +83,12 @@ const SubCategoryScreen = () => {
             case 'fish_aquarium':
             case 'pets_food_accessories':
             case 'other_pets':
-            case 'other_services':
             case 'packers_movers':
+                navigation.navigate('AddPackersMoversGeneral', { category, subcategory });
+                break;
+            case 'other_services':
+                navigation.navigate('AddOtherServicesGeneral', { category, subcategory });
+                break;
             case 'machinery_spare_parts':
                 navigation.navigate('AddOthers', { category, subcategory });
                 break;
@@ -105,7 +111,8 @@ const SubCategoryScreen = () => {
                 navigation.navigate('AddCleaningPestControl', { category, subcategory });
                 break;
             case 'legal_documentation_services': // Fixed typo in service name
-                navigation.navigate('AddLegalDocumentationServices', { category, subcategory });
+                console.log('Navigating to AddLegalServicesGeneral for guard_name:', subcategory?.guard_name);
+                navigation.navigate('AddLegalServicesGeneral', { category, subcategory });
                 break;
             case 'commercial_heavy_vehicles':
                 navigation.navigate('AddCommercialHeavyVehicle', { category, subcategory });
@@ -117,7 +124,7 @@ const SubCategoryScreen = () => {
                 navigation.navigate('AddCommercialHeavyMachinery', { category, subcategory });
                 break;
             default:
-                console.log('No valid guard_name found for the selected subcategory');
+                console.log('No valid guard_name found for the selected subcategory:', subcategory?.guard_name);
                 // Optional: Navigate to a fallback screen
                 navigation.navigate('AddOthers', { category, subcategory });
                 break;

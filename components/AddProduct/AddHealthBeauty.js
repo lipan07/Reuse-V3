@@ -10,7 +10,7 @@ import ModalScreen from '../SupportElement/ModalScreen.js';
 const AddHealthBeauty = ({ route, navigation }) => {
   const { category, subcategory, product } = route.params;
   const [formData, setFormData] = useState({
-    type: '',
+    type: 'Fitness & Wellness', // Default to Fitness & Wellness
     adTitle: '',
     description: '',
     amount: '',
@@ -48,7 +48,7 @@ const AddHealthBeauty = ({ route, navigation }) => {
           const productData = data.data;
           setFormData({
             id: productData.id,
-            type: productData.type || '',
+            type: productData.type || 'Fitness & Wellness',
             adTitle: productData.title || '',
             description: productData.post_details?.description || '',
             amount: productData.amount?.toString() || '',

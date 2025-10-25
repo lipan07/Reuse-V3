@@ -47,6 +47,9 @@ import AddLegalDocumentationServices from './AddProduct/AddLegalDocumentationSer
 import AddVehicleSpareParts from './AddProduct/AddVehicleSpareParts';
 import AddCommercialHeavyVehicle from './AddProduct/AddCommercialHeavyVehicle';
 import AddCommercialHeavyMachinery from './AddProduct/AddCommercialHeavyMachinery';
+import AddLegalServicesGeneral from './AddProduct/AddLegalDocumentationServicesGeneral';
+import AddPackersMoversGeneral from './AddProduct/AddPackersMoversGeneral';
+import AddOtherServicesGeneral from './AddProduct/AddOtherServicesGeneral';
 import LocationPicker from './LocationPicker';
 import ChangePassword from './ChangePassword';
 import SubCategoryScreen from './Screens/SubCategoryScreen';
@@ -185,6 +188,9 @@ const AppNavigator = () => {
         <Stack.Screen name="AddVehicleSpareParts" component={AddVehicleSpareParts} />
         <Stack.Screen name="AddCommercialHeavyVehicle" component={AddCommercialHeavyVehicle} />
         <Stack.Screen name="AddCommercialHeavyMachinery" component={AddCommercialHeavyMachinery} />
+        <Stack.Screen name="AddLegalServicesGeneral" component={AddLegalServicesGeneral} />
+        <Stack.Screen name="AddPackersMoversGeneral" component={AddPackersMoversGeneral} />
+        <Stack.Screen name="AddOtherServicesGeneral" component={AddOtherServicesGeneral} />
 
         <Stack.Screen name="SubCategories" component={SubCategoryScreen} />
       </Stack.Navigator>

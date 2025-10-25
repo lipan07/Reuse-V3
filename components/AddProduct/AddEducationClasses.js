@@ -10,7 +10,7 @@ import ModalScreen from '../SupportElement/ModalScreen.js';
 const AddEducationClasses = ({ route, navigation }) => {
   const { category, subcategory, product } = route.params;
   const [formData, setFormData] = useState({
-    type: '',
+    type: 'Tutions', // Default to Tutions
     adTitle: '',
     description: '',
     address: '',
@@ -47,7 +47,7 @@ const AddEducationClasses = ({ route, navigation }) => {
           const productData = data.data;
           setFormData({
             id: productData.id,
-            type: productData.type || '',
+            type: productData.type || 'Tutions',
             adTitle: productData.title || '',
             description: productData.post_details?.description || '',
             address: productData.address || '',

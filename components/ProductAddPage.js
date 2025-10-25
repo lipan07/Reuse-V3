@@ -199,7 +199,7 @@ const staticCategories = [
       { id: 70, parent_id: 66, guard_name: "health_beauty", name: "Health & Beauty" },
       { id: 71, parent_id: 66, guard_name: "home_renovation_repair", name: "Home Renovation and Repair" },
       { id: 72, parent_id: 66, guard_name: "cleaning_pest_control", name: "Cleaning & Pest Control" },
-      { id: 73, parent_id: 66, guard_name: "legal_documentation_sevices", name: "Legal & Documentation Services" },
+      { id: 73, parent_id: 66, guard_name: "legal_documentation_services", name: "Legal & Documentation Services" },
       { id: 74, parent_id: 66, guard_name: "packers_movers", name: "Packers and Movers" },
       { id: 75, parent_id: 66, guard_name: "other_services", name: "Other Services" },
     ],

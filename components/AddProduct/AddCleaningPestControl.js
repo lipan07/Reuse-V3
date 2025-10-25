@@ -10,7 +10,7 @@ import ModalScreen from '../SupportElement/ModalScreen.js';
 const AddCleaningPestControl = ({ route, navigation }) => {
   const { category, subcategory, product } = route.params;
   const [formData, setFormData] = useState({
-    type: '',
+    type: 'Pest Control', // Default to Pest Control
     adTitle: '',
     description: '',
     amount: '',
@@ -48,7 +48,7 @@ const AddCleaningPestControl = ({ route, navigation }) => {
           const productData = data.data;
           setFormData({
             id: productData.id,
-            type: productData.type || '',
+            type: productData.type || 'Pest Control',
             adTitle: productData.title || '',
             description: productData.post_details?.description || '',
             amount: productData.amount?.toString() || '',

@@ -10,7 +10,8 @@ import {
     Linking,
     Alert,
     Dimensions,
-    FlatList
+    FlatList,
+    Share
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -49,13 +50,13 @@ const ProductDetails = () => {
 
     const navigation = useNavigation();
     const route = useRoute();
-    const { productDetails } = route.params;
-    const productId = productDetails?.id;
+    const { productDetails, productId: deepLinkProductId } = route.params || {};
+    const productId = productDetails?.id || deepLinkProductId;
     const flatListRef = useRef(null);
     const scrollViewRef = useRef(null);
     const autoScrollInterval = useRef(null);
 
-    // Set product from productDetails
+    // Set product from productDetails (if coming from navigation)
     useEffect(() => {
         if (productDetails) {
             console.log('ProductDetails received:', productDetails);
@@ -377,6 +378,67 @@ const ProductDetails = () => {
         Linking.openURL(url).catch(() => Alert.alert("Error", "Could not open Google Maps"));
     };
 
+    const handleShare = async () => {
+        try {
+            // Generate deep link URL for the product
+            const productLink = `reuseapp://product/${product.id}`;
+
+            // Extract base domain from BASE_URL (remove /api if present)
+            let baseUrl = process.env.BASE_URL || 'https://yourwebsite.com';
+            // Remove /api from the end if present
+            baseUrl = baseUrl.replace(/\/api\/?$/, '');
+            // Remove trailing slash
+            baseUrl = baseUrl.replace(/\/$/, '');
+
+            // Generate web link for sharing
+            const webLink = `${baseUrl}/product/${product.id}`;
+
+            const shareMessage = `Check out this ${product.title} on Reuse!\n\n` +
+                `Price: ₹${product?.amount || product?.post_details?.amount || 'Not specified'}\n` +
+                `Category: ${product.category?.name || 'Uncategorized'}\n` +
+                `Location: ${product.address || 'Not specified'}\n\n` +
+                `View details: ${webLink}\n` +
+                `Or open in app: ${productLink}`;
+
+            const result = await Share.share({
+                message: shareMessage,
+                url: webLink, // iOS will use this
+                title: product.title || 'Check out this product'
+            });
+
+            if (result.action === Share.sharedAction) {
+                // Optionally track the share event
+                try {
+                    const userId = await AsyncStorage.getItem('userId');
+                    await fetch(`${process.env.BASE_URL}/product/${product.id}/track-share`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            user_id: userId ? parseInt(userId) : null,
+                            platform: result.activityType || 'unknown'
+                        })
+                    });
+                } catch (trackError) {
+                    // Silent fail - tracking is optional
+                    console.log('Share tracking failed:', trackError);
+                }
+
+                if (result.activityType) {
+                    console.log('Shared with activity type:', result.activityType);
+                } else {
+                    console.log('Product shared successfully');
+                }
+            } else if (result.action === Share.dismissedAction) {
+                console.log('Share dismissed');
+            }
+        } catch (error) {
+            console.error('Error sharing product:', error);
+            Alert.alert('Error', 'Failed to share product. Please try again.');
+        }
+    };
+
     const handleReportSubmit = async (reportData) => {
         try {
             const token = await AsyncStorage.getItem('authToken');
@@ -562,30 +624,41 @@ const ProductDetails = () => {
                         </Text>
                     </View>
 
-                    {/* Like Button - Top Right Corner */}
-                    {buyerId !== product.user?.id && (
-                        <View style={styles.likeButtonTopRight}>
-                            <AnimatedFollowButton
-                                isLiked={isLiked}
-                                onPress={async () => {
-                                    console.log('[LIKE][POST] Request →', `${process.env.BASE_URL}/follow-post`, { post_id: product.id });
-                                    const updatedData = await togglePostLike();
+                    {/* Action Buttons - Top Right Corner */}
+                    <View style={styles.topRightActions}>
+                        {/* Like Button */}
+                        {buyerId !== product.user?.id && (
+                            <View style={styles.likeButtonContainer}>
+                                <AnimatedFollowButton
+                                    isLiked={isLiked}
+                                    onPress={async () => {
+                                        console.log('[LIKE][POST] Request →', `${process.env.BASE_URL}/follow-post`, { post_id: product.id });
+                                        const updatedData = await togglePostLike();
 
-                                    // Update product with fresh counts from API response
-                                    if (updatedData) {
-                                        console.log('[LIKE][POST] Updating product with fresh counts:', updatedData);
-                                        setProduct(prev => ({
-                                            ...prev,
-                                            is_liked: updatedData.is_liked,
-                                            like_count: updatedData.like_count
-                                            // Note: view_count should not be updated during like/unlike operations
-                                        }));
-                                    }
-                                }}
-                                size={24}
-                            />
-                        </View>
-                    )}
+                                        // Update product with fresh counts from API response
+                                        if (updatedData) {
+                                            console.log('[LIKE][POST] Updating product with fresh counts:', updatedData);
+                                            setProduct(prev => ({
+                                                ...prev,
+                                                is_liked: updatedData.is_liked,
+                                                like_count: updatedData.like_count
+                                                // Note: view_count should not be updated during like/unlike operations
+                                            }));
+                                        }
+                                    }}
+                                    size={24}
+                                />
+                            </View>
+                        )}
+
+                        {/* Share Button */}
+                        <TouchableOpacity
+                            style={styles.actionButton}
+                            onPress={handleShare}
+                        >
+                            <Icon name="share-variant" size={normalize(20)} color="#fff" />
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 {/* Stats Card */}
@@ -795,7 +868,7 @@ const ProductDetails = () => {
                 <View style={styles.floatingButtonContainer}>
                     <TouchableOpacity
                         style={[styles.floatingButton, styles.editButton]}
-                            onPress={handleEditPost}
+                        onPress={handleEditPost}
                     >
                         <Icon name="pencil" size={normalize(18)} color="#fff" />
                         <Text style={styles.floatingButtonText}>Edit</Text>

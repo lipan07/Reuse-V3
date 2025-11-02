@@ -125,8 +125,24 @@ const AppInner = () => {
         }
     };
 
+    // Deep linking configuration
+    const linking = {
+        prefixes: ['reuseapp://', 'https://yourwebsite.com'],
+        config: {
+            screens: {
+                ProductDetails: {
+                    path: 'product/:productId',
+                    parse: {
+                        productId: (productId) => `${productId}`
+                    }
+                },
+                Home: '',
+            },
+        },
+    };
+
     return (
-        <NavigationContainer>
+        <NavigationContainer linking={linking}>
             <AppNavigator />
         </NavigationContainer>
     );

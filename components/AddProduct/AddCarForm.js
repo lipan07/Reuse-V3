@@ -126,7 +126,9 @@ const AddCarForm = ({ route, navigation }) => {
         if (response.ok) {
           const data = await response.json();
           const productData = data.data;
-          console.log(productData);
+          console.log('Product data for editing:', productData);
+          console.log('show_phone value:', productData.show_phone, 'type:', typeof productData.show_phone);
+          console.log('show_phone converted:', productData.show_phone === true || productData.show_phone === 1 || productData.show_phone === '1');
           setFormData({
             id: productData.id,
             listingType: productData?.type || 'sell',
@@ -148,6 +150,7 @@ const AddCarForm = ({ route, navigation }) => {
               isNew: false,
             })) || [],
             deletedImages: [],
+            show_phone: productData.show_phone === true || productData.show_phone === 1 || productData.show_phone === '1',
           });
         }
       } catch (error) {

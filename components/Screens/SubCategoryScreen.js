@@ -83,6 +83,8 @@ const SubCategoryScreen = () => {
             case 'fish_aquarium':
             case 'pets_food_accessories':
             case 'other_pets':
+                navigation.navigate('AddOthers', { category, subcategory });
+                break;
             case 'packers_movers':
                 navigation.navigate('AddPackersMoversGeneral', { category, subcategory });
                 break;

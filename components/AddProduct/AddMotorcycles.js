@@ -26,7 +26,7 @@ const AddMotorcycles = ({ route, navigation }) => {
     images: [],
     deletedImages: [],
     listingType: 'sell',
-    show_phone: false, 
+    show_phone: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!product);
@@ -70,6 +70,7 @@ const AddMotorcycles = ({ route, navigation }) => {
               isNew: false,
             })) || [],
             deletedImages: [],
+            show_phone: productData.show_phone === true || productData.show_phone === 1 || productData.show_phone === '1',
             listingType: productData.type || 'sell',
           });
         }

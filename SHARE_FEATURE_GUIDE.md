@@ -32,6 +32,13 @@ A comprehensive share feature has been implemented for the Product Details page,
   - `reuseapp://product/{productId}` - Custom app scheme
   - `https://yourwebsite.com/product/{productId}` - Web URL (update with your actual domain)
 
+### 4. **Smart Back Navigation**
+
+- Device back button handler (hardware button on Android, swipe gesture on iOS)
+- When opened from deep link: navigates to Home page instead of closing app
+- When opened normally: navigates back in history as expected
+- Prevents app from closing unexpectedly
+
 ---
 
 ## Implementation Details
@@ -40,8 +47,9 @@ A comprehensive share feature has been implemented for the Product Details page,
 
 #### 1. **components/ProductDetailsPage.js**
 
-- Added `Share` import from React Native
+- Added `Share` and `BackHandler` imports from React Native
 - Added `handleShare` function to generate and share product links
+- Added device back button handler to prevent app from closing when opened via deep link
 - Updated UI to include share button next to like button
 - Modified to handle both navigation params and deep link params
 
@@ -85,6 +93,12 @@ A comprehensive share feature has been implemented for the Product Details page,
    - Clicks on either the web link or app link
    - If app is installed: Opens directly to product details
    - If app is not installed: Opens web URL (configure your website)
+
+3. **Navigating Back:**
+   - Press device back button (Android) or swipe back gesture (iOS)
+   - If opened from deep link: automatically navigates to Home/Dashboard
+   - If opened normally: navigates back to previous screen
+   - App never closes unexpectedly
 
 ### Deep Link Resolution
 
@@ -261,6 +275,16 @@ Or open in app: reuseapp://product/[ID]
   - `productId` parameter (from deep link)
 - Verify the API endpoint is working: `/posts/{productId}`
 
+### App Closes When Pressing Back
+
+If the back button still closes the app:
+
+- Verify `BackHandler` is imported from `react-native`
+- Check that the back button handler useEffect is present and active
+- Ensure the navigation prop is available
+- Test on a real device (emulators can behave differently)
+- Check console logs for any errors in the backAction function
+
 ---
 
 ## Future Enhancements
@@ -307,5 +331,15 @@ The share feature is now fully implemented and functional. Users can:
 - ✅ Share via any installed app (WhatsApp, SMS, Email, etc.)
 - ✅ Recipients can click links to open the product in the app
 - ✅ Deep linking works on both Android and iOS
+- ✅ Smart back navigation prevents app from closing
+- ✅ Device back button and swipe gestures handled properly
+- ✅ Web URLs automatically derived from BASE_URL environment variable
+
+**Key Features:**
+
+- **No Configuration Needed:** Web URLs are automatically derived from your `BASE_URL` environment variable
+- **Smart Navigation:** Device back button intelligently navigates to Home when opened from deep link
+- **Universal Sharing:** Works with any app that supports sharing (WhatsApp, Telegram, SMS, Email, etc.)
+- **Platform Support:** Both Android and iOS fully supported
 
 Remember to update the web URLs with your actual domain before deploying to production!

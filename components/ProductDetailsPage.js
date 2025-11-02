@@ -11,7 +11,8 @@ import {
     Alert,
     Dimensions,
     FlatList,
-    Share
+    Share,
+    BackHandler
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -183,6 +184,33 @@ const ProductDetails = () => {
 
         loadBuyerId();
     }, []);
+
+    // Handle device back button - navigate to Home if opened from deep link
+    useEffect(() => {
+        const backAction = () => {
+            const state = navigation.getState();
+
+            // Check if this is the only screen in the stack (opened from deep link)
+            if (state.index === 0 || state.routes.length === 1) {
+                // Navigate to Home instead of closing the app
+                navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'Home' }],
+                });
+                return true; // Prevent default behavior (closing app)
+            }
+
+            // If there's history, let the default back action happen
+            return false;
+        };
+
+        const backHandler = BackHandler.addEventListener(
+            'hardwareBackPress',
+            backAction
+        );
+
+        return () => backHandler.remove();
+    }, [navigation]);
 
     useEffect(() => {
         if (!product?.images || product.images.length <= 1) return;

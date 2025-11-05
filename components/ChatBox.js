@@ -11,7 +11,8 @@ import {
   Image,
   Animated,
   FlatList,
-  ActivityIndicator
+  ActivityIndicator,
+  BackHandler
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -56,6 +57,33 @@ const ChatBox = ({ route }) => {
   useEffect(() => {
     AsyncStorage.getItem('userId').then(setLoggedInUserId);
   }, []);
+
+  // Handle device back button - navigate to Home if opened from notification
+  useEffect(() => {
+    const backAction = () => {
+      const state = navigation.getState();
+
+      // Check if this is the only screen in the stack (opened from notification/deep link)
+      if (state.index === 0 || state.routes.length === 1) {
+        // Navigate to Home instead of closing the app
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Home' }],
+        });
+        return true; // Prevent default behavior (closing app)
+      }
+
+      // If there's history, let the default back action happen
+      return false;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction
+    );
+
+    return () => backHandler.remove();
+  }, [navigation]);
 
   // Replace your useEffect for WebSocket setup with this:
   useEffect(() => {

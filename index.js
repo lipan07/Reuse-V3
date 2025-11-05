@@ -1,6 +1,7 @@
 import messaging from '@react-native-firebase/messaging';
 import notifee, { AndroidImportance, EventType } from '@notifee/react-native';
 import { AppRegistry } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import App from './App';
 import { name as appName } from './app.json';
 
@@ -8,9 +9,36 @@ import { name as appName } from './app.json';
 notifee.onBackgroundEvent(async ({ type, detail }) => {
     const { notification, pressAction } = detail;
 
-    if (type === EventType.ACTION_PRESS && pressAction.id === 'default') {
-        console.log('✅ User tapped background notification:', notification);
-        // You can trigger navigation or logic here
+    console.log('🔔 [Background] Notification event type:', type);
+    console.log('🔔 [Background] Notification:', JSON.stringify(notification, null, 2));
+    console.log('🔔 [Background] Press action:', JSON.stringify(pressAction, null, 2));
+
+    if (type === EventType.PRESS || (type === EventType.ACTION_PRESS && pressAction?.id === 'default')) {
+        console.log('✅ User tapped background notification');
+
+        // Store notification data for navigation when app starts
+        const data = notification?.data || {};
+        console.log('📬 [Background] Notification data:', JSON.stringify(data, null, 2));
+
+        if (data.chat_id || data.chatId) {
+            const navData = {
+                screen: 'ChatBox',
+                params: {
+                    chatId: data.chat_id || data.chatId,
+                    sellerId: data.seller_id || data.sellerId,
+                    buyerId: data.buyer_id || data.buyerId,
+                    postId: data.post_id || data.postId || '',
+                    postTitle: data.post_title || data.postTitle || 'Chat',
+                    postImage: data.post_image || data.postImage || '',
+                }
+            };
+
+            console.log('💾 [Background] Storing navigation data:', JSON.stringify(navData, null, 2));
+            await AsyncStorage.setItem('pendingNotificationNavigation', JSON.stringify(navData));
+            console.log('✅ [Background] Navigation data stored successfully');
+        } else {
+            console.warn('⚠️ [Background] No chat_id found in notification');
+        }
     }
 });
 

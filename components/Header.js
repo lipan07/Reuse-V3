@@ -78,7 +78,7 @@ const Header = () => {
             <View style={styles.contentContainer}>
                <View style={styles.logoContainer}>
                   <Image
-                     source={{ uri: 'https://i.pinimg.com/originals/92/4c/af/924cafad941065f4d5c03ca5423bfcd3.gif' }}
+                     source={require('../assets/logo.png')}
                      style={styles.logo}
                   />
                   <View style={styles.titleContainer}>

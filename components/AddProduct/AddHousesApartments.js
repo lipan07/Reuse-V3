@@ -32,7 +32,7 @@ const AddHousesApartments = ({ route, navigation }) => {
     longitude: null,
     images: [],
     deletedImages: [],
-            show_phone: productData.show_phone === true || productData.show_phone === 1 || productData.show_phone === '1',
+    show_phone: false,
     listingType: 'sell',
     show_phone: false, 
   });

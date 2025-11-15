@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Switch } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import { submitForm } from '../../service/apiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ImagePickerComponent from './SubComponent/ImagePickerComponent';
-import AddressAutocomplete from '../AddressAutocomplete.js'; // Added import
+import AddressAutocomplete from '../AddressAutocomplete.js';
+import ModernSelectionModal from './SubComponent/ModernSelectionModal.js';
 import styles from '../../assets/css/AddProductForm.styles.js';
-import CustomPicker from './SubComponent/CustomPicker';
 import ModalScreen from '../SupportElement/ModalScreen.js';
 
 const AddScooters = ({ route, navigation }) => {
@@ -35,6 +35,11 @@ const AddScooters = ({ route, navigation }) => {
   const [modalType, setModalType] = useState('info');
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
+
+  // Selection Modal States
+  const [showListingTypeModal, setShowListingTypeModal] = useState(false);
+  const [showBrandModal, setShowBrandModal] = useState(false);
+  const [showYearModal, setShowYearModal] = useState(false);
 
   // Fetch product details if editing
   useEffect(() => {
@@ -180,40 +185,39 @@ const AddScooters = ({ route, navigation }) => {
         <ScrollView contentContainerStyle={styles.scrollViewContent} keyboardShouldPersistTaps="handled">
           {/* Listing Type section */}
           <Text style={styles.label}>Listing Type *</Text>
-          <View style={styles.optionContainer}>
-            {['sell', 'rent'].map((type) => (
-              <TouchableOpacity
-                key={type}
-                style={[
-                  styles.optionButton,
-                  formData.listingType === type && styles.selectedOption,
-                  { textTransform: 'capitalize' }
-                ]}
-                onPress={() => handleChange('listingType', type)}
-              >
-                <Text style={formData.listingType === type ? styles.selectedText : styles.optionText}>
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowListingTypeModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.listingType === 'sell' ? 'Sell' : 'Rent'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
+
           {/* Brand Selection */}
           <Text style={styles.label}>Brand *</Text>
-          <CustomPicker
-            label="Select a brand"
-            value={formData.brand}
-            options={brands.map(brand => ({ label: brand, value: brand }))}
-            onSelect={value => handleChange('brand', value)}
-          />
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowBrandModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.brand || 'Select a brand'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
 
           {/* Year Dropdown */}
           <Text style={styles.label}>Year *</Text>
-          <CustomPicker
-            label="Select Year"
-            value={formData.year}
-            options={generateYears().map(year => ({ label: year, value: year }))}
-            onSelect={value => handleChange('year', value)}
-          />
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowYearModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.year || 'Select Year'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
 
           {/* KM Driven Field */}
           <Text style={styles.label}>KM Driven *</Text>
@@ -311,6 +315,41 @@ const AddScooters = ({ route, navigation }) => {
           if (modalType === 'success') navigation.goBack();
         }}
       />
+
+      {/* Selection Modals */}
+      <ModernSelectionModal
+        visible={showListingTypeModal}
+        title="Select Listing Type"
+        options={[
+          { label: 'Sell', value: 'sell' },
+          { label: 'Rent', value: 'rent' }
+        ]}
+        selectedValue={formData.listingType}
+        onSelect={(value) => handleChange('listingType', value)}
+        onClose={() => setShowListingTypeModal(false)}
+        multiColumn={true}
+      />
+
+      <ModernSelectionModal
+        visible={showBrandModal}
+        title="Select Brand"
+        options={brands.map(brand => ({ label: brand, value: brand }))}
+        selectedValue={formData.brand}
+        onSelect={(value) => handleChange('brand', value)}
+        onClose={() => setShowBrandModal(false)}
+        searchable={true}
+      />
+
+      <ModernSelectionModal
+        visible={showYearModal}
+        title="Select Year"
+        options={generateYears().map(year => ({ label: year, value: year }))}
+        selectedValue={formData.year}
+        onSelect={(value) => handleChange('year', value)}
+        onClose={() => setShowYearModal(false)}
+        searchable={true}
+      />
+
     </>
   );
 };

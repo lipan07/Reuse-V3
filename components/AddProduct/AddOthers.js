@@ -10,10 +10,12 @@ import {
   Platform,
   StyleSheet, Switch
 } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import { submitForm } from '../../service/apiService';
 import ImagePickerComponent from './SubComponent/ImagePickerComponent';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import AddressAutocomplete from '../AddressAutocomplete.js'; // Add this import
+import AddressAutocomplete from '../AddressAutocomplete.js';
+import ModernSelectionModal from './SubComponent/ModernSelectionModal.js';
 import styles from '../../assets/css/AddProductForm.styles.js';
 import ModalScreen from '../SupportElement/ModalScreen.js';
 
@@ -38,6 +40,9 @@ const AddOthers = ({ route, navigation }) => {
   const [modalType, setModalType] = useState('info');
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
+
+  // Selection Modal State
+  const [showListingTypeModal, setShowListingTypeModal] = useState(false);
 
   // Remove all address-related state and functions
 
@@ -141,23 +146,15 @@ const AddOthers = ({ route, navigation }) => {
         >
           {/* Listing Type section */}
           <Text style={styles.label}>Listing Type *</Text>
-          <View style={styles.optionContainer}>
-            {['sell', 'rent'].map((type) => (
-              <TouchableOpacity
-                key={type}
-                style={[
-                  styles.optionButton,
-                  formData.listingType === type && styles.selectedOption,
-                  { textTransform: 'capitalize' }
-                ]}
-                onPress={() => handleChange('listingType', type)}
-              >
-                <Text style={formData.listingType === type ? styles.selectedText : styles.optionText}>
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowListingTypeModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.listingType === 'sell' ? 'Sell' : 'Rent'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
           <Text style={styles.label}>Title *</Text>
           <TextInput
             style={styles.input}
@@ -234,6 +231,21 @@ const AddOthers = ({ route, navigation }) => {
           if (modalType === 'success') navigation.goBack();
         }}
       />
+
+      {/* Selection Modal */}
+      <ModernSelectionModal
+        visible={showListingTypeModal}
+        title="Select Listing Type"
+        options={[
+          { label: 'Sell', value: 'sell' },
+          { label: 'Rent', value: 'rent' }
+        ]}
+        selectedValue={formData.listingType}
+        onSelect={(value) => handleChange('listingType', value)}
+        onClose={() => setShowListingTypeModal(false)}
+        multiColumn={true}
+      />
+
     </>
   );
 };

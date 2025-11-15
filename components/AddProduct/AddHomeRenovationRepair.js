@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Switch } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import { submitForm } from '../../service/apiService';
 import ImagePickerComponent from './SubComponent/ImagePickerComponent';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AddressAutocomplete from '../AddressAutocomplete.js';
+import ModernSelectionModal from './SubComponent/ModernSelectionModal.js';
 import styles from '../../assets/css/AddProductForm.styles.js';
-import CustomPicker from './SubComponent/CustomPicker';
 import ModalScreen from '../SupportElement/ModalScreen.js';
 
 const AddHomeRenovationRepair = ({ route, navigation }) => {
@@ -30,6 +30,9 @@ const AddHomeRenovationRepair = ({ route, navigation }) => {
   const [modalType, setModalType] = useState('info');
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
+
+  // Selection Modal State
+  const [showTypeModal, setShowTypeModal] = useState(false);
 
   // Fetch product details if editing
   useEffect(() => {
@@ -141,19 +144,15 @@ const AddHomeRenovationRepair = ({ route, navigation }) => {
 
           {/* Type Selection */}
           <Text style={styles.label}>Type *</Text>
-          <CustomPicker
-            label="Select Type"
-            value={formData.type}
-            options={[
-              { label: 'Builder & Contractor', value: 'builder-contractor' },
-              { label: 'Plumber', value: 'plumber' },
-              { label: 'Electrician', value: 'electrician' },
-              { label: 'Carpenter', value: 'carpenter' },
-              { label: 'Painter', value: 'painter' },
-              { label: 'Others', value: 'others' },
-            ]}
-            onSelect={value => handleChange('type', value)}
-          />
+          <TouchableOpacity 
+            style={styles.selectButton}
+            onPress={() => setShowTypeModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.type || 'Select Type'}
+            </Text>
+            <Icon name="chevron-down" size={16} color="#666" />
+          </TouchableOpacity>
 
           {/* Title Field */}
           <Text style={styles.label}>Title *</Text>
@@ -240,6 +239,20 @@ const AddHomeRenovationRepair = ({ route, navigation }) => {
           setIsModalVisible(false);
           if (modalType === 'success') navigation.goBack();
         }}
+      />
+
+      {/* Modern Selection Modals */}
+      <ModernSelectionModal
+        visible={showTypeModal}
+        title="Select Type"
+        options={['Builder & Contractor', 'Plumber', 'Electrician', 'Carpenter', 'Painter', 'Others']}
+        selectedValue={formData.type}
+        onSelect={(value) => {
+          handleChange('type', value);
+          setShowTypeModal(false);
+        }}
+        onClose={() => setShowTypeModal(false)}
+        searchable={true}
       />
     </>
   );

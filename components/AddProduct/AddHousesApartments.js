@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Switch } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import { submitForm } from '../../service/apiService';
 import ImagePickerComponent from './SubComponent/ImagePickerComponent';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AddressAutocomplete from '../AddressAutocomplete.js';
+import ModernSelectionModal from './SubComponent/ModernSelectionModal.js';
 import styles from '../../assets/css/AddProductForm.styles.js';
 import ModalScreen from '../SupportElement/ModalScreen';
 
@@ -43,6 +45,17 @@ const AddHousesApartments = ({ route, navigation }) => {
   const [modalType, setModalType] = useState('info');
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
+
+  // Selection Modal States
+  const [showListingTypeModal, setShowListingTypeModal] = useState(false);
+  const [showPropertyTypeModal, setShowPropertyTypeModal] = useState(false);
+  const [showBedroomModal, setShowBedroomModal] = useState(false);
+  const [showBathroomModal, setShowBathroomModal] = useState(false);
+  const [showFacingModal, setShowFacingModal] = useState(false);
+  const [showFurnishingModal, setShowFurnishingModal] = useState(false);
+  const [showConstructionStatusModal, setShowConstructionStatusModal] = useState(false);
+  const [showListedByModal, setShowListedByModal] = useState(false);
+  const [showCarParkingModal, setShowCarParkingModal] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [modalData, setModalData] = useState({
@@ -189,141 +202,111 @@ const AddHousesApartments = ({ route, navigation }) => {
         <ScrollView contentContainerStyle={styles.scrollViewContent} keyboardShouldPersistTaps="handled">
           {/* Listing Type section */}
           <Text style={styles.label}>Listing Type *</Text>
-          <View style={styles.optionContainer}>
-            {['sell', 'rent'].map((type) => (
-              <TouchableOpacity
-                key={type}
-                style={[
-                  styles.optionButton,
-                  formData.listingType === type && styles.selectedOption,
-                  { textTransform: 'capitalize' }
-                ]}
-                onPress={() => handleChange('listingType', type)}
-              >
-                <Text style={formData.listingType === type ? styles.selectedText : styles.optionText}>
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowListingTypeModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.listingType === 'sell' ? 'Sell' : 'Rent'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
+
           {/* Property Type Selection */}
           <Text style={styles.label}>Property Type *</Text>
-          <View style={styles.optionContainer}>
-            {['Apartments', 'Builder Floors', 'Farm Houses', 'Houses & Villas'].map((type) => (
-              <TouchableOpacity
-                key={type}
-                style={[styles.optionButton, formData.propertyType === type && styles.selectedOption]}
-                onPress={() => handleSelection('propertyType', type)}
-              >
-                <Text style={formData.propertyType === type ? styles.selectedText : styles.optionText}>{type}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowPropertyTypeModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.propertyType || 'Select Property Type'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
 
           {/* Bedroom Selection */}
           <Text style={styles.label}>Bedroom *</Text>
-          <View style={styles.optionContainer}>
-            {['1', '2', '3', '4', '4+'].map((bedroom) => (
-              <TouchableOpacity
-                key={bedroom}
-                style={[styles.optionButton, formData.bedroom === bedroom && styles.selectedOption]}
-                onPress={() => handleSelection('bedroom', bedroom)}
-              >
-                <Text style={formData.bedroom === bedroom ? styles.selectedText : styles.optionText}>{bedroom}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowBedroomModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.bedroom || 'Select Bedroom'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
 
           {/* Bathroom Selection */}
           <Text style={styles.label}>Bathroom *</Text>
-          <View style={styles.optionContainer}>
-            {['1', '2', '3', '4', '4+'].map((bathroom) => (
-              <TouchableOpacity
-                key={bathroom}
-                style={[styles.optionButton, formData.bathroom === bathroom && styles.selectedOption]}
-                onPress={() => handleSelection('bathroom', bathroom)}
-              >
-                <Text style={formData.bathroom === bathroom ? styles.selectedText : styles.optionText}>{bathroom}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowBathroomModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.bathroom || 'Select Bathroom'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
 
           {/* Facing Selection */}
           <Text style={styles.label}>Facing *</Text>
-          <View style={styles.optionContainer}>
-            {['East', 'North', 'South', 'West', 'North-East', 'North-West', 'South-East', 'South-West'].map((facing) => (
-              <TouchableOpacity
-                key={facing}
-                style={[styles.optionButton, formData.facing === facing && styles.selectedOption]}
-                onPress={() => handleSelection('facing', facing)}
-              >
-                <Text style={formData.facing === facing ? styles.selectedText : styles.optionText}>{facing}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowFacingModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.facing || 'Select Facing'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
 
           {/* Furnishing Selection */}
           <Text style={styles.label}>Furnishing *</Text>
-          <View style={styles.optionContainer}>
-            {['Furnished', 'Semi-Furnished', 'Unfurnished'].map((option) => (
-              <TouchableOpacity
-                key={option}
-                style={[styles.optionButton, formData.furnishing === option && styles.selectedOption]}
-                onPress={() => handleOptionSelection('furnishing', option)}
-              >
-                <Text style={formData.furnishing === option ? styles.selectedText : styles.optionText}>
-                  {option}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowFurnishingModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.furnishing || 'Select Furnishing'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
 
           {/* Construction Status Selection */}
           <Text style={styles.label}>Construction Status *</Text>
-          <View style={styles.optionContainer}>
-            {['New Launch', 'Under Construction', 'Ready to Move'].map((option) => (
-              <TouchableOpacity
-                key={option}
-                style={[styles.optionButton, formData.constructionStatus === option && styles.selectedOption]}
-                onPress={() => handleOptionSelection('constructionStatus', option)}
-              >
-                <Text style={formData.constructionStatus === option ? styles.selectedText : styles.optionText}>
-                  {option}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowConstructionStatusModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.constructionStatus || 'Select Construction Status'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
 
           {/* Listed By Selection */}
           <Text style={styles.label}>Listed By *</Text>
-          <View style={styles.optionContainer}>
-            {['Builder', 'Owner', 'Dealer'].map((option) => (
-              <TouchableOpacity
-                key={option}
-                style={[styles.optionButton, formData.listedBy === option && styles.selectedOption]}
-                onPress={() => handleOptionSelection('listedBy', option)}
-              >
-                <Text style={formData.listedBy === option ? styles.selectedText : styles.optionText}>
-                  {option}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowListedByModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.listedBy || 'Select Listed By'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
 
           {/* Car Parking Selection */}
           <Text style={styles.label}>Car Parking *</Text>
-          <View style={styles.optionContainer}>
-            {['0', '1', '2', '3', '3+'].map((parking) => (
-              <TouchableOpacity
-                key={parking}
-                style={[styles.optionButton, formData.carParking === parking && styles.selectedOption]}
-                onPress={() => handleOptionSelection('carParking', parking)}
-              >
-                <Text style={formData.carParking === parking ? styles.selectedText : styles.optionText}>{parking}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowCarParkingModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.carParking || 'Select Car Parking'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
 
           {/* Super Builtup Area */}
           <Text style={styles.label}>Super Builtup Area (ft²)</Text>
@@ -432,6 +415,99 @@ const AddHousesApartments = ({ route, navigation }) => {
           setIsModalVisible(false);
           if (modalType === 'success') navigation.goBack();
         }}
+      />
+
+      {/* Selection Modals */}
+      <ModernSelectionModal
+        visible={showListingTypeModal}
+        title="Select Listing Type"
+        options={[
+          { label: 'Sell', value: 'sell' },
+          { label: 'Rent', value: 'rent' }
+        ]}
+        selectedValue={formData.listingType}
+        onSelect={(value) => handleChange('listingType', value)}
+        onClose={() => setShowListingTypeModal(false)}
+        multiColumn={true}
+      />
+
+      <ModernSelectionModal
+        visible={showPropertyTypeModal}
+        title="Select Property Type"
+        options={['Apartments', 'Builder Floors', 'Farm Houses', 'Houses & Villas']}
+        selectedValue={formData.propertyType}
+        onSelect={(value) => handleSelection('propertyType', value)}
+        onClose={() => setShowPropertyTypeModal(false)}
+      />
+
+      <ModernSelectionModal
+        visible={showBedroomModal}
+        title="Select Bedroom"
+        options={['1', '2', '3', '4', '4+']}
+        selectedValue={formData.bedroom}
+        onSelect={(value) => handleSelection('bedroom', value)}
+        onClose={() => setShowBedroomModal(false)}
+        multiColumn={true}
+      />
+
+      <ModernSelectionModal
+        visible={showBathroomModal}
+        title="Select Bathroom"
+        options={['1', '2', '3', '4', '4+']}
+        selectedValue={formData.bathroom}
+        onSelect={(value) => handleSelection('bathroom', value)}
+        onClose={() => setShowBathroomModal(false)}
+        multiColumn={true}
+      />
+
+      <ModernSelectionModal
+        visible={showFacingModal}
+        title="Select Facing"
+        options={['East', 'North', 'South', 'West', 'North-East', 'North-West', 'South-East', 'South-West']}
+        selectedValue={formData.facing}
+        onSelect={(value) => handleSelection('facing', value)}
+        onClose={() => setShowFacingModal(false)}
+        multiColumn={true}
+      />
+
+      <ModernSelectionModal
+        visible={showFurnishingModal}
+        title="Select Furnishing"
+        options={['Furnished', 'Semi-Furnished', 'Unfurnished']}
+        selectedValue={formData.furnishing}
+        onSelect={(value) => handleOptionSelection('furnishing', value)}
+        onClose={() => setShowFurnishingModal(false)}
+        multiColumn={true}
+      />
+
+      <ModernSelectionModal
+        visible={showConstructionStatusModal}
+        title="Select Construction Status"
+        options={['New Launch', 'Under Construction', 'Ready to Move']}
+        selectedValue={formData.constructionStatus}
+        onSelect={(value) => handleOptionSelection('constructionStatus', value)}
+        onClose={() => setShowConstructionStatusModal(false)}
+        multiColumn={true}
+      />
+
+      <ModernSelectionModal
+        visible={showListedByModal}
+        title="Select Listed By"
+        options={['Builder', 'Owner', 'Dealer']}
+        selectedValue={formData.listedBy}
+        onSelect={(value) => handleOptionSelection('listedBy', value)}
+        onClose={() => setShowListedByModal(false)}
+        multiColumn={true}
+      />
+
+      <ModernSelectionModal
+        visible={showCarParkingModal}
+        title="Select Car Parking"
+        options={['0', '1', '2', '3', '3+']}
+        selectedValue={formData.carParking}
+        onSelect={(value) => handleOptionSelection('carParking', value)}
+        onClose={() => setShowCarParkingModal(false)}
+        multiColumn={true}
       />
 
     </>

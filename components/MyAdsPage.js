@@ -1,9 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Modal, TouchableWithoutFeedback, ActivityIndicator, Dimensions, Animated } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Modal, TouchableWithoutFeedback, ActivityIndicator, Dimensions, Animated, Platform, ScrollView } from 'react-native';
 import BottomNavBar from './BottomNavBar';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
+
+// Responsive scaling functions
+const { width, height } = Dimensions.get('window');
+const scale = width / 375;
+const verticalScale = height / 812;
+const normalize = (size) => Math.round(scale * size);
+const normalizeVertical = (size) => Math.round(verticalScale * size);
+
+// Get safe area insets for different devices
+const isIphoneX = Platform.OS === 'ios' && (height >= 812 || width >= 812);
+const bottomSafeArea = isIphoneX ? 34 : 0;
 
 const MyAdsPage = ({ navigation }) => {
   const [products, setProducts] = useState([]);
@@ -44,6 +55,16 @@ const MyAdsPage = ({ navigation }) => {
         const newProducts = jsonResponse.data || [];
         const nextPage = jsonResponse.links.next !== null;
 
+        // Debug: Log first product structure
+        if (newProducts.length > 0) {
+          console.log('First product structure:', JSON.stringify(newProducts[0], null, 2));
+          console.log('Amount location:', {
+            'post_details.amount': newProducts[0].post_details?.amount,
+            'amount': newProducts[0].amount,
+            'price': newProducts[0].price
+          });
+        }
+
         setProducts(prevProducts => (isRefreshing ? newProducts : [...prevProducts, ...newProducts]));
         setCurrentPage(page);
         setHasMorePages(nextPage);
@@ -80,20 +101,20 @@ const MyAdsPage = ({ navigation }) => {
         setProducts(products.filter(item => item.id !== selectedProduct.id));
         Dialog.show({
           type: ALERT_TYPE.SUCCESS,
-          title: 'Success',
-          textBody: 'Post deleted successfully.',
+          title: 'Listing Removed',
+          textBody: 'Your ad has been successfully removed from the marketplace.',
           button: 'OK',
         });
       } else {
-        throw new Error('Failed to delete the post');
+        throw new Error('Failed to remove the listing');
       }
     } catch (error) {
       console.error('Delete failed:', error);
       Dialog.show({
         type: ALERT_TYPE.ERROR,
-        title: 'Error',
-        textBody: 'Failed to delete the post.',
-        button: 'Try again',
+        title: 'Unable to Remove',
+        textBody: 'We couldn\'t remove your listing. Please check your connection and try again.',
+        button: 'Retry',
       });
     }
   };
@@ -123,6 +144,9 @@ const MyAdsPage = ({ navigation }) => {
   const renderProductItem = ({ item }) => {
     const hasImage = item.images && item.images.length > 0 && item.images[0];
 
+    // Get amount from different possible locations
+    const amount = item.post_details?.amount || item.amount || item.price || '0';
+
     return (
       <TouchableOpacity style={styles.productItem} onPress={() => showPopup(item)}>
         {item.images && item.images.length > 0 ? (
@@ -141,7 +165,7 @@ const MyAdsPage = ({ navigation }) => {
         <View style={styles.productDetails}>
           <Text style={styles.productName}>{item.title}</Text>
           <Text style={styles.productDesc}>{item.post_details?.description || item.description || ''}</Text>
-          <Text style={styles.price}>Price: ${item.post_details.amount}</Text>
+          <Text style={styles.price}>Price: ₹{amount}</Text>
         </View>
         <Icon name="angle-right" size={24} color="#007BFF" style={styles.arrowIcon} />
       </TouchableOpacity>
@@ -324,76 +348,18 @@ const MyAdsPage = ({ navigation }) => {
     const particles = createConfettiParticles();
     setConfettiParticles(particles);
     setShowConfetti(true);
+    setShowBoostSuccess(true);
     hidePopup();
 
     setTimeout(() => {
       setShowConfetti(false);
       setConfettiParticles([]);
-      setShowBoostSuccess(true);
-    }, 2000);
-    setTimeout(() => setShowBoostSuccess(false), 5000);
+      setShowBoostSuccess(false);
+    }, 3000);
   };
 
   return (
     <View style={styles.container}>
-      {showConfetti && (
-        <View style={styles.confettiContainer}>
-          {confettiParticles.map((particle) => (
-            <ConfettiParticle key={particle.id} particle={particle} />
-          ))}
-        </View>
-      )}
-
-      {/* Professional Boost Success Modal */}
-      {showBoostSuccess && (
-        <Modal
-          visible={showBoostSuccess}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowBoostSuccess(false)}
-        >
-          <View style={styles.boostSuccessOverlay}>
-            <View style={styles.boostSuccessContainer}>
-              <View style={styles.boostSuccessIconContainer}>
-                <Icon name="rocket" size={60} color="#FFD700" />
-                <View style={styles.boostSuccessGlow} />
-              </View>
-
-              <Text style={styles.boostSuccessTitle}>🎉 Congratulations!</Text>
-              <Text style={styles.boostSuccessMessage}>
-                Your product "{selectedProduct?.title}" has been successfully boosted!
-              </Text>
-
-              <View style={styles.boostSuccessDetails}>
-                <View style={styles.boostSuccessDetailItem}>
-                  <Icon name="eye" size={20} color="#007BFF" />
-                  <Text style={styles.boostSuccessDetailText}>Increased visibility</Text>
-                </View>
-                <View style={styles.boostSuccessDetailItem}>
-                  <Icon name="trending-up" size={20} color="#28A745" />
-                  <Text style={styles.boostSuccessDetailText}>Higher engagement</Text>
-                </View>
-                <View style={styles.boostSuccessDetailItem}>
-                  <Icon name="star" size={20} color="#FFD700" />
-                  <Text style={styles.boostSuccessDetailText}>Priority placement</Text>
-                </View>
-              </View>
-
-              <Text style={styles.boostSuccessFooter}>
-                Your ad will now appear at the top of search results for the next 24 hours.
-              </Text>
-
-              <TouchableOpacity
-                style={styles.boostSuccessButton}
-                onPress={() => setShowBoostSuccess(false)}
-              >
-                <Text style={styles.boostSuccessButtonText}>Got it!</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-      )}
-
       <FlatList
         data={products}
         renderItem={renderProductItem}
@@ -414,21 +380,43 @@ const MyAdsPage = ({ navigation }) => {
       />
       <BottomNavBar navigation={navigation} />
 
-      {/* Action Modal */}
+      {/* Modern Centered Action Modal */}
       <Modal
         visible={isPopupVisible}
         transparent={true}
-        animationType="slide"
+        animationType="fade"
         onRequestClose={hidePopup}
       >
         <TouchableWithoutFeedback onPress={hidePopup}>
-          <View style={styles.modalOverlay}>
+          <View style={styles.modernModalOverlay}>
             <TouchableWithoutFeedback>
-              <View style={styles.newPopupContainer}>
-                <Text style={styles.newPopupTitle}>Select an Action</Text>
-                <View style={styles.newPopupOptionsContainer}>
+              <View style={styles.modernModalContainer}>
+                {/* Product Preview */}
+                {selectedProduct && (
+                  <View style={styles.modernProductPreview}>
+                    {selectedProduct.images && selectedProduct.images.length > 0 ? (
+                      <Image
+                        source={{ uri: selectedProduct.images[0] }}
+                        style={styles.modernPreviewImage}
+                      />
+                    ) : (
+                      <View style={styles.modernPreviewImagePlaceholder}>
+                        <Icon name="image" size={30} color="#CCC" />
+                      </View>
+                    )}
+                    <View style={styles.modernPreviewInfo}>
+                      <Text style={styles.modernPreviewTitle} numberOfLines={2}>{selectedProduct.title}</Text>
+                      <Text style={styles.modernPreviewPrice}>₹{selectedProduct.post_details?.amount || selectedProduct.amount || selectedProduct.price || '0'}</Text>
+                    </View>
+                  </View>
+                )}
+
+                <View style={styles.modernDivider} />
+
+                {/* Action Options */}
+                <View style={styles.modernActionContainer}>
                   <TouchableOpacity
-                    style={styles.newPopupOption}
+                    style={styles.modernActionItem}
                     onPress={() => {
                       hidePopup();
                       setTimeout(() => {
@@ -436,14 +424,14 @@ const MyAdsPage = ({ navigation }) => {
                       }, 300);
                     }}
                   >
-                    <Icon name="info-circle" size={20} color="#007BFF" style={styles.newPopupIcon} />
-                    <Text style={styles.newPopupOptionText}>Details</Text>
-                    <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                      <Icon name="angle-right" size={20} color="#888" />
+                    <View style={[styles.modernActionIcon, { backgroundColor: '#E3F2FD' }]}>
+                      <Icon name="eye" size={22} color="#007BFF" />
                     </View>
+                    <Text style={styles.modernActionText}>View Ad</Text>
                   </TouchableOpacity>
+
                   <TouchableOpacity
-                    style={styles.newPopupOption}
+                    style={styles.modernActionItem}
                     onPress={() => {
                       hidePopup();
                       setTimeout(() => {
@@ -451,14 +439,14 @@ const MyAdsPage = ({ navigation }) => {
                       }, 300);
                     }}
                   >
-                    <Icon name="users" size={20} color="#007BFF" style={styles.newPopupIcon} />
-                    <Text style={styles.newPopupOptionText}>Followers</Text>
-                    <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                      <Icon name="angle-right" size={20} color="#888" />
+                    <View style={[styles.modernActionIcon, { backgroundColor: '#F3E5F5' }]}>
+                      <Icon name="heart" size={22} color="#9C27B0" />
                     </View>
+                    <Text style={styles.modernActionText}>Interested</Text>
                   </TouchableOpacity>
+
                   <TouchableOpacity
-                    style={styles.newPopupOption}
+                    style={styles.modernActionItem}
                     onPress={() => {
                       hidePopup();
                       setTimeout(() => {
@@ -467,43 +455,51 @@ const MyAdsPage = ({ navigation }) => {
                       }, 300);
                     }}
                   >
-                    <Icon name="edit" size={20} color="#007BFF" style={styles.newPopupIcon} />
-                    <Text style={styles.newPopupOptionText}>Edit</Text>
-                    <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                      <Icon name="angle-right" size={20} color="#888" />
+                    <View style={[styles.modernActionIcon, { backgroundColor: '#E8F5E9' }]}>
+                      <Icon name="pencil" size={22} color="#4CAF50" />
                     </View>
+                    <Text style={styles.modernActionText}>Edit Ad</Text>
                   </TouchableOpacity>
+
                   <TouchableOpacity
-                    style={[styles.newPopupOption, styles.newBoostOption]}
+                    style={styles.modernActionItem}
                     onPress={handleBoost}
                   >
-                    <Icon name="bolt" size={20} color="#FFD700" style={styles.newPopupIcon} />
-                    <Text style={styles.newPopupOptionText}>Boost</Text>
-                    <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                      <Icon name="angle-right" size={20} color="#888" />
+                    <View style={[styles.modernActionIcon, { backgroundColor: '#FFF8E1' }]}>
+                      <Icon name="rocket" size={22} color="#FFA000" />
                     </View>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.newPopupOption, styles.newDeleteOption]}
-                    onPress={() => {
-                      hidePopup();
-                      showDeleteConfirmModal();
-                    }}
-                  >
-                    <Icon name="trash" size={20} color="#FF5C5C" style={styles.newPopupIcon} />
-                    <Text style={styles.newPopupOptionText}>Delete</Text>
-                    <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                      <Icon name="angle-right" size={20} color="#888" />
-                    </View>
+                    <Text style={styles.modernActionText}>Promote</Text>
                   </TouchableOpacity>
                 </View>
+
+                <View style={styles.modernDivider} />
+
+                {/* Delete Button */}
+                <TouchableOpacity
+                  style={styles.modernDeleteButton}
+                  onPress={() => {
+                    hidePopup();
+                    showDeleteConfirmModal();
+                  }}
+                >
+                  <Icon name="trash-o" size={18} color="#FF3B30" />
+                  <Text style={styles.modernDeleteButtonText}>Remove Listing</Text>
+                </TouchableOpacity>
+
+                {/* Cancel Button */}
+                <TouchableOpacity
+                  style={styles.modernCancelButton}
+                  onPress={hidePopup}
+                >
+                  <Text style={styles.modernCancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
               </View>
             </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
       </Modal>
 
-      {/* Delete Confirmation Modal */}
+      {/* Modern Delete Confirmation Modal */}
       <Modal
         visible={isDeleteConfirmVisible}
         transparent={true}
@@ -513,19 +509,91 @@ const MyAdsPage = ({ navigation }) => {
         <TouchableWithoutFeedback onPress={hideDeleteConfirmModal}>
           <View style={styles.modalOverlay}>
             <View style={styles.confirmContainer}>
-              <Text style={styles.confirmTitle}>Are you sure you want to delete this post?</Text>
+              <View style={styles.confirmIconWrapper}>
+                <Icon name="exclamation-triangle" size={36} color="#FF3B30" />
+              </View>
+              <Text style={styles.confirmTitle}>Remove Listing?</Text>
+              <Text style={styles.confirmSubtitle}>This will permanently delete your ad. All views, likes, and messages associated with this listing will be lost.</Text>
               <View style={styles.buttonRow}>
-                <TouchableOpacity style={styles.cancelButton} onPress={hideDeleteConfirmModal}>
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                <TouchableOpacity style={styles.confirmCancelButton} onPress={hideDeleteConfirmModal}>
+                  <Text style={styles.confirmCancelButtonText}>Keep It</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.confirmButton} onPress={confirmDelete}>
-                  <Text style={styles.confirmButtonText}>Delete</Text>
+                  <Text style={styles.confirmButtonText}>Remove</Text>
                 </TouchableOpacity>
               </View>
             </View>
           </View>
         </TouchableWithoutFeedback>
       </Modal>
+
+      {/* Confetti Overlay */}
+      {showConfetti && (
+        <View style={styles.confettiContainer}>
+          {confettiParticles.map((particle) => (
+            <ConfettiParticle key={particle.id} particle={particle} />
+          ))}
+        </View>
+      )}
+
+      {/* Modern Boost Success Modal */}
+      {showBoostSuccess && (
+        <Modal
+          visible={showBoostSuccess}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowBoostSuccess(false)}
+        >
+          <View style={styles.boostSuccessOverlay}>
+            <Animated.View style={styles.boostSuccessContainer}>
+              {/* Rocket Icon with Pulse */}
+              <View style={styles.boostIconCircle}>
+                <Icon name="rocket" size={normalize(36)} color="#FFA000" />
+              </View>
+
+              <Text style={styles.boostSuccessTitle}>Ad Promoted!</Text>
+              <Text style={styles.boostSuccessSubtitle}>
+                Your listing is now featured at the top of search results
+              </Text>
+
+              {/* 24 Hour Badge */}
+              <View style={styles.boostTimeBadge}>
+                <Icon name="clock-o" size={normalize(16)} color="#FFA000" />
+                <Text style={styles.boostTimeText}>Promoted for 24 hours</Text>
+              </View>
+
+              {/* Benefits Compact */}
+              <View style={styles.boostBenefitsCompact}>
+                <View style={styles.boostBenefitItem}>
+                  <View style={styles.boostBenefitIcon}>
+                    <Icon name="eye" size={normalize(14)} color="#007BFF" />
+                  </View>
+                  <Text style={styles.boostBenefitText}>10x visibility</Text>
+                </View>
+                <View style={styles.boostBenefitItem}>
+                  <View style={styles.boostBenefitIcon}>
+                    <Icon name="arrow-up" size={normalize(14)} color="#4CAF50" />
+                  </View>
+                  <Text style={styles.boostBenefitText}>Top position</Text>
+                </View>
+                <View style={styles.boostBenefitItem}>
+                  <View style={styles.boostBenefitIcon}>
+                    <Icon name="users" size={normalize(14)} color="#9C27B0" />
+                  </View>
+                  <Text style={styles.boostBenefitText}>More buyers</Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={styles.boostSuccessButton}
+                onPress={() => setShowBoostSuccess(false)}
+              >
+                <Text style={styles.boostSuccessButtonText}>Awesome!</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 };
@@ -582,88 +650,198 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  newPopupContainer: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 15,
-    width: '90%',
+  // Modern Centered Modal Styles
+  modernModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 10,
+    padding: normalize(20),
   },
-  newPopupTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  newPopupOptionsContainer: {
+  modernModalContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: normalize(20),
     width: '100%',
+    maxWidth: normalize(400),
+    padding: normalize(20),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 20,
   },
-  newPopupOption: {
+  modernProductPreview: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 10,
-    marginVertical: 8,
-    width: '100%',
+    marginBottom: normalizeVertical(16),
   },
-  newPopupOptionText: {
-    fontSize: 16,
+  modernPreviewImage: {
+    width: normalize(60),
+    height: normalize(60),
+    borderRadius: normalize(12),
+    marginRight: normalize(12),
+    resizeMode: 'cover',
+  },
+  modernPreviewImagePlaceholder: {
+    width: normalize(60),
+    height: normalize(60),
+    borderRadius: normalize(12),
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: normalize(12),
+  },
+  modernPreviewInfo: {
+    flex: 1,
+  },
+  modernPreviewTitle: {
+    fontSize: normalize(16),
+    fontWeight: '700',
+    color: '#1A1A1A',
+    marginBottom: normalizeVertical(4),
+  },
+  modernPreviewPrice: {
+    fontSize: normalize(18),
+    fontWeight: 'bold',
+    color: '#4CAF50',
+  },
+  modernDivider: {
+    height: 1,
+    backgroundColor: '#F0F0F0',
+    marginVertical: normalizeVertical(16),
+  },
+  modernActionContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: normalizeVertical(16),
+  },
+  modernActionItem: {
+    width: '48%',
+    alignItems: 'center',
+    paddingVertical: normalizeVertical(16),
+    paddingHorizontal: normalize(12),
+    backgroundColor: '#FAFAFA',
+    borderRadius: normalize(12),
+    marginBottom: normalizeVertical(12),
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+  },
+  modernActionIcon: {
+    width: normalize(48),
+    height: normalize(48),
+    borderRadius: normalize(24),
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: normalizeVertical(8),
+  },
+  modernActionText: {
+    fontSize: normalize(14),
+    fontWeight: '600',
     color: '#333',
-    fontWeight: '500',
-    marginLeft: 10,
+    textAlign: 'center',
   },
-  newPopupIcon: {
-    marginRight: 10,
+  modernDeleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFF5F5',
+    paddingVertical: normalizeVertical(14),
+    borderRadius: normalize(12),
+    marginBottom: normalizeVertical(12),
+    borderWidth: 1,
+    borderColor: '#FFE5E5',
   },
-  newDeleteOption: {
-    backgroundColor: '#ffe6e6',
+  modernDeleteButtonText: {
+    fontSize: normalize(15),
+    fontWeight: '600',
+    color: '#FF3B30',
+    marginLeft: normalize(8),
+  },
+  modernCancelButton: {
+    backgroundColor: '#F5F5F5',
+    paddingVertical: normalizeVertical(14),
+    borderRadius: normalize(12),
+    alignItems: 'center',
+  },
+  modernCancelButtonText: {
+    fontSize: normalize(15),
+    fontWeight: '600',
+    color: '#666',
   },
   confirmContainer: {
     backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
+    padding: normalize(20),
+    borderRadius: normalize(18),
     alignItems: 'center',
-    width: '80%',
+    width: '82%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 10,
+  },
+  confirmIconWrapper: {
+    width: normalize(64),
+    height: normalize(64),
+    borderRadius: normalize(32),
+    backgroundColor: '#FFF5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: normalizeVertical(14),
   },
   confirmTitle: {
-    fontSize: 18,
-    marginBottom: 20,
+    fontSize: normalize(19),
+    fontWeight: '700',
+    color: '#1A1A1A',
+    marginBottom: normalizeVertical(8),
     textAlign: 'center',
+  },
+  confirmSubtitle: {
+    fontSize: normalize(13),
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: normalizeVertical(20),
+    lineHeight: normalize(18),
+    paddingHorizontal: normalize(8),
   },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
   },
-  cancelButton: {
+  confirmCancelButton: {
     flex: 1,
-    marginRight: 10,
-    padding: 10,
-    backgroundColor: '#ccc',
-    borderRadius: 5,
+    marginRight: normalize(6),
+    paddingVertical: normalizeVertical(12),
+    paddingHorizontal: normalize(12),
+    backgroundColor: '#F5F5F5',
+    borderRadius: normalize(10),
     alignItems: 'center',
+  },
+  confirmCancelButtonText: {
+    color: '#666',
+    fontSize: normalize(15),
+    fontWeight: '600',
   },
   confirmButton: {
     flex: 1,
-    marginLeft: 10,
-    padding: 10,
-    backgroundColor: '#d9534f',
-    borderRadius: 5,
+    marginLeft: normalize(6),
+    paddingVertical: normalizeVertical(12),
+    paddingHorizontal: normalize(12),
+    backgroundColor: '#FF3B30',
+    borderRadius: normalize(10),
     alignItems: 'center',
-  },
-  cancelButtonText: {
-    color: '#000',
+    shadowColor: '#FF3B30',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   confirmButtonText: {
-    color: '#fff',
+    color: '#FFFFFF',
+    fontSize: normalize(15),
+    fontWeight: '600',
   },
   emptyContainer: {
     flex: 1,
@@ -693,11 +871,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
 
-
-  newBoostOption: {
-    backgroundColor: '#fff8e1',
-  },
-
   // Custom Confetti Styles
   confettiContainer: {
     position: 'absolute',
@@ -716,102 +889,110 @@ const styles = StyleSheet.create({
     top: -50,
   },
 
-  // Boost Success Modal Styles
+  // Modern Boost Success Modal Styles
   boostSuccessOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: normalize(20),
   },
   boostSuccessContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 30,
+    borderRadius: normalize(20),
+    padding: normalize(24),
     alignItems: 'center',
-    width: '100%',
-    maxWidth: 400,
+    width: '85%',
+    maxWidth: normalize(340),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 20,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 16,
   },
-  boostSuccessIconContainer: {
-    position: 'relative',
-    marginBottom: 20,
-  },
-  boostSuccessGlow: {
-    position: 'absolute',
-    top: -10,
-    left: -10,
-    right: -10,
-    bottom: -10,
-    backgroundColor: '#FFD700',
-    borderRadius: 50,
-    opacity: 0.3,
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 20,
-    elevation: 10,
+  boostIconCircle: {
+    width: normalize(72),
+    height: normalize(72),
+    borderRadius: normalize(36),
+    backgroundColor: '#FFF8E1',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: normalizeVertical(16),
+    borderWidth: 3,
+    borderColor: '#FFE082',
   },
   boostSuccessTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#2C3E50',
-    marginBottom: 15,
+    fontSize: normalize(22),
+    fontWeight: '700',
+    color: '#1A1A1A',
+    marginBottom: normalizeVertical(6),
     textAlign: 'center',
   },
-  boostSuccessMessage: {
-    fontSize: 16,
-    color: '#34495E',
+  boostSuccessSubtitle: {
+    fontSize: normalize(13),
+    color: '#666',
     textAlign: 'center',
-    marginBottom: 25,
-    lineHeight: 24,
+    marginBottom: normalizeVertical(16),
+    lineHeight: normalize(18),
+    paddingHorizontal: normalize(8),
   },
-  boostSuccessDetails: {
-    width: '100%',
-    marginBottom: 25,
-  },
-  boostSuccessDetailItem: {
+  boostTimeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    backgroundColor: '#F8F9FA',
-    borderRadius: 10,
-    marginVertical: 4,
+    backgroundColor: '#FFF8E1',
+    paddingVertical: normalizeVertical(8),
+    paddingHorizontal: normalize(16),
+    borderRadius: normalize(20),
+    marginBottom: normalizeVertical(16),
+    borderWidth: 1,
+    borderColor: '#FFE082',
   },
-  boostSuccessDetailText: {
-    fontSize: 14,
-    color: '#2C3E50',
-    marginLeft: 12,
+  boostTimeText: {
+    fontSize: normalize(14),
+    fontWeight: '600',
+    color: '#F57C00',
+    marginLeft: normalize(6),
+  },
+  boostBenefitsCompact: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginBottom: normalizeVertical(20),
+  },
+  boostBenefitItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  boostBenefitIcon: {
+    width: normalize(32),
+    height: normalize(32),
+    borderRadius: normalize(16),
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: normalizeVertical(4),
+  },
+  boostBenefitText: {
+    fontSize: normalize(11),
+    color: '#666',
+    textAlign: 'center',
     fontWeight: '500',
   },
-  boostSuccessFooter: {
-    fontSize: 13,
-    color: '#7F8C8D',
-    textAlign: 'center',
-    marginBottom: 25,
-    lineHeight: 20,
-    fontStyle: 'italic',
-  },
   boostSuccessButton: {
-    backgroundColor: '#007BFF',
-    paddingVertical: 15,
-    paddingHorizontal: 40,
-    borderRadius: 25,
-    shadowColor: '#007BFF',
+    backgroundColor: '#FFA000',
+    paddingVertical: normalizeVertical(12),
+    paddingHorizontal: normalize(48),
+    borderRadius: normalize(24),
+    shadowColor: '#FFA000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 8,
+    elevation: 6,
   },
   boostSuccessButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: normalize(16),
+    fontWeight: '700',
   },
 });
 

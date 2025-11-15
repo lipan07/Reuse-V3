@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Switch } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import { submitForm } from '../../service/apiService';
 import ImagePickerComponent from './SubComponent/ImagePickerComponent';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AddressAutocomplete from '../AddressAutocomplete.js';
+import ModernSelectionModal from './SubComponent/ModernSelectionModal.js';
 import styles from '../../assets/css/AddProductForm.styles.js';
 import ModalScreen from '../SupportElement/ModalScreen.js';
 
@@ -34,6 +36,11 @@ const AddLandPlots = ({ route, navigation }) => {
   const [modalType, setModalType] = useState('info');
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
+
+  // Selection Modal States
+  const [showListingTypeModal, setShowListingTypeModal] = useState(false);
+  const [showFacingModal, setShowFacingModal] = useState(false);
+  const [showListedByModal, setShowListedByModal] = useState(false);
 
   // Fetch product details if editing
   useEffect(() => {
@@ -150,54 +157,39 @@ const AddLandPlots = ({ route, navigation }) => {
         <ScrollView contentContainerStyle={styles.scrollViewContent} keyboardShouldPersistTaps="handled">
           {/* Listing Type section */}
           <Text style={styles.label}>Listing Type *</Text>
-          <View style={styles.optionContainer}>
-            {['sell', 'rent'].map((type) => (
-              <TouchableOpacity
-                key={type}
-                style={[
-                  styles.optionButton,
-                  formData.listingType === type && styles.selectedOption,
-                  { textTransform: 'capitalize' }
-                ]}
-                onPress={() => handleChange('listingType', type)}
-              >
-                <Text style={formData.listingType === type ? styles.selectedText : styles.optionText}>
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity 
+            style={styles.selectButton}
+            onPress={() => setShowListingTypeModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.listingType ? formData.listingType.charAt(0).toUpperCase() + formData.listingType.slice(1) : 'Select Listing Type'}
+            </Text>
+            <Icon name="chevron-down" size={16} color="#666" />
+          </TouchableOpacity>
+
           {/* Listed By */}
           <Text style={styles.label}>Listed By *</Text>
-          <View style={styles.optionContainer}>
-            {['Dealer', 'Owner', 'Builder'].map((listedByOption) => (
-              <TouchableOpacity
-                key={listedByOption}
-                style={[styles.optionButton, formData.listedBy === listedByOption && styles.selectedOption]}
-                onPress={() => handleChange('listedBy', listedByOption)}
-              >
-                <Text style={formData.listedBy === listedByOption ? styles.selectedText : styles.optionText}>
-                  {listedByOption}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity 
+            style={styles.selectButton}
+            onPress={() => setShowListedByModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.listedBy || 'Select Listed By'}
+            </Text>
+            <Icon name="chevron-down" size={16} color="#666" />
+          </TouchableOpacity>
 
           {/* Facing */}
           <Text style={styles.label}>Facing *</Text>
-          <View style={styles.optionContainer}>
-            {['East', 'North', 'South', 'West', 'North-East', 'North-West', 'South-East', 'South-West'].map((facingOption) => (
-              <TouchableOpacity
-                key={facingOption}
-                style={[styles.optionButton, formData.facing === facingOption && styles.selectedOption]}
-                onPress={() => handleChange('facing', facingOption)}
-              >
-                <Text style={formData.facing === facingOption ? styles.selectedText : styles.optionText}>
-                  {facingOption}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity 
+            style={styles.selectButton}
+            onPress={() => setShowFacingModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.facing || 'Select Facing'}
+            </Text>
+            <Icon name="chevron-down" size={16} color="#666" />
+          </TouchableOpacity>
 
           {/* Plot Area */}
           <Text style={styles.label}>Plot Area (ft²) *</Text>
@@ -323,6 +315,46 @@ const AddLandPlots = ({ route, navigation }) => {
           setIsModalVisible(false);
           if (modalType === 'success') navigation.goBack();
         }}
+      />
+
+      {/* Modern Selection Modals */}
+      <ModernSelectionModal
+        visible={showListingTypeModal}
+        title="Select Listing Type"
+        options={['Sell', 'Rent']}
+        selectedValue={formData.listingType ? formData.listingType.charAt(0).toUpperCase() + formData.listingType.slice(1) : ''}
+        onSelect={(value) => {
+          handleChange('listingType', value.toLowerCase());
+          setShowListingTypeModal(false);
+        }}
+        onClose={() => setShowListingTypeModal(false)}
+        multiColumn={true}
+      />
+
+      <ModernSelectionModal
+        visible={showListedByModal}
+        title="Select Listed By"
+        options={['Dealer', 'Owner', 'Builder']}
+        selectedValue={formData.listedBy}
+        onSelect={(value) => {
+          handleChange('listedBy', value);
+          setShowListedByModal(false);
+        }}
+        onClose={() => setShowListedByModal(false)}
+        multiColumn={true}
+      />
+
+      <ModernSelectionModal
+        visible={showFacingModal}
+        title="Select Facing"
+        options={['East', 'North', 'South', 'West', 'North-East', 'North-West', 'South-East', 'South-West']}
+        selectedValue={formData.facing}
+        onSelect={(value) => {
+          handleChange('facing', value);
+          setShowFacingModal(false);
+        }}
+        onClose={() => setShowFacingModal(false)}
+        searchable={true}
       />
     </>
   );

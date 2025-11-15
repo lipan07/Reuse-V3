@@ -19,11 +19,14 @@ const MyFollowersPage = ({ route }) => {
     const { product } = route.params || {};
 
     const fetchData = async () => {
-        let endpoint = `/post/followers/${product.id}`;
-        // console.log(`${process.env.BASE_URL}${endpoint}`);
+        let endpoint = `/post/likes/${product.id}`;
+        console.log(`Fetching: ${process.env.BASE_URL}${endpoint}`);
         try {
             const authToken = await AsyncStorage.getItem('authToken');
-            if (!authToken) return;
+            if (!authToken) {
+                console.error('No auth token found');
+                return;
+            }
 
             const response = await fetch(`${process.env.BASE_URL}${endpoint}`, {
                 method: 'GET',
@@ -33,26 +36,53 @@ const MyFollowersPage = ({ route }) => {
                 },
             });
 
-            const result = await response.json();
+            console.log('Response status:', response.status);
 
-            // console.log('API Product:', result);
+            // Check if response is OK before parsing
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`API Error (${response.status}):`, errorText);
+                Alert.alert('Error', `Failed to load followers. Status: ${response.status}`);
+                return;
+            }
+
+            // Check content type
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('Non-JSON response:', text.substring(0, 200));
+                Alert.alert('Error', 'Server returned invalid response format');
+                return;
+            }
+
+            const result = await response.json();
+            console.log('Followers data received:', result.length || 0, 'items');
+
+            // Handle empty or invalid data
+            if (!result || !Array.isArray(result)) {
+                console.warn('Invalid data format:', result);
+                setData([]);
+                return;
+            }
+
             const formattedData = result.map((item) => {
                 const source = item.user;
                 return {
                     id: item.id,
                     postId: item.post_id,
                     userId: item.user_id,
-                    title: source.name,
-                    address: source.address,
-                    images: source.images || [],
+                    title: source?.name || 'Unknown',
+                    address: source?.address || 'No address',
+                    images: source?.images || [],
                     distance: '5km' || '10km',
-                    createdAt: source.created_at,
+                    createdAt: source?.created_at || '',
                 };
             });
             setData(formattedData);
 
         } catch (error) {
             console.error('Error fetching data:', error);
+            Alert.alert('Error', 'Failed to load followers. Please try again.');
         }
     };
 

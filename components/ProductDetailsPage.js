@@ -411,15 +411,15 @@ const ProductDetails = () => {
             // Generate deep link URL for the product
             const productLink = `reuseapp://product/${product.id}`;
 
-            // Extract base domain from BASE_URL (remove /api if present)
-            let baseUrl = process.env.BASE_URL || 'https://yourwebsite.com';
+            // Extract base domain from APP_URL or BASE_URL (remove /api if present)
+            let baseUrl = process.env.APP_URL || process.env.BASE_URL || '';
             // Remove /api from the end if present
             baseUrl = baseUrl.replace(/\/api\/?$/, '');
             // Remove trailing slash
             baseUrl = baseUrl.replace(/\/$/, '');
 
-            // Generate web link for sharing
-            const webLink = `${baseUrl}/product/${product.id}`;
+            // Generate web link for sharing (only if baseUrl is available)
+            const webLink = baseUrl ? `${baseUrl}/product/${product.id}` : productLink;
 
             const shareMessage = `Check out this ${product.title} on Reuse!\n\n` +
                 `Price: ₹${product?.amount || product?.post_details?.amount || 'Not specified'}\n` +

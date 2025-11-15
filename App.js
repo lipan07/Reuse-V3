@@ -236,8 +236,9 @@ const AppInner = () => {
     };
 
     // Deep linking configuration
+    const appUrl = process.env.APP_URL || 'https://big-brain.co.in';
     const linking = {
-        prefixes: ['reuseapp://', 'https://yourwebsite.com'],
+        prefixes: ['reuseapp://', appUrl],
         config: {
             screens: {
                 ProductDetails: {

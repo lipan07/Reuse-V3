@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Switch } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import { submitForm } from '../../service/apiService';
 import ImagePickerComponent from './SubComponent/ImagePickerComponent';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AddressAutocomplete from '../AddressAutocomplete.js';
+import ModernSelectionModal from './SubComponent/ModernSelectionModal.js';
 import styles from '../../assets/css/AddProductForm.styles.js';
-import CustomPicker from './SubComponent/CustomPicker';
 import ModalScreen from '../SupportElement/ModalScreen.js';
 
 
@@ -32,6 +32,10 @@ const AddMobileTablets = ({ route, navigation }) => {
   const [modalType, setModalType] = useState('info');
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
+
+  // Selection Modal States
+  const [showListingTypeModal, setShowListingTypeModal] = useState(false);
+  const [showBrandModal, setShowBrandModal] = useState(false);
 
   // Fetch product details if editing
   useEffect(() => {
@@ -143,58 +147,27 @@ const AddMobileTablets = ({ route, navigation }) => {
         <ScrollView contentContainerStyle={styles.scrollViewContent} keyboardShouldPersistTaps="handled">
           {/* Listing Type section */}
           <Text style={styles.label}>Listing Type *</Text>
-          <View style={styles.optionContainer}>
-            {['sell', 'rent'].map((type) => (
-              <TouchableOpacity
-                key={type}
-                style={[
-                  styles.optionButton,
-                  formData.listingType === type && styles.selectedOption,
-                  { textTransform: 'capitalize' }
-                ]}
-                onPress={() => handleChange('listingType', type)}
-              >
-                <Text style={formData.listingType === type ? styles.selectedText : styles.optionText}>
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowListingTypeModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.listingType === 'sell' ? 'Sell' : 'Rent'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
+
           {/* Brand Selection */}
           <Text style={styles.label}>Brand *</Text>
-          <CustomPicker
-            label="Select Brand"
-            value={formData.brand}
-            options={[
-              { label: 'iPhone', value: 'iphone' },
-              { label: 'Samsung', value: 'samsung' },
-              { label: 'Xiaomi', value: 'xiaomi' },
-              { label: 'Vivo', value: 'vivo' },
-              { label: 'Oppo', value: 'oppo' },
-              { label: 'Realme', value: 'realme' },
-              { label: 'Asus', value: 'asus' },
-              { label: 'BlackBerry', value: 'blackberry' },
-              { label: 'Gionee', value: 'gionee' },
-              { label: 'Google Pixel', value: 'google-pixel' },
-              { label: 'Honor', value: 'honor' },
-              { label: 'HTC', value: 'htc' },
-              { label: 'Huawei', value: 'huawei' },
-              { label: 'Infinix', value: 'infinix' },
-              { label: 'Intex', value: 'intex' },
-              { label: 'Karbonn', value: 'karbonn' },
-              { label: 'Lava', value: 'lava' },
-              { label: 'Lenovo', value: 'lenovo' },
-              { label: 'LG', value: 'lg' },
-              { label: 'Micromax', value: 'micromax' },
-              { label: 'Motorola', value: 'motorola' },
-              { label: 'Nokia', value: 'nokia' },
-              { label: 'One Plus', value: 'one-plus' },
-              { label: 'Sony', value: 'sony' },
-              { label: 'Techno', value: 'techno' },
-              { label: 'Other Mobiles', value: 'other-mobiles' },
-            ]}
-            onSelect={value => handleChange('brand', value)}
-          />
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowBrandModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.brand ? formData.brand.charAt(0).toUpperCase() + formData.brand.slice(1).replace('-', ' ') : 'Select Brand'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
 
           {/* Title Field */}
           <Text style={styles.label}>Title *</Text>
@@ -282,6 +255,58 @@ const AddMobileTablets = ({ route, navigation }) => {
           if (modalType === 'success') navigation.goBack();
         }}
       />
+
+      {/* Selection Modals */}
+      <ModernSelectionModal
+        visible={showListingTypeModal}
+        title="Select Listing Type"
+        options={[
+          { label: 'Sell', value: 'sell' },
+          { label: 'Rent', value: 'rent' }
+        ]}
+        selectedValue={formData.listingType}
+        onSelect={(value) => handleChange('listingType', value)}
+        onClose={() => setShowListingTypeModal(false)}
+        multiColumn={true}
+      />
+
+      <ModernSelectionModal
+        visible={showBrandModal}
+        title="Select Brand"
+        options={[
+          { label: 'iPhone', value: 'iphone' },
+          { label: 'Samsung', value: 'samsung' },
+          { label: 'Xiaomi', value: 'xiaomi' },
+          { label: 'Vivo', value: 'vivo' },
+          { label: 'Oppo', value: 'oppo' },
+          { label: 'Realme', value: 'realme' },
+          { label: 'Asus', value: 'asus' },
+          { label: 'BlackBerry', value: 'blackberry' },
+          { label: 'Gionee', value: 'gionee' },
+          { label: 'Google Pixel', value: 'google-pixel' },
+          { label: 'Honor', value: 'honor' },
+          { label: 'HTC', value: 'htc' },
+          { label: 'Huawei', value: 'huawei' },
+          { label: 'Infinix', value: 'infinix' },
+          { label: 'Intex', value: 'intex' },
+          { label: 'Karbonn', value: 'karbonn' },
+          { label: 'Lava', value: 'lava' },
+          { label: 'Lenovo', value: 'lenovo' },
+          { label: 'LG', value: 'lg' },
+          { label: 'Micromax', value: 'micromax' },
+          { label: 'Motorola', value: 'motorola' },
+          { label: 'Nokia', value: 'nokia' },
+          { label: 'One Plus', value: 'one-plus' },
+          { label: 'Sony', value: 'sony' },
+          { label: 'Techno', value: 'techno' },
+          { label: 'Other Mobiles', value: 'other-mobiles' },
+        ]}
+        selectedValue={formData.brand}
+        onSelect={(value) => handleChange('brand', value)}
+        onClose={() => setShowBrandModal(false)}
+        searchable={true}
+      />
+
     </>
   );
 };

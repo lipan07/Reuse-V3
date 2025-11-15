@@ -221,4 +221,23 @@ export default StyleSheet.create({
         shadowRadius: 4,
         elevation: 2,
     },
+    // Modern Selection Button Styles
+    selectButton: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: '#F8F8F8',
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+        borderRadius: normalize(10),
+        paddingHorizontal: normalize(16),
+        paddingVertical: normalizeVertical(14),
+        marginBottom: normalizeVertical(15),
+    },
+    selectButtonText: {
+        fontSize: normalize(15),
+        color: '#333',
+        fontWeight: '500',
+        flex: 1,
+    },
 });

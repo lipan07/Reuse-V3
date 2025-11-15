@@ -251,6 +251,9 @@ export default StyleSheet.create({
   sellTag: {
     backgroundColor: 'rgba(255, 86, 34, 0.54)', // Orange with 80% opacity
   },
+  pendingTag: {
+    backgroundColor: 'rgba(255, 152, 0, 0.7)', // Amber/Orange with 70% opacity
+  },
   tagText: {
     color: 'white',
     fontSize: 12,

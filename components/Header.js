@@ -82,8 +82,11 @@ const Header = () => {
                      style={styles.logo}
                   />
                   <View style={styles.titleContainer}>
-                     <Text style={styles.appName}>Reuse</Text>
-                     <Text style={styles.appSubName}>Bharat</Text>
+                     <View style={styles.appNameRow}>
+                        <Text style={styles.appNameFirstLetter}>M</Text>
+                        <Text style={styles.appNameRest}>USTAFA</Text>
+                     </View>
+                     <Text style={styles.appSubName}>BHARAT</Text>
                   </View>
                </View>
                <View style={styles.rightIcons}>
@@ -150,16 +153,28 @@ const styles = StyleSheet.create({
       height: normalize(32),
       resizeMode: 'contain',
       borderColor: '#007BFF',
-      borderWidth: 1,
+      borderWidth: 0.8,
       marginRight: normalize(8),
    },
    titleContainer: {
       flexDirection: 'column',
       justifyContent: 'center',
    },
-   appName: {
-      fontSize: normalize(16),
+   appNameRow: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+   },
+   appNameFirstLetter: {
+      fontSize: normalize(20),
       fontWeight: 'bold',
+      fontFamily: Platform.OS === 'android' ? 'sans-serif-medium' : 'System',
+      color: '#007BFF',
+      includeFontPadding: false,
+   },
+   appNameRest: {
+      fontSize: normalize(14),
+      fontWeight: 'bold',
+      fontFamily: Platform.OS === 'android' ? 'sans-serif-medium' : 'System',
       color: '#007BFF',
       includeFontPadding: false,
    },

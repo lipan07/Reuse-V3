@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Switch } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import { submitForm } from '../../service/apiService';
 import ImagePickerComponent from './SubComponent/ImagePickerComponent';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AddressAutocomplete from '../AddressAutocomplete.js';
+import ModernSelectionModal from './SubComponent/ModernSelectionModal.js';
 import styles from '../../assets/css/AddProductForm.styles.js';
 import ModalScreen from '../SupportElement/ModalScreen.js';
 
@@ -34,6 +36,14 @@ const AddPgGuestHouse = ({ route, navigation }) => {
   const [modalType, setModalType] = useState('info');
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
+
+  // Selection Modal States
+  const [showListingTypeModal, setShowListingTypeModal] = useState(false);
+  const [showPgTypeModal, setShowPgTypeModal] = useState(false);
+  const [showFurnishingModal, setShowFurnishingModal] = useState(false);
+  const [showListedByModal, setShowListedByModal] = useState(false);
+  const [showCarParkingModal, setShowCarParkingModal] = useState(false);
+  const [showMealsModal, setShowMealsModal] = useState(false);
 
   // Fetch product details if editing
   useEffect(() => {
@@ -157,87 +167,51 @@ const AddPgGuestHouse = ({ route, navigation }) => {
         <ScrollView contentContainerStyle={styles.scrollViewContent} keyboardShouldPersistTaps="handled">
           {/* Listing Type section */}
           <Text style={styles.label}>Listing Type *</Text>
-          <View style={styles.optionContainer}>
-            {['sell', 'rent'].map((type) => (
-              <TouchableOpacity
-                key={type}
-                style={[
-                  styles.optionButton,
-                  formData.listingType === type && styles.selectedOption,
-                  { textTransform: 'capitalize' }
-                ]}
-                onPress={() => handleChange('listingType', type)}
-              >
-                <Text style={formData.listingType === type ? styles.selectedText : styles.optionText}>
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity 
+            style={styles.selectButton}
+            onPress={() => setShowListingTypeModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.listingType ? formData.listingType.charAt(0).toUpperCase() + formData.listingType.slice(1) : 'Select Listing Type'}
+            </Text>
+            <Icon name="chevron-down" size={16} color="#666" />
+          </TouchableOpacity>
+
           {/* Type Selection */}
           <Text style={styles.label}>Type *</Text>
-          <View style={styles.optionContainer}>
-            {['Guest House', 'PG', 'Roommate'].map((option) => (
-              <TouchableOpacity
-                key={option}
-                style={[styles.optionButton, formData.pgType === option && styles.selectedOption]}
-                onPress={() => handleOptionSelection('pgType', option)}
-              >
-                <Text style={formData.pgType === option ? styles.selectedText : styles.optionText}>
-                  {option}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
+          <TouchableOpacity 
+            style={styles.selectButton}
+            onPress={() => setShowPgTypeModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.pgType || 'Select Type'}
+            </Text>
+            <Icon name="chevron-down" size={16} color="#666" />
+          </TouchableOpacity>
 
           {/* Furnishing */}
           <Text style={styles.label}>Furnishing *</Text>
-          <View style={styles.optionContainer}>
-            {['Furnished', 'Semi-Furnished', 'Unfurnished'].map((option) => (
-              <TouchableOpacity
-                key={option}
-                style={[styles.optionButton, formData.furnishing === option && styles.selectedOption]}
-                onPress={() => handleOptionSelection('furnishing', option)}
-              >
-                <Text style={formData.furnishing === option ? styles.selectedText : styles.optionText}>
-                  {option}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity 
+            style={styles.selectButton}
+            onPress={() => setShowFurnishingModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.furnishing || 'Select Furnishing'}
+            </Text>
+            <Icon name="chevron-down" size={16} color="#666" />
+          </TouchableOpacity>
 
           {/* Listed By */}
           <Text style={styles.label}>Listed By *</Text>
-          <View style={styles.optionContainer}>
-            {['Builder', 'Owner', 'Dealer'].map((option) => (
-              <TouchableOpacity
-                key={option}
-                style={[styles.optionButton, formData.listedBy === option && styles.selectedOption]}
-                onPress={() => handleOptionSelection('listedBy', option)}
-              >
-                <Text style={formData.listedBy === option ? styles.selectedText : styles.optionText}>
-                  {option}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Furnishing */}
-          <Text style={styles.label}>Furnishing *</Text>
-          <View style={styles.optionContainer}>
-            {['Furnished', 'Semi-Furnished', 'Unfurnished'].map((option) => (
-              <TouchableOpacity
-                key={option}
-                style={[styles.optionButton, formData.furnishing === option && styles.selectedOption]}
-                onPress={() => handleOptionSelection('furnishing', option)}
-              >
-                <Text style={formData.furnishing === option ? styles.selectedText : styles.optionText}>
-                  {option}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity 
+            style={styles.selectButton}
+            onPress={() => setShowListedByModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.listedBy || 'Select Listed By'}
+            </Text>
+            <Icon name="chevron-down" size={16} color="#666" />
+          </TouchableOpacity>
 
           {/* Carpet Area */}
           <Text style={styles.label}>Carpet Area (ft²) *</Text>
@@ -251,35 +225,27 @@ const AddPgGuestHouse = ({ route, navigation }) => {
 
           {/* Car Parking */}
           <Text style={styles.label}>Car Parking *</Text>
-          <View style={styles.optionContainer}>
-            {['0', '1', '2', '3', '4', '5', '5+'].map((option) => (
-              <TouchableOpacity
-                key={option}
-                style={[styles.optionButton, formData.carParking === option && styles.selectedOption]}
-                onPress={() => handleOptionSelection('carParking', option)}
-              >
-                <Text style={formData.carParking === option ? styles.selectedText : styles.optionText}>
-                  {option}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity 
+            style={styles.selectButton}
+            onPress={() => setShowCarParkingModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.carParking || 'Select Car Parking'}
+            </Text>
+            <Icon name="chevron-down" size={16} color="#666" />
+          </TouchableOpacity>
 
           {/* Meals Included */}
           <Text style={styles.label}>Meals Included *</Text>
-          <View style={styles.optionContainer}>
-            {['Yes', 'No'].map((option) => (
-              <TouchableOpacity
-                key={option}
-                style={[styles.optionButton, formData.isMealIncluded === option && styles.selectedOption]}
-                onPress={() => handleOptionSelection('isMealIncluded', option)}
-              >
-                <Text style={formData.isMealIncluded === option ? styles.selectedText : styles.optionText}>
-                  {option}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity 
+            style={styles.selectButton}
+            onPress={() => setShowMealsModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.isMealIncluded || 'Select Meals Included'}
+            </Text>
+            <Icon name="chevron-down" size={16} color="#666" />
+          </TouchableOpacity>
 
           {/* Title */}
           <Text style={styles.label}>Title *</Text>
@@ -364,6 +330,86 @@ const AddPgGuestHouse = ({ route, navigation }) => {
           setIsModalVisible(false);
           if (modalType === 'success') navigation.goBack();
         }}
+      />
+
+      {/* Modern Selection Modals */}
+      <ModernSelectionModal
+        visible={showListingTypeModal}
+        title="Select Listing Type"
+        options={['Sell', 'Rent']}
+        selectedValue={formData.listingType ? formData.listingType.charAt(0).toUpperCase() + formData.listingType.slice(1) : ''}
+        onSelect={(value) => {
+          handleChange('listingType', value.toLowerCase());
+          setShowListingTypeModal(false);
+        }}
+        onClose={() => setShowListingTypeModal(false)}
+        multiColumn={true}
+      />
+
+      <ModernSelectionModal
+        visible={showPgTypeModal}
+        title="Select Type"
+        options={['Guest House', 'PG', 'Roommate']}
+        selectedValue={formData.pgType}
+        onSelect={(value) => {
+          handleOptionSelection('pgType', value);
+          setShowPgTypeModal(false);
+        }}
+        onClose={() => setShowPgTypeModal(false)}
+        multiColumn={true}
+      />
+
+      <ModernSelectionModal
+        visible={showFurnishingModal}
+        title="Select Furnishing"
+        options={['Furnished', 'Semi-Furnished', 'Unfurnished']}
+        selectedValue={formData.furnishing}
+        onSelect={(value) => {
+          handleOptionSelection('furnishing', value);
+          setShowFurnishingModal(false);
+        }}
+        onClose={() => setShowFurnishingModal(false)}
+        multiColumn={true}
+      />
+
+      <ModernSelectionModal
+        visible={showListedByModal}
+        title="Select Listed By"
+        options={['Builder', 'Owner', 'Dealer']}
+        selectedValue={formData.listedBy}
+        onSelect={(value) => {
+          handleOptionSelection('listedBy', value);
+          setShowListedByModal(false);
+        }}
+        onClose={() => setShowListedByModal(false)}
+        multiColumn={true}
+      />
+
+      <ModernSelectionModal
+        visible={showCarParkingModal}
+        title="Select Car Parking"
+        options={['0', '1', '2', '3', '4', '5', '5+']}
+        selectedValue={formData.carParking}
+        onSelect={(value) => {
+          handleOptionSelection('carParking', value);
+          setShowCarParkingModal(false);
+        }}
+        onClose={() => setShowCarParkingModal(false)}
+        searchable={false}
+        multiColumn={true}
+      />
+
+      <ModernSelectionModal
+        visible={showMealsModal}
+        title="Select Meals Included"
+        options={['Yes', 'No']}
+        selectedValue={formData.isMealIncluded}
+        onSelect={(value) => {
+          handleOptionSelection('isMealIncluded', value);
+          setShowMealsModal(false);
+        }}
+        onClose={() => setShowMealsModal(false)}
+        multiColumn={true}
       />
     </>
   );

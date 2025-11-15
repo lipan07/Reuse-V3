@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Switch } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import { submitForm } from '../../service/apiService';
 import ImagePickerComponent from './SubComponent/ImagePickerComponent';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AddressAutocomplete from '../AddressAutocomplete.js';
+import ModernSelectionModal from './SubComponent/ModernSelectionModal.js';
 import styles from '../../assets/css/AddProductForm.styles.js';
 import ModalScreen from '../SupportElement/ModalScreen.js';
 
@@ -27,6 +29,9 @@ const AddLegalDocumentationServices = ({ route, navigation }) => {
   const [modalType, setModalType] = useState('info');
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
+
+  // Selection Modal State
+  const [showTypeModal, setShowTypeModal] = useState(false);
 
   // Fetch product details if editing
   useEffect(() => {
@@ -144,17 +149,15 @@ const AddLegalDocumentationServices = ({ route, navigation }) => {
 
           {/* Type Selection */}
           <Text style={styles.label}>Type *</Text>
-          <View style={styles.optionContainer}>
-            {['RTO Related', 'KYC Related', 'Notary Services', 'Others'].map((val) => (
-              <TouchableOpacity
-                key={val}
-                style={[styles.optionButton, formData.type === val && styles.selectedOption]}
-                onPress={() => handleSelection('type', val)}
-              >
-                <Text style={formData.type === val ? styles.selectedText : styles.optionText}>{val}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity 
+            style={styles.selectButton}
+            onPress={() => setShowTypeModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.type || 'Select Type'}
+            </Text>
+            <Icon name="chevron-down" size={16} color="#666" />
+          </TouchableOpacity>
 
           {/* Title Field */}
           <Text style={styles.label}>Title *</Text>
@@ -231,6 +234,20 @@ const AddLegalDocumentationServices = ({ route, navigation }) => {
           setIsModalVisible(false);
           if (modalType === 'success') navigation.goBack();
         }}
+      />
+
+      {/* Modern Selection Modals */}
+      <ModernSelectionModal
+        visible={showTypeModal}
+        title="Select Type"
+        options={['RTO Related', 'KYC Related', 'Notary Services', 'Others']}
+        selectedValue={formData.type}
+        onSelect={(value) => {
+          handleSelection('type', value);
+          setShowTypeModal(false);
+        }}
+        onClose={() => setShowTypeModal(false)}
+        multiColumn={true}
       />
     </>
   );

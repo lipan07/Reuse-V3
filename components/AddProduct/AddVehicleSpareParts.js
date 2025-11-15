@@ -9,10 +9,12 @@ import {
   KeyboardAvoidingView,
   Platform, Switch
 } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import { submitForm } from '../../service/apiService';
 import ImagePickerComponent from './SubComponent/ImagePickerComponent';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import AddressAutocomplete from '../AddressAutocomplete.js'; // Add this import
+import AddressAutocomplete from '../AddressAutocomplete.js';
+import ModernSelectionModal from './SubComponent/ModernSelectionModal.js';
 import styles from '../../assets/css/AddProductForm.styles.js';
 import ModalScreen from '../SupportElement/ModalScreen.js';
 
@@ -36,6 +38,9 @@ const AddVehicleSpareParts = ({ route, navigation }) => {
   const [modalType, setModalType] = useState('info');
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
+
+  // Selection Modal State
+  const [showTypeModal, setShowTypeModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -153,17 +158,15 @@ const AddVehicleSpareParts = ({ route, navigation }) => {
 
           {/* Type Selection */}
           <Text style={styles.label}>Type *</Text>
-          <View style={styles.optionContainer}>
-            {['Wheels & Tyres', 'Audio & Other Accessories', 'Others'].map((val) => (
-              <TouchableOpacity
-                key={val}
-                style={[styles.optionButton, formData.type === val && styles.selectedOption]}
-                onPress={() => handleChange('type', val)}
-              >
-                <Text style={formData.type === val ? styles.selectedText : styles.optionText}>{val}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowTypeModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.type || 'Select Type'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
 
           {/* Title Field */}
           <Text style={styles.label}>Title *</Text>
@@ -243,6 +246,18 @@ const AddVehicleSpareParts = ({ route, navigation }) => {
           if (modalType === 'success') navigation.goBack();
         }}
       />
+
+      {/* Selection Modal */}
+      <ModernSelectionModal
+        visible={showTypeModal}
+        title="Select Type"
+        options={['Wheels & Tyres', 'Audio & Other Accessories', 'Others']}
+        selectedValue={formData.type}
+        onSelect={(value) => handleChange('type', value)}
+        onClose={() => setShowTypeModal(false)}
+        multiColumn={true}
+      />
+
     </>
   );
 };

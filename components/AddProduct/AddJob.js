@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Switch } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import { submitForm } from '../../service/apiService';
 import ImagePickerComponent from './SubComponent/ImagePickerComponent';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AddressAutocomplete from '../AddressAutocomplete.js';
+import ModernSelectionModal from './SubComponent/ModernSelectionModal.js';
 import styles from '../../assets/css/AddProductForm.styles.js';
 import ModalScreen from '../SupportElement/ModalScreen.js';
 
@@ -29,6 +31,10 @@ const AddJob = ({ route, navigation }) => {
   const [modalType, setModalType] = useState('info');
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
+
+  // Selection Modal States
+  const [showSalaryPeriodModal, setShowSalaryPeriodModal] = useState(false);
+  const [showPositionTypeModal, setShowPositionTypeModal] = useState(false);
 
   // Fetch product details if editing
   useEffect(() => {
@@ -148,31 +154,27 @@ const AddJob = ({ route, navigation }) => {
 
           {/* Salary Period Selection */}
           <Text style={styles.label}>Salary Period *</Text>
-          <View style={styles.optionContainer}>
-            {['Hourly', 'Daily', 'Weekly', 'Monthly', 'Yearly'].map((period) => (
-              <TouchableOpacity
-                key={period}
-                style={[styles.optionButton, formData.salaryPeriod === period && styles.selectedOption]}
-                onPress={() => handleSelection('salaryPeriod', period)}
-              >
-                <Text style={formData.salaryPeriod === period ? styles.selectedText : styles.optionText}>{period}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity 
+            style={styles.selectButton}
+            onPress={() => setShowSalaryPeriodModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.salaryPeriod || 'Select Salary Period'}
+            </Text>
+            <Icon name="chevron-down" size={16} color="#666" />
+          </TouchableOpacity>
 
           {/* Position Type Selection */}
           <Text style={styles.label}>Position Type *</Text>
-          <View style={styles.optionContainer}>
-            {['Contract', 'Full-time', 'Part-time', 'Temporary'].map((type) => (
-              <TouchableOpacity
-                key={type}
-                style={[styles.optionButton, formData.positionType === type && styles.selectedOption]}
-                onPress={() => handleSelection('positionType', type)}
-              >
-                <Text style={formData.positionType === type ? styles.selectedText : styles.optionText}>{type}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity 
+            style={styles.selectButton}
+            onPress={() => setShowPositionTypeModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.positionType || 'Select Position Type'}
+            </Text>
+            <Icon name="chevron-down" size={16} color="#666" />
+          </TouchableOpacity>
 
           {/* Salary Field (single amount) */}
           <Text style={styles.label}>Salary *</Text>
@@ -259,6 +261,33 @@ const AddJob = ({ route, navigation }) => {
           setIsModalVisible(false);
           if (modalType === 'success') navigation.goBack();
         }}
+      />
+
+      {/* Modern Selection Modals */}
+      <ModernSelectionModal
+        visible={showSalaryPeriodModal}
+        title="Select Salary Period"
+        options={['Hourly', 'Daily', 'Weekly', 'Monthly', 'Yearly']}
+        selectedValue={formData.salaryPeriod}
+        onSelect={(value) => {
+          handleSelection('salaryPeriod', value);
+          setShowSalaryPeriodModal(false);
+        }}
+        onClose={() => setShowSalaryPeriodModal(false)}
+        multiColumn={true}
+      />
+
+      <ModernSelectionModal
+        visible={showPositionTypeModal}
+        title="Select Position Type"
+        options={['Contract', 'Full-time', 'Part-time', 'Temporary']}
+        selectedValue={formData.positionType}
+        onSelect={(value) => {
+          handleSelection('positionType', value);
+          setShowPositionTypeModal(false);
+        }}
+        onClose={() => setShowPositionTypeModal(false)}
+        multiColumn={true}
       />
     </>
   );

@@ -406,10 +406,18 @@ const Home = () => {
           {/* Add the tag container here */}
           <View style={[
             styles.productTag,
-            item.type === 'rent' ? styles.rentTag : styles.sellTag
+            item.status === 'pending'
+              ? styles.pendingTag
+              : item.type === 'rent'
+                ? styles.rentTag
+                : styles.sellTag
           ]}>
             <Text style={styles.tagText}>
-              {item.type === 'rent' ? 'Rent' : 'Sell'}
+              {item.status === 'pending'
+                ? 'Pending'
+                : item.type === 'rent'
+                  ? 'Rent'
+                  : 'Sell'}
             </Text>
           </View>
 

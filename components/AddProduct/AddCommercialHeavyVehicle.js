@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Switch } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import { submitForm } from '../../service/apiService';
 import ImagePickerComponent from './SubComponent/ImagePickerComponent';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AddressAutocomplete from '../AddressAutocomplete.js';
+import ModernSelectionModal from './SubComponent/ModernSelectionModal.js';
 import styles from '../../assets/css/AddProductForm.styles.js';
-import CustomPicker from './SubComponent/CustomPicker';
 import ModalScreen from '../SupportElement/ModalScreen.js';
 
 const AddCommercialHeavyVehicle = ({ route, navigation }) => {
@@ -40,6 +40,15 @@ const AddCommercialHeavyVehicle = ({ route, navigation }) => {
   const [modalType, setModalType] = useState('info');
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
+
+  // Selection Modal States
+  const [showListingTypeModal, setShowListingTypeModal] = useState(false);
+  const [showBrandModal, setShowBrandModal] = useState(false);
+  const [showConditionModal, setShowConditionModal] = useState(false);
+  const [showYearModal, setShowYearModal] = useState(false);
+  const [showFuelTypeModal, setShowFuelTypeModal] = useState(false);
+  const [showOwnersModal, setShowOwnersModal] = useState(false);
+  const [showListedByModal, setShowListedByModal] = useState(false);
 
   // Fetch product details if editing
   useEffect(() => {
@@ -155,27 +164,27 @@ const AddCommercialHeavyVehicle = ({ route, navigation }) => {
   };
 
   const vehicleBrands = [
-    'Tata Motors Limited',
-    'Mahindra & Mahindra Limited',
-    'Eicher Motors Limited',
-    'Ashok Leyland Limited',
-    'Force Motors Limited',
-    'SML ISUZU Limited',
-    'Hindustan Motors',
-    "Daimler India Commercial Vehicles' BharatBenz",
-    'Volvo Trucks',
-    'Asia Motorworks',
-    'Scania Commercial Vehicles India Pvt. Ltd.',
-    'MAN Trucks India Pvt. Ltd.',
-    'Iveco',
-    'Bharat Earth Movers Limited (BEML)',
-    'JCB India Limited',
-    'Komatsu India Private Limited',
-    'Caterpillar India',
-    'John Deere India Private Limited',
-    'Case New Holland Construction Equipment India Private Limited',
-    'L&T Construction Equipment Limited',
-    'Others',
+    { label: 'Tata Motors Limited', value: 'Tata Motors Limited' },
+    { label: 'Mahindra & Mahindra Limited', value: 'Mahindra & Mahindra Limited' },
+    { label: 'Eicher Motors Limited', value: 'Eicher Motors Limited' },
+    { label: 'Ashok Leyland Limited', value: 'Ashok Leyland Limited' },
+    { label: 'Force Motors Limited', value: 'Force Motors Limited' },
+    { label: 'SML ISUZU Limited', value: 'SML ISUZU Limited' },
+    { label: 'Hindustan Motors', value: 'Hindustan Motors' },
+    { label: "Daimler India Commercial Vehicles' BharatBenz", value: "Daimler India Commercial Vehicles' BharatBenz" },
+    { label: 'Volvo Trucks', value: 'Volvo Trucks' },
+    { label: 'Asia Motorworks', value: 'Asia Motorworks' },
+    { label: 'Scania Commercial Vehicles India Pvt. Ltd.', value: 'Scania Commercial Vehicles India Pvt. Ltd.' },
+    { label: 'MAN Trucks India Pvt. Ltd.', value: 'MAN Trucks India Pvt. Ltd.' },
+    { label: 'Iveco', value: 'Iveco' },
+    { label: 'Bharat Earth Movers Limited (BEML)', value: 'Bharat Earth Movers Limited (BEML)' },
+    { label: 'JCB India Limited', value: 'JCB India Limited' },
+    { label: 'Komatsu India Private Limited', value: 'Komatsu India Private Limited' },
+    { label: 'Caterpillar India', value: 'Caterpillar India' },
+    { label: 'John Deere India Private Limited', value: 'John Deere India Private Limited' },
+    { label: 'Case New Holland Construction Equipment India Private Limited', value: 'Case New Holland Construction Equipment India Private Limited' },
+    { label: 'L&T Construction Equipment Limited', value: 'L&T Construction Equipment Limited' },
+    { label: 'Others', value: 'Others' },
   ];
 
   return (
@@ -191,68 +200,62 @@ const AddCommercialHeavyVehicle = ({ route, navigation }) => {
         <ScrollView contentContainerStyle={styles.scrollViewContent} keyboardShouldPersistTaps="handled">
           {/* Listing Type section */}
           <Text style={styles.label}>Listing Type *</Text>
-          <View style={styles.optionContainer}>
-            {['sell', 'rent'].map((type) => (
-              <TouchableOpacity
-                key={type}
-                style={[
-                  styles.optionButton,
-                  formData.listingType === type && styles.selectedOption,
-                  { textTransform: 'capitalize' }
-                ]}
-                onPress={() => handleChange('listingType', type)}
-              >
-                <Text style={formData.listingType === type ? styles.selectedText : styles.optionText}>
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowListingTypeModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.listingType === 'sell' ? 'Sell' : 'Rent'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
           {/* Brand Selection */}
           <Text style={styles.label}>Brand *</Text>
-          <CustomPicker
-            label="Select Brand"
-            value={formData.brand}
-            options={vehicleBrands.map(brand => ({ label: brand, value: brand }))}
-            onSelect={value => handleChange('brand', value)}
-          />
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowBrandModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.brand || 'Select Brand'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
 
           {/* Condition Selection */}
           <Text style={styles.label}>Condition *</Text>
-          <View style={styles.optionContainer}>
-            {['New', 'Like new', 'Fair', 'Needs repair'].map((condition) => (
-              <TouchableOpacity
-                key={condition}
-                style={[styles.optionButton, formData.condition === condition && styles.selectedOption]}
-                onPress={() => handleChange('condition', condition)}
-              >
-                <Text style={formData.condition === condition ? styles.selectedText : styles.optionText}>{condition}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowConditionModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.condition || 'Select Condition'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
 
           {/* Year Dropdown */}
           <Text style={styles.label}>Year *</Text>
-          <CustomPicker
-            label="Select Year"
-            value={formData.year}
-            options={generateYears().map(year => ({ label: year, value: year }))}
-            onSelect={value => handleChange('year', value)}
-          />
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowYearModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.year || 'Select Year'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
 
           {/* Fuel Type Selection */}
           <Text style={styles.label}>Fuel Type *</Text>
-          <View style={styles.optionContainer}>
-            {['Diesel', 'Electric', 'Others'].map((fuel) => (
-              <TouchableOpacity
-                key={fuel}
-                style={[styles.optionButton, formData.fuelType === fuel && styles.selectedOption]}
-                onPress={() => handleChange('fuelType', fuel)}
-              >
-                <Text style={formData.fuelType === fuel ? styles.selectedText : styles.optionText}>{fuel}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowFuelTypeModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.fuelType || 'Select Fuel Type'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
 
           {/* KM Driven Field */}
           <Text style={styles.label}>KM Driven *</Text>
@@ -266,32 +269,26 @@ const AddCommercialHeavyVehicle = ({ route, navigation }) => {
 
           {/* Number of Owners Selection */}
           <Text style={styles.label}>Number of Owners *</Text>
-          <View style={styles.optionContainer}>
-            {['1st', '2nd', '3rd', '4th', '5th', '6th'].map((owner) => (
-              <TouchableOpacity
-                key={owner}
-                style={[styles.optionButton, formData.owners === owner && styles.selectedOption]}
-                onPress={() => handleChange('owners', owner)}
-              >
-                <Text style={formData.owners === owner ? styles.selectedText : styles.optionText}>{owner}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowOwnersModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.owners || 'Select Number of Owners'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
 
           <Text style={styles.label}>Listed By *</Text>
-          <View style={styles.optionContainer}>
-            {['Dealer', 'Owner'].map((listedByOption) => (
-              <TouchableOpacity
-                key={listedByOption}
-                style={[styles.optionButton, formData.listedBy === listedByOption && styles.selectedOption]}
-                onPress={() => handleChange('listedBy', listedByOption)}
-              >
-                <Text style={formData.listedBy === listedByOption ? styles.selectedText : styles.optionText}>
-                  {listedByOption}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowListedByModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.listedBy || 'Select Listed By'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
 
           {/* Title Field */}
           <Text style={styles.label}>Title *</Text>
@@ -398,6 +395,78 @@ const AddCommercialHeavyVehicle = ({ route, navigation }) => {
           setIsModalVisible(false);
           if (modalType === 'success') navigation.goBack();
         }}
+      />
+
+      {/* Selection Modals */}
+      <ModernSelectionModal
+        visible={showListingTypeModal}
+        title="Select Listing Type"
+        options={[
+          { label: 'Sell', value: 'sell' },
+          { label: 'Rent', value: 'rent' }
+        ]}
+        selectedValue={formData.listingType}
+        onSelect={(value) => handleChange('listingType', value)}
+        onClose={() => setShowListingTypeModal(false)}
+        multiColumn={true}
+      />
+
+      <ModernSelectionModal
+        visible={showBrandModal}
+        title="Select Brand"
+        options={vehicleBrands}
+        selectedValue={formData.brand}
+        onSelect={(value) => handleChange('brand', value)}
+        onClose={() => setShowBrandModal(false)}
+        searchable={true}
+      />
+
+      <ModernSelectionModal
+        visible={showConditionModal}
+        title="Select Condition"
+        options={['New', 'Like new', 'Fair', 'Needs repair'].map(condition => ({ label: condition, value: condition }))}
+        selectedValue={formData.condition}
+        onSelect={(value) => handleChange('condition', value)}
+        onClose={() => setShowConditionModal(false)}
+      />
+
+      <ModernSelectionModal
+        visible={showYearModal}
+        title="Select Year"
+        options={generateYears().map(year => ({ label: year, value: year }))}
+        selectedValue={formData.year}
+        onSelect={(value) => handleChange('year', value)}
+        onClose={() => setShowYearModal(false)}
+        searchable={true}
+      />
+
+      <ModernSelectionModal
+        visible={showFuelTypeModal}
+        title="Select Fuel Type"
+        options={['Diesel', 'Electric', 'Others'].map(fuel => ({ label: fuel, value: fuel }))}
+        selectedValue={formData.fuelType}
+        onSelect={(value) => handleChange('fuelType', value)}
+        onClose={() => setShowFuelTypeModal(false)}
+      />
+
+      <ModernSelectionModal
+        visible={showOwnersModal}
+        title="Number of Owners"
+        options={['1st', '2nd', '3rd', '4th', '5th', '6th'].map(owner => ({ label: owner, value: owner }))}
+        selectedValue={formData.owners}
+        onSelect={(value) => handleChange('owners', value)}
+        onClose={() => setShowOwnersModal(false)}
+        multiColumn={true}
+      />
+
+      <ModernSelectionModal
+        visible={showListedByModal}
+        title="Select Listed By"
+        options={['Dealer', 'Owner'].map(option => ({ label: option, value: option }))}
+        selectedValue={formData.listedBy}
+        onSelect={(value) => handleChange('listedBy', value)}
+        onClose={() => setShowListedByModal(false)}
+        multiColumn={true}
       />
 
     </>

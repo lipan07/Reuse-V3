@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Switch } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import { submitForm } from '../../service/apiService';
 import ImagePickerComponent from './SubComponent/ImagePickerComponent';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AddressAutocomplete from '../AddressAutocomplete.js';
+import ModernSelectionModal from './SubComponent/ModernSelectionModal.js';
 import styles from '../../assets/css/AddProductForm.styles.js';
-import CustomPicker from './SubComponent/CustomPicker';
 import ModalScreen from '../SupportElement/ModalScreen.js';
 
 const AddCommercialHeavyMachinery = ({ route, navigation }) => {
@@ -41,6 +41,16 @@ const AddCommercialHeavyMachinery = ({ route, navigation }) => {
   const [modalType, setModalType] = useState('info');
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
+
+  // Selection Modal States
+  const [showListingTypeModal, setShowListingTypeModal] = useState(false);
+  const [showBrandModal, setShowBrandModal] = useState(false);
+  const [showConditionModal, setShowConditionModal] = useState(false);
+  const [showYearModal, setShowYearModal] = useState(false);
+  const [showFuelTypeModal, setShowFuelTypeModal] = useState(false);
+  const [showTransmissionModal, setShowTransmissionModal] = useState(false);
+  const [showOwnersModal, setShowOwnersModal] = useState(false);
+  const [showListedByModal, setShowListedByModal] = useState(false);
 
   // Fetch product details if editing
   useEffect(() => {
@@ -197,99 +207,75 @@ const AddCommercialHeavyMachinery = ({ route, navigation }) => {
         <ScrollView contentContainerStyle={styles.scrollViewContent} keyboardShouldPersistTaps="handled">
           {/* Listing Type section */}
           <Text style={styles.label}>Listing Type *</Text>
-          <View style={styles.optionContainer}>
-            {['sell', 'rent'].map((type) => (
-              <TouchableOpacity
-                key={type}
-                style={[
-                  styles.optionButton,
-                  formData.listingType === type && styles.selectedOption,
-                  { textTransform: 'capitalize' }
-                ]}
-                onPress={() => handleChange('listingType', type)}
-              >
-                <Text style={formData.listingType === type ? styles.selectedText : styles.optionText}>
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowListingTypeModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.listingType === 'sell' ? 'Sell' : 'Rent'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
+
           {/* Brand Field */}
           <Text style={styles.label}>Brand *</Text>
-          <CustomPicker
-            label="Select Brand"
-            value={formData.brand}
-            options={[
-              'Caterpillar',
-              'JCB',
-              'Tata Hitachi',
-              'Volvo',
-              'Komatsu',
-              'L&T Construction Equipment',
-              'BEML (Bharat Earth Movers Limited)',
-              'Hyundai Construction Equipment',
-              'SANY',
-              'Case Construction',
-              'Doosan',
-              'Mahindra Construction Equipment',
-              'LiuGong',
-              'John Deere',
-              'XCMG',
-              'Others',
-            ].map(brand => ({ label: brand, value: brand }))}
-            onSelect={value => handleChange('brand', value)}
-          />
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowBrandModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.brand || 'Select Brand'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
 
           {/* Condition Selection */}
           <Text style={styles.label}>Condition *</Text>
-          <View style={styles.optionContainer}>
-            {['New', 'Like new', 'Fair', 'Needs repair'].map((condition) => (
-              <TouchableOpacity
-                key={condition}
-                style={[styles.optionButton, formData.condition === condition && styles.selectedOption]}
-                onPress={() => handleConditionSelection(condition)}
-              >
-                <Text style={formData.condition === condition ? styles.selectedText : styles.optionText}>{condition}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowConditionModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.condition || 'Select Condition'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
 
           {/* Year Dropdown */}
           <Text style={styles.label}>Year *</Text>
-          <CustomPicker
-            label="Select Year"
-            value={formData.year}
-            options={generateYears().map(year => ({ label: year, value: year }))}
-            onSelect={value => handleChange('year', value)}
-          />
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowYearModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.year || 'Select Year'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
 
           {/* Fuel Type Selection */}
           <Text style={styles.label}>Fuel Type *</Text>
-          <View style={styles.optionContainer}>
-            {['Diesel', 'Electric', 'Petrol', 'Others'].map((fuel) => (
-              <TouchableOpacity
-                key={fuel}
-                style={[styles.optionButton, formData.fuelType === fuel && styles.selectedOption]}
-                onPress={() => handleFuelSelection(fuel)}
-              >
-                <Text style={formData.fuelType === fuel ? styles.selectedText : styles.optionText}>{fuel}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowFuelTypeModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.fuelType || 'Select Fuel Type'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
 
           {/* Transmission Selection */}
           <Text style={styles.label}>Transmission *</Text>
-          <View style={styles.optionContainer}>
-            {['Automatic', 'Manual'].map((trans) => (
-              <TouchableOpacity
-                key={trans}
-                style={[styles.optionButton, formData.transmission === trans && styles.selectedOption]}
-                onPress={() => handleTransmissionSelection(trans)}
-              >
-                <Text style={formData.transmission === trans ? styles.selectedText : styles.optionText}>{trans}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowTransmissionModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.transmission || 'Select Transmission'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
 
           {/* KM Driven Field */}
           <Text style={styles.label}>KM Driven *</Text>
@@ -303,32 +289,26 @@ const AddCommercialHeavyMachinery = ({ route, navigation }) => {
 
           {/* Number of Owners Selection */}
           <Text style={styles.label}>Number of Owners *</Text>
-          <View style={styles.optionContainer}>
-            {['1st', '2nd', '3rd', '4th', '5th', '6th'].map((owner) => (
-              <TouchableOpacity
-                key={owner}
-                style={[styles.optionButton, formData.owners === owner && styles.selectedOption]}
-                onPress={() => handleOwnersSelection(owner)}
-              >
-                <Text style={formData.owners === owner ? styles.selectedText : styles.optionText}>{owner}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowOwnersModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.owners || 'Select Number of Owners'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
 
           <Text style={styles.label}>Listed By *</Text>
-          <View style={styles.optionContainer}>
-            {['Dealer', 'Owner'].map((listedByOption) => (
-              <TouchableOpacity
-                key={listedByOption}
-                style={[styles.optionButton, formData.listedBy === listedByOption && styles.selectedOption]}
-                onPress={() => handleChange('listedBy', listedByOption)}
-              >
-                <Text style={formData.listedBy === listedByOption ? styles.selectedText : styles.optionText}>
-                  {listedByOption}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={styles.selectButton}
+            onPress={() => setShowListedByModal(true)}
+          >
+            <Text style={styles.selectButtonText}>
+              {formData.listedBy || 'Select Listed By'}
+            </Text>
+            <Icon name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
 
           {/* Ad Title Field */}
           <Text style={styles.label}>Ad Title *</Text>
@@ -435,6 +415,107 @@ const AddCommercialHeavyMachinery = ({ route, navigation }) => {
           setIsModalVisible(false);
           if (modalType === 'success') navigation.goBack();
         }}
+      />
+
+      {/* Selection Modals */}
+      <ModernSelectionModal
+        visible={showListingTypeModal}
+        title="Select Listing Type"
+        options={[
+          { label: 'Sell', value: 'sell' },
+          { label: 'Rent', value: 'rent' }
+        ]}
+        selectedValue={formData.listingType}
+        onSelect={(value) => handleChange('listingType', value)}
+        onClose={() => setShowListingTypeModal(false)}
+        multiColumn={true}
+      />
+
+      <ModernSelectionModal
+        visible={showBrandModal}
+        title="Select Brand"
+        options={[
+          'Caterpillar',
+          'JCB',
+          'Tata Hitachi',
+          'Volvo',
+          'Komatsu',
+          'L&T Construction Equipment',
+          'BEML (Bharat Earth Movers Limited)',
+          'Hyundai Construction Equipment',
+          'SANY',
+          'Case Construction',
+          'Doosan',
+          'Mahindra Construction Equipment',
+          'LiuGong',
+          'John Deere',
+          'XCMG',
+          'Others',
+        ]}
+        selectedValue={formData.brand}
+        onSelect={(value) => handleChange('brand', value)}
+        onClose={() => setShowBrandModal(false)}
+        searchable={true}
+      />
+
+      <ModernSelectionModal
+        visible={showConditionModal}
+        title="Select Condition"
+        options={['New', 'Like new', 'Fair', 'Needs repair']}
+        selectedValue={formData.condition}
+        onSelect={(value) => handleConditionSelection(value)}
+        onClose={() => setShowConditionModal(false)}
+        multiColumn={true}
+      />
+
+      <ModernSelectionModal
+        visible={showYearModal}
+        title="Select Year"
+        options={generateYears().map(year => ({ label: year, value: year }))}
+        selectedValue={formData.year}
+        onSelect={(value) => handleChange('year', value)}
+        onClose={() => setShowYearModal(false)}
+        searchable={true}
+      />
+
+      <ModernSelectionModal
+        visible={showFuelTypeModal}
+        title="Select Fuel Type"
+        options={['Diesel', 'Electric', 'Petrol', 'Others']}
+        selectedValue={formData.fuelType}
+        onSelect={(value) => handleFuelSelection(value)}
+        onClose={() => setShowFuelTypeModal(false)}
+        multiColumn={true}
+      />
+
+      <ModernSelectionModal
+        visible={showTransmissionModal}
+        title="Select Transmission"
+        options={['Automatic', 'Manual']}
+        selectedValue={formData.transmission}
+        onSelect={(value) => handleTransmissionSelection(value)}
+        onClose={() => setShowTransmissionModal(false)}
+        multiColumn={true}
+      />
+
+      <ModernSelectionModal
+        visible={showOwnersModal}
+        title="Number of Owners"
+        options={['1st', '2nd', '3rd', '4th', '5th', '6th']}
+        selectedValue={formData.owners}
+        onSelect={(value) => handleOwnersSelection(value)}
+        onClose={() => setShowOwnersModal(false)}
+        multiColumn={true}
+      />
+
+      <ModernSelectionModal
+        visible={showListedByModal}
+        title="Select Listed By"
+        options={['Dealer', 'Owner']}
+        selectedValue={formData.listedBy}
+        onSelect={(value) => handleChange('listedBy', value)}
+        onClose={() => setShowListedByModal(false)}
+        multiColumn={true}
       />
 
     </>

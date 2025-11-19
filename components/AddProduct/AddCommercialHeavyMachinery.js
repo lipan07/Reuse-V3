@@ -10,7 +10,7 @@ import styles from '../../assets/css/AddProductForm.styles.js';
 import ModalScreen from '../SupportElement/ModalScreen.js';
 
 const AddCommercialHeavyMachinery = ({ route, navigation }) => {
-  const { category, subcategory, product } = route.params;
+  const { category, subcategory, product, listingType } = route.params || {};
   const currentYear = new Date().getFullYear();
   const [formData, setFormData] = useState({
     brand: '',
@@ -31,7 +31,7 @@ const AddCommercialHeavyMachinery = ({ route, navigation }) => {
     longitude: null,
     images: [],
     deletedImages: [],
-    listingType: 'sell',
+    listingType: listingType || 'sell',
     show_phone: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,9 +41,6 @@ const AddCommercialHeavyMachinery = ({ route, navigation }) => {
   const [modalType, setModalType] = useState('info');
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
-
-  // Selection Modal States
-  const [showListingTypeModal, setShowListingTypeModal] = useState(false);
   const [showBrandModal, setShowBrandModal] = useState(false);
   const [showConditionModal, setShowConditionModal] = useState(false);
   const [showYearModal, setShowYearModal] = useState(false);
@@ -205,18 +202,6 @@ const AddCommercialHeavyMachinery = ({ route, navigation }) => {
           <Text style={styles.formSubHeader}>Fill in details for your listing</Text>
         </View>
         <ScrollView contentContainerStyle={styles.scrollViewContent} keyboardShouldPersistTaps="handled">
-          {/* Listing Type section */}
-          <Text style={styles.label}>Listing Type *</Text>
-          <TouchableOpacity
-            style={styles.selectButton}
-            onPress={() => setShowListingTypeModal(true)}
-          >
-            <Text style={styles.selectButtonText}>
-              {formData.listingType === 'sell' ? 'Sell' : 'Rent'}
-            </Text>
-            <Icon name="chevron-right" size={16} color="#999" />
-          </TouchableOpacity>
-
           {/* Brand Field */}
           <Text style={styles.label}>Brand *</Text>
           <TouchableOpacity
@@ -418,19 +403,6 @@ const AddCommercialHeavyMachinery = ({ route, navigation }) => {
       />
 
       {/* Selection Modals */}
-      <ModernSelectionModal
-        visible={showListingTypeModal}
-        title="Select Listing Type"
-        options={[
-          { label: 'Sell', value: 'sell' },
-          { label: 'Rent', value: 'rent' }
-        ]}
-        selectedValue={formData.listingType}
-        onSelect={(value) => handleChange('listingType', value)}
-        onClose={() => setShowListingTypeModal(false)}
-        multiColumn={true}
-      />
-
       <ModernSelectionModal
         visible={showBrandModal}
         title="Select Brand"

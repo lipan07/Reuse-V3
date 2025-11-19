@@ -22,7 +22,7 @@ const BottomNavBar = () => {
   const navItems = [
     { key: 'Home', route: 'Home', icon: 'home-outline', color: '#4CAF50', size: normalize(30) },
     { key: 'My Ads', route: 'MyAdsPage', icon: 'briefcase-outline', color: '#FF9800', size: normalize(30) },
-    { key: 'Add Product', route: 'ProductAddPage', icon: 'add-circle', color: '#E91E63', size: normalize(50), bump: true, showText: false },
+    { key: 'Add Product', route: 'ListingTypeSelection', icon: 'add-circle', color: '#E91E63', size: normalize(50), bump: true, showText: false },
     { key: 'Chat', route: 'ChatList', icon: 'chatbubble-ellipses-outline', color: '#2196F3', size: normalize(30) },
     { key: 'Account', route: 'AccountPage', icon: 'person-outline', color: '#9C27B0', size: normalize(30) }
   ];

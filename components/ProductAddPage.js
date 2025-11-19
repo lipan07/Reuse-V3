@@ -214,12 +214,13 @@ const staticCategories = [
   },
 ];
 
-const ProductAddPage = () => {
+const ProductAddPage = ({ route }) => {
   // const [categories, setCategories] = useState([]);
   const [categories] = useState(staticCategories);
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
   const navigation = useNavigation();
+  const listingType = route?.params?.listingType || 'sell';
 
   // useEffect(() => {
   //   const fetchCategories = async () => {
@@ -253,32 +254,37 @@ const ProductAddPage = () => {
     if (category.children && category.children.length > 0) {
       navigation.navigate('SubCategories', {
         parentCategory: category,
-        subcategories: category.children
+        subcategories: category.children,
+        listingType: listingType
       });
     } else {
       switch (category.guard_name) {
         case 'cars':
           navigation.navigate('AddCarForm', {
             category: category,
-            subcategory: category
+            subcategory: category,
+            listingType: listingType
           });
           break;
         case 'mobiles':
           navigation.navigate('AddMobileTablets', {
             category: category,
-            subcategory: category
+            subcategory: category,
+            listingType: listingType
           });
           break;
         case 'others':
           navigation.navigate('AddOthers', {
             category: category,
-            subcategory: category
+            subcategory: category,
+            listingType: listingType
           });
           break;
         default:
           navigation.navigate('AddOthers', {
             category: category,
-            subcategory: category
+            subcategory: category,
+            listingType: listingType
           });
           break;
       }

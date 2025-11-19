@@ -55,6 +55,7 @@ import ChangePassword from './ChangePassword';
 import SubCategoryScreen from './Screens/SubCategoryScreen';
 import HelpSupport from './HelpSupport';
 import Feedback from './Feedback';
+import ListingTypeSelection from './ListingTypeSelection';
 
 const Stack = createStackNavigator();
 
@@ -165,6 +166,7 @@ const AppNavigator = () => {
         {/* <Stack.Screen name="CompanyDetailsPage" component={CompanyDetailsPage} /> */}
         {/* <Stack.Screen name="LocationPicker" component={LocationPicker} /> */}
         {/* Add product section */}
+        <Stack.Screen name="ListingTypeSelection" component={ListingTypeSelection} />
         <Stack.Screen name="ProductAddPage" component={ProductAddPage} />
         <Stack.Screen name="ProductForm" component={ProductForm} />
         <Stack.Screen name="AddCarForm" component={AddCarForm} />

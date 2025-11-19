@@ -10,7 +10,7 @@ import styles from '../../assets/css/AddProductForm.styles.js';
 import ModalScreen from '../SupportElement/ModalScreen.js';
 
 const AddPgGuestHouse = ({ route, navigation }) => {
-  const { category, subcategory, product } = route.params;
+  const { category, subcategory, product, listingType } = route.params || {};
   const [formData, setFormData] = useState({
     pgType: 'PG',
     furnishing: 'Unfurnished',
@@ -26,7 +26,7 @@ const AddPgGuestHouse = ({ route, navigation }) => {
     longitude: null, // Added longitude
     images: [],
     deletedImages: [],
-    listingType: 'sell',
+    listingType: listingType || 'sell',
     show_phone: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,9 +36,6 @@ const AddPgGuestHouse = ({ route, navigation }) => {
   const [modalType, setModalType] = useState('info');
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
-
-  // Selection Modal States
-  const [showListingTypeModal, setShowListingTypeModal] = useState(false);
   const [showPgTypeModal, setShowPgTypeModal] = useState(false);
   const [showFurnishingModal, setShowFurnishingModal] = useState(false);
   const [showListedByModal, setShowListedByModal] = useState(false);
@@ -165,18 +162,6 @@ const AddPgGuestHouse = ({ route, navigation }) => {
           <Text style={styles.formSubHeader}>Fill in details for your listing</Text>
         </View>
         <ScrollView contentContainerStyle={styles.scrollViewContent} keyboardShouldPersistTaps="handled">
-          {/* Listing Type section */}
-          <Text style={styles.label}>Listing Type *</Text>
-          <TouchableOpacity 
-            style={styles.selectButton}
-            onPress={() => setShowListingTypeModal(true)}
-          >
-            <Text style={styles.selectButtonText}>
-              {formData.listingType ? formData.listingType.charAt(0).toUpperCase() + formData.listingType.slice(1) : 'Select Listing Type'}
-            </Text>
-            <Icon name="chevron-down" size={16} color="#666" />
-          </TouchableOpacity>
-
           {/* Type Selection */}
           <Text style={styles.label}>Type *</Text>
           <TouchableOpacity 
@@ -333,19 +318,6 @@ const AddPgGuestHouse = ({ route, navigation }) => {
       />
 
       {/* Modern Selection Modals */}
-      <ModernSelectionModal
-        visible={showListingTypeModal}
-        title="Select Listing Type"
-        options={['Sell', 'Rent']}
-        selectedValue={formData.listingType ? formData.listingType.charAt(0).toUpperCase() + formData.listingType.slice(1) : ''}
-        onSelect={(value) => {
-          handleChange('listingType', value.toLowerCase());
-          setShowListingTypeModal(false);
-        }}
-        onClose={() => setShowListingTypeModal(false)}
-        multiColumn={true}
-      />
-
       <ModernSelectionModal
         visible={showPgTypeModal}
         title="Select Type"

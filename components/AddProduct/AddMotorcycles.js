@@ -10,7 +10,7 @@ import styles from '../../assets/css/AddProductForm.styles.js';
 import ModalScreen from '../SupportElement/ModalScreen.js';
 
 const AddMotorcycles = ({ route, navigation }) => {
-  const { category, subcategory, product } = route.params;
+  const { category, subcategory, product, listingType } = route.params || {};
   const currentYear = new Date().getFullYear();
   const [brands, setBrands] = useState([]);
   const [formData, setFormData] = useState({
@@ -25,7 +25,7 @@ const AddMotorcycles = ({ route, navigation }) => {
     longitude: null,
     images: [],
     deletedImages: [],
-    listingType: 'sell',
+    listingType: listingType || 'sell',
     show_phone: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,7 +37,6 @@ const AddMotorcycles = ({ route, navigation }) => {
   const [modalMessage, setModalMessage] = useState('');
 
   // Selection Modal States
-  const [showListingTypeModal, setShowListingTypeModal] = useState(false);
   const [showBrandModal, setShowBrandModal] = useState(false);
   const [showYearModal, setShowYearModal] = useState(false);
 
@@ -182,17 +181,6 @@ const AddMotorcycles = ({ route, navigation }) => {
           <Text style={styles.formSubHeader}>Fill in details for your listing</Text>
         </View>
         <ScrollView contentContainerStyle={styles.scrollViewContent} keyboardShouldPersistTaps="handled">
-          {/* Listing Type section */}
-          <Text style={styles.label}>Listing Type *</Text>
-          <TouchableOpacity
-            style={styles.selectButton}
-            onPress={() => setShowListingTypeModal(true)}
-          >
-            <Text style={styles.selectButtonText}>
-              {formData.listingType === 'sell' ? 'Sell' : 'Rent'}
-            </Text>
-            <Icon name="chevron-right" size={16} color="#999" />
-          </TouchableOpacity>
           {/* Brand Selection */}
           <Text style={styles.label}>Brand *</Text>
           <TouchableOpacity
@@ -314,19 +302,6 @@ const AddMotorcycles = ({ route, navigation }) => {
       />
 
       {/* Selection Modals */}
-      <ModernSelectionModal
-        visible={showListingTypeModal}
-        title="Select Listing Type"
-        options={[
-          { label: 'Sell', value: 'sell' },
-          { label: 'Rent', value: 'rent' }
-        ]}
-        selectedValue={formData.listingType}
-        onSelect={(value) => handleChange('listingType', value)}
-        onClose={() => setShowListingTypeModal(false)}
-        multiColumn={true}
-      />
-
       <ModernSelectionModal
         visible={showBrandModal}
         title="Select Brand"

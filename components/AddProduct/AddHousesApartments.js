@@ -10,7 +10,7 @@ import styles from '../../assets/css/AddProductForm.styles.js';
 import ModalScreen from '../SupportElement/ModalScreen';
 
 const AddHousesApartments = ({ route, navigation }) => {
-  const { category, subcategory, product } = route.params;
+  const { category, subcategory, product, listingType } = route.params || {};
   const [formData, setFormData] = useState({
     propertyType: 'Apartments',
     bedroom: '2',
@@ -35,8 +35,7 @@ const AddHousesApartments = ({ route, navigation }) => {
     images: [],
     deletedImages: [],
     show_phone: false,
-    listingType: 'sell',
-    show_phone: false, 
+    listingType: listingType || 'sell',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!product);
@@ -45,9 +44,6 @@ const AddHousesApartments = ({ route, navigation }) => {
   const [modalType, setModalType] = useState('info');
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
-
-  // Selection Modal States
-  const [showListingTypeModal, setShowListingTypeModal] = useState(false);
   const [showPropertyTypeModal, setShowPropertyTypeModal] = useState(false);
   const [showBedroomModal, setShowBedroomModal] = useState(false);
   const [showBathroomModal, setShowBathroomModal] = useState(false);
@@ -200,18 +196,6 @@ const AddHousesApartments = ({ route, navigation }) => {
           <Text style={styles.formSubHeader}>Fill in details for your listing</Text>
         </View>
         <ScrollView contentContainerStyle={styles.scrollViewContent} keyboardShouldPersistTaps="handled">
-          {/* Listing Type section */}
-          <Text style={styles.label}>Listing Type *</Text>
-          <TouchableOpacity
-            style={styles.selectButton}
-            onPress={() => setShowListingTypeModal(true)}
-          >
-            <Text style={styles.selectButtonText}>
-              {formData.listingType === 'sell' ? 'Sell' : 'Rent'}
-            </Text>
-            <Icon name="chevron-right" size={16} color="#999" />
-          </TouchableOpacity>
-
           {/* Property Type Selection */}
           <Text style={styles.label}>Property Type *</Text>
           <TouchableOpacity
@@ -418,19 +402,6 @@ const AddHousesApartments = ({ route, navigation }) => {
       />
 
       {/* Selection Modals */}
-      <ModernSelectionModal
-        visible={showListingTypeModal}
-        title="Select Listing Type"
-        options={[
-          { label: 'Sell', value: 'sell' },
-          { label: 'Rent', value: 'rent' }
-        ]}
-        selectedValue={formData.listingType}
-        onSelect={(value) => handleChange('listingType', value)}
-        onClose={() => setShowListingTypeModal(false)}
-        multiColumn={true}
-      />
-
       <ModernSelectionModal
         visible={showPropertyTypeModal}
         title="Select Property Type"

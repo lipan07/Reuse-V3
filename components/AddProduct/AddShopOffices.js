@@ -10,7 +10,7 @@ import styles from '../../assets/css/AddProductForm.styles.js';
 import ModalScreen from '../SupportElement/ModalScreen.js';
 
 const AddShopOffices = ({ route, navigation }) => {
-    const { category, subcategory, product } = route.params;
+    const { category, subcategory, product, listingType } = route.params || {};
     const [formData, setFormData] = useState({
         furnishing: 'Unfurnished',
         constructionStatus: 'Ready to Move',
@@ -29,7 +29,7 @@ const AddShopOffices = ({ route, navigation }) => {
         longitude: null, // Added longitude
         images: [],
         deletedImages: [],
-        listingType: 'sell',
+        listingType: listingType || 'sell',
         show_phone: false,
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,9 +39,6 @@ const AddShopOffices = ({ route, navigation }) => {
     const [modalType, setModalType] = useState('info');
     const [modalTitle, setModalTitle] = useState('');
     const [modalMessage, setModalMessage] = useState('');
-
-    // Selection Modal States
-    const [showListingTypeModal, setShowListingTypeModal] = useState(false);
     const [showFurnishingModal, setShowFurnishingModal] = useState(false);
     const [showConstructionStatusModal, setShowConstructionStatusModal] = useState(false);
     const [showListedByModal, setShowListedByModal] = useState(false);
@@ -169,18 +166,6 @@ const AddShopOffices = ({ route, navigation }) => {
                     <Text style={styles.formSubHeader}>Fill in details for your listing</Text>
                 </View>
                 <ScrollView contentContainerStyle={styles.scrollViewContent} keyboardShouldPersistTaps="handled">
-                    {/* Listing Type section */}
-                    <Text style={styles.label}>Listing Type *</Text>
-                    <TouchableOpacity 
-                        style={styles.selectButton}
-                        onPress={() => setShowListingTypeModal(true)}
-                    >
-                        <Text style={styles.selectButtonText}>
-                            {formData.listingType ? formData.listingType.charAt(0).toUpperCase() + formData.listingType.slice(1) : 'Select Listing Type'}
-                        </Text>
-                        <Icon name="chevron-down" size={16} color="#666" />
-                    </TouchableOpacity>
-
                     {/* Furnishing */}
                     <Text style={styles.label}>Furnishing *</Text>
                     <TouchableOpacity 
@@ -344,19 +329,6 @@ const AddShopOffices = ({ route, navigation }) => {
             />
 
             {/* Modern Selection Modals */}
-            <ModernSelectionModal
-                visible={showListingTypeModal}
-                title="Select Listing Type"
-                options={['Sell', 'Rent']}
-                selectedValue={formData.listingType ? formData.listingType.charAt(0).toUpperCase() + formData.listingType.slice(1) : ''}
-                onSelect={(value) => {
-                    handleChange('listingType', value.toLowerCase());
-                    setShowListingTypeModal(false);
-                }}
-                onClose={() => setShowListingTypeModal(false)}
-                multiColumn={true}
-            />
-
             <ModernSelectionModal
                 visible={showFurnishingModal}
                 title="Select Furnishing"

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Switch } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Switch, Dimensions, SafeAreaView, StyleSheet } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { submitForm } from '../../service/apiService';
 import ImagePickerComponent from './SubComponent/ImagePickerComponent';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -9,8 +9,14 @@ import ModernSelectionModal from './SubComponent/ModernSelectionModal.js';
 import styles from '../../assets/css/AddProductForm.styles.js';
 import ModalScreen from '../SupportElement/ModalScreen.js';
 
+const { width, height } = Dimensions.get('window');
+const scale = width / 375;
+const verticalScale = height / 812;
+const normalize = (size) => Math.round(scale * size);
+const normalizeVertical = (size) => Math.round(verticalScale * size);
+
 const AddJob = ({ route, navigation }) => {
-  const { category, subcategory, product } = route.params;
+  const { category, subcategory, product, listingType } = route.params || {};
   const [formData, setFormData] = useState({
     salaryPeriod: 'Monthly',
     positionType: 'Full-time',
@@ -126,10 +132,12 @@ const AddJob = ({ route, navigation }) => {
 
   if (isLoading) {
     return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#007BFF" />
-        <Text style={styles.loaderText}>Loading job details...</Text>
-      </View>
+      <SafeAreaView style={modernStyles.safeArea}>
+        <View style={modernStyles.loaderContainer}>
+          <ActivityIndicator size="large" color="#4CAF50" />
+          <Text style={modernStyles.loaderText}>Loading job details...</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -142,116 +150,199 @@ const AddJob = ({ route, navigation }) => {
 
   return (
     <>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}
-      >
-        <View style={styles.formHeaderContainer}>
-          <Text style={styles.formHeaderTitle}>{subcategory?.name}</Text>
-          <Text style={styles.formSubHeader}>Fill in details for your listing</Text>
-        </View>
-        <ScrollView contentContainerStyle={styles.scrollViewContent} keyboardShouldPersistTaps="handled">
-
-          {/* Salary Period Selection */}
-          <Text style={styles.label}>Salary Period *</Text>
-          <TouchableOpacity 
-            style={styles.selectButton}
-            onPress={() => setShowSalaryPeriodModal(true)}
-          >
-            <Text style={styles.selectButtonText}>
-              {formData.salaryPeriod || 'Select Salary Period'}
-            </Text>
-            <Icon name="chevron-down" size={16} color="#666" />
-          </TouchableOpacity>
-
-          {/* Position Type Selection */}
-          <Text style={styles.label}>Position Type *</Text>
-          <TouchableOpacity 
-            style={styles.selectButton}
-            onPress={() => setShowPositionTypeModal(true)}
-          >
-            <Text style={styles.selectButtonText}>
-              {formData.positionType || 'Select Position Type'}
-            </Text>
-            <Icon name="chevron-down" size={16} color="#666" />
-          </TouchableOpacity>
-
-          {/* Salary Field (single amount) */}
-          <Text style={styles.label}>Salary *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Salary"
-            keyboardType="numeric"
-            value={String(formData.amount ?? '')}
-            onChangeText={(value) => handleChange('amount', value)}
-          />
-
-          {/* Title Field */}
-          <Text style={styles.label}>Title *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Title"
-            value={formData.adTitle}
-            onChangeText={(value) => handleChange('adTitle', value)}
-          />
-
-          {/* Description Field */}
-          <Text style={styles.label}>Description *</Text>
-          <TextInput
-            style={[styles.input, { height: 100 }]}
-            placeholder="Enter Description"
-            value={formData.description}
-            multiline
-            onChangeText={(value) => handleChange('description', value)}
-          />
-
-          {/* Address Field */}
-          <Text style={styles.label}>Job Location *</Text>
-          <AddressAutocomplete
-            initialAddress={formData.address}
-            initialLatitude={formData.latitude}
-            initialLongitude={formData.longitude}
-            onAddressSelect={handleAddressSelect}
-            styles={{
-              input: styles.input,
-              container: { marginBottom: 16 }
-            }}
-          />
-
-          <Text style={styles.label}>Show Phone Number</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-            <Switch
-              value={formData.show_phone}
-              onValueChange={handleToggleShowPhone}
-            />
-            <Text style={{ marginLeft: 10 }}>
-              Allow buyers to contact me directly by phone
-            </Text>
+      <SafeAreaView style={modernStyles.safeArea}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={modernStyles.container}
+        >
+          {/* Modern Header */}
+          <View style={modernStyles.header}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={modernStyles.backButton}
+            >
+              <Icon name="arrow-back" size={normalize(24)} color="#333" />
+            </TouchableOpacity>
+            <View style={modernStyles.headerContent}>
+              <Text style={modernStyles.headerTitle}>{subcategory?.name || 'Job Listing'}</Text>
+              <Text style={modernStyles.headerSubtitle}>Add your job details</Text>
+            </View>
           </View>
 
-          {/* Image Picker */}
-          <ImagePickerComponent
-            formData={formData}
-            setFormData={setFormData}
-          />
-        </ScrollView>
-
-        {/* Submit Button */}
-        <View style={styles.stickyButton}>
-          <TouchableOpacity
-            onPress={handleSubmit}
-            style={[
-              styles.submitButton,
-              isSubmitting && styles.disabledButton,
-            ]}
-            disabled={isSubmitting}
+          <ScrollView
+            contentContainerStyle={modernStyles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled={true}
+            showsVerticalScrollIndicator={false}
           >
-            <Text style={styles.submitButtonText}>
-              {isSubmitting ? 'Processing...' : product ? 'Update' : 'Submit'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
+            {/* Salary Period Selection */}
+            <View style={modernStyles.fieldContainer}>
+              <View style={modernStyles.labelContainer}>
+                <Icon name="calendar-outline" size={normalize(18)} color="#666" style={modernStyles.labelIcon} />
+                <Text style={modernStyles.label}>Salary Period *</Text>
+              </View>
+              <TouchableOpacity
+                style={modernStyles.selectButton}
+                onPress={() => setShowSalaryPeriodModal(true)}
+                activeOpacity={0.7}
+              >
+                <Text style={modernStyles.selectButtonText}>
+                  {formData.salaryPeriod || 'Select Salary Period'}
+                </Text>
+                <Icon name="chevron-down" size={normalize(18)} color="#666" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Position Type Selection */}
+            <View style={modernStyles.fieldContainer}>
+              <View style={modernStyles.labelContainer}>
+                <Icon name="briefcase-outline" size={normalize(18)} color="#666" style={modernStyles.labelIcon} />
+                <Text style={modernStyles.label}>Position Type *</Text>
+              </View>
+              <TouchableOpacity
+                style={modernStyles.selectButton}
+                onPress={() => setShowPositionTypeModal(true)}
+                activeOpacity={0.7}
+              >
+                <Text style={modernStyles.selectButtonText}>
+                  {formData.positionType || 'Select Position Type'}
+                </Text>
+                <Icon name="chevron-down" size={normalize(18)} color="#666" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Salary Field */}
+            <View style={modernStyles.fieldContainer}>
+              <View style={modernStyles.labelContainer}>
+                <Icon name="cash-outline" size={normalize(18)} color="#666" style={modernStyles.labelIcon} />
+                <Text style={modernStyles.label}>Salary *</Text>
+              </View>
+              <View style={modernStyles.inputWrapper}>
+                <TextInput
+                  style={modernStyles.input}
+                  placeholder="Enter salary amount"
+                  placeholderTextColor="#999"
+                  keyboardType="numeric"
+                  value={String(formData.amount ?? '')}
+                  onChangeText={(value) => handleChange('amount', value)}
+                />
+              </View>
+            </View>
+
+            {/* Title Field */}
+            <View style={modernStyles.fieldContainer}>
+              <View style={modernStyles.labelContainer}>
+                <Icon name="text-outline" size={normalize(18)} color="#666" style={modernStyles.labelIcon} />
+                <Text style={modernStyles.label}>Title *</Text>
+              </View>
+              <View style={modernStyles.inputWrapper}>
+                <TextInput
+                  style={modernStyles.input}
+                  placeholder="Enter job title"
+                  placeholderTextColor="#999"
+                  value={formData.adTitle}
+                  onChangeText={(value) => handleChange('adTitle', value)}
+                />
+              </View>
+            </View>
+
+            {/* Description Field */}
+            <View style={modernStyles.fieldContainer}>
+              <View style={modernStyles.labelContainer}>
+                <Icon name="document-text-outline" size={normalize(18)} color="#666" style={modernStyles.labelIcon} />
+                <Text style={modernStyles.label}>Description *</Text>
+              </View>
+              <View style={modernStyles.inputWrapper}>
+                <TextInput
+                  style={[modernStyles.input, modernStyles.textArea]}
+                  placeholder="Describe the job position..."
+                  placeholderTextColor="#999"
+                  value={formData.description}
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                  onChangeText={(value) => handleChange('description', value)}
+                />
+              </View>
+            </View>
+
+            {/* Job Location Field */}
+            <View style={modernStyles.fieldContainer}>
+              <View style={modernStyles.labelContainer}>
+                <Icon name="location-outline" size={normalize(18)} color="#666" style={modernStyles.labelIcon} />
+                <Text style={modernStyles.label}>Job Location *</Text>
+              </View>
+              <View style={modernStyles.inputWrapper}>
+                <AddressAutocomplete
+                  initialAddress={formData.address}
+                  initialLatitude={formData.latitude}
+                  initialLongitude={formData.longitude}
+                  onAddressSelect={handleAddressSelect}
+                  styles={{
+                    input: modernStyles.addressInput,
+                    container: { marginBottom: 0 }
+                  }}
+                />
+              </View>
+            </View>
+
+            {/* Show Phone Number Toggle */}
+            <View style={[modernStyles.fieldContainer, modernStyles.toggleContainer]}>
+              <View style={modernStyles.toggleContent}>
+                <View style={modernStyles.toggleLeft}>
+                  <Icon name="call-outline" size={normalize(20)} color="#666" style={modernStyles.toggleIcon} />
+                  <View>
+                    <Text style={modernStyles.toggleTitle}>Show Phone Number</Text>
+                    <Text style={modernStyles.toggleDescription}>
+                      Allow applicants to contact you directly
+                    </Text>
+                  </View>
+                </View>
+                <Switch
+                  value={formData.show_phone}
+                  onValueChange={handleToggleShowPhone}
+                  trackColor={{ false: '#E0E0E0', true: '#4CAF50' }}
+                  thumbColor={formData.show_phone ? '#FFFFFF' : '#F4F3F4'}
+                  ios_backgroundColor="#E0E0E0"
+                />
+              </View>
+            </View>
+
+            {/* Image Picker */}
+            <View style={modernStyles.fieldContainer}>
+              <View style={modernStyles.labelContainer}>
+                <Icon name="images-outline" size={normalize(18)} color="#666" style={modernStyles.labelIcon} />
+                <Text style={modernStyles.label}>Photos</Text>
+              </View>
+              <ImagePickerComponent
+                formData={formData}
+                setFormData={setFormData}
+              />
+            </View>
+          </ScrollView>
+
+          {/* Sticky Submit Button */}
+          <View style={modernStyles.stickyButton}>
+            <TouchableOpacity
+              onPress={handleSubmit}
+              style={[modernStyles.submitButton, (isSubmitting || isLoading) && modernStyles.disabledButton]}
+              disabled={isSubmitting || isLoading}
+              activeOpacity={0.8}
+            >
+              {isSubmitting ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <>
+                  <Icon name="checkmark-circle-outline" size={normalize(20)} color="#FFFFFF" style={{ marginRight: 8 }} />
+                  <Text style={modernStyles.submitButtonText}>
+                    {product ? 'Update Job' : 'Post Job'}
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
       <ModalScreen
         visible={isModalVisible}
         type={modalType}
@@ -292,5 +383,223 @@ const AddJob = ({ route, navigation }) => {
     </>
   );
 };
+
+const modernStyles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: normalize(20),
+    paddingTop: normalizeVertical(12),
+    paddingBottom: normalizeVertical(16),
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  backButton: {
+    width: normalize(40),
+    height: normalize(40),
+    borderRadius: normalize(20),
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: normalize(12),
+  },
+  headerContent: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: normalize(20),
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: normalizeVertical(2),
+  },
+  headerSubtitle: {
+    fontSize: normalize(13),
+    color: '#6B7280',
+    fontWeight: '400',
+  },
+  scrollContent: {
+    padding: normalize(20),
+    paddingBottom: normalizeVertical(100),
+  },
+  fieldContainer: {
+    marginBottom: normalizeVertical(24),
+  },
+  labelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: normalizeVertical(10),
+  },
+  labelIcon: {
+    marginRight: normalize(8),
+  },
+  label: {
+    fontSize: normalize(15),
+    fontWeight: '600',
+    color: '#374151',
+    letterSpacing: 0.2,
+  },
+  inputWrapper: {
+    position: 'relative',
+  },
+  input: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: normalize(12),
+    paddingHorizontal: normalize(16),
+    paddingVertical: normalizeVertical(14),
+    fontSize: normalize(15),
+    color: '#1F2937',
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  textArea: {
+    height: normalizeVertical(100),
+    paddingTop: normalizeVertical(14),
+    textAlignVertical: 'top',
+  },
+  addressInput: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: normalize(12),
+    paddingHorizontal: normalize(16),
+    paddingVertical: normalizeVertical(14),
+    fontSize: normalize(15),
+    color: '#1F2937',
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  selectButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: normalize(12),
+    paddingHorizontal: normalize(16),
+    paddingVertical: normalizeVertical(14),
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  selectButtonText: {
+    fontSize: normalize(15),
+    color: '#1F2937',
+    fontWeight: '500',
+    flex: 1,
+  },
+  toggleContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: normalize(12),
+    padding: normalize(16),
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  toggleContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  toggleLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  toggleIcon: {
+    marginRight: normalize(12),
+  },
+  toggleTitle: {
+    fontSize: normalize(15),
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: normalizeVertical(2),
+  },
+  toggleDescription: {
+    fontSize: normalize(12),
+    color: '#6B7280',
+    fontWeight: '400',
+  },
+  stickyButton: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: normalize(20),
+    paddingTop: normalizeVertical(12),
+    paddingBottom: normalizeVertical(Platform.OS === 'ios' ? 20 : 16),
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  submitButton: {
+    backgroundColor: '#4CAF50',
+    borderRadius: normalize(12),
+    paddingVertical: normalizeVertical(16),
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#4CAF50',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  disabledButton: {
+    backgroundColor: '#9CA3AF',
+    shadowOpacity: 0.1,
+  },
+  submitButtonText: {
+    color: '#FFFFFF',
+    fontSize: normalize(16),
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+  },
+  loaderText: {
+    marginTop: normalizeVertical(12),
+    fontSize: normalize(15),
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+});
 
 export default AddJob;

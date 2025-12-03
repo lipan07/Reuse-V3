@@ -12,7 +12,8 @@ import {
   Animated,
   FlatList,
   ActivityIndicator,
-  BackHandler
+  BackHandler,
+  Alert
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -398,6 +399,7 @@ const ChatBox = ({ route }) => {
     }
   };
 
+
   const handleMessageText = () => {
     handleSend(inputText);
   };
@@ -546,6 +548,8 @@ const ChatBox = ({ route }) => {
     }
 
     const isMe = item.user_id === loggedInUserId;
+
+    // Text message rendering
     return (
       <View
         style={[

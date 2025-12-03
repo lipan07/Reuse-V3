@@ -1,4 +1,5 @@
-import messaging from '@react-native-firebase/messaging';
+import { getMessaging, setBackgroundMessageHandler } from '@react-native-firebase/messaging';
+import { getApp } from '@react-native-firebase/app';
 import notifee, { AndroidImportance, EventType } from '@notifee/react-native';
 import { AppRegistry } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -50,7 +51,8 @@ notifee.createChannel({
 });
 
 // 3️⃣ Background FCM handler
-messaging().setBackgroundMessageHandler(async remoteMessage => {
+const messaging = getMessaging(getApp());
+setBackgroundMessageHandler(messaging, async remoteMessage => {
     console.log('🌙 [FCM] Background Message:', remoteMessage);
 
     const { title, body } = remoteMessage.notification || {};

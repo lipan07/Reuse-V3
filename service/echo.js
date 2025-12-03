@@ -7,7 +7,13 @@ window.Pusher = Pusher;
 
 export const createEcho = async () => {
   const token = await AsyncStorage.getItem('authToken');
-
+  // authEndpoint: `${REVERB_SCHEME}://${REVERB_HOST}/broadcasting/auth`,
+  console.log('REVERB_HOST', REVERB_HOST);
+  console.log('REVERB_PORT', REVERB_PORT);
+  console.log('REVERB_SCHEME', REVERB_SCHEME);
+  console.log('REVERB_APP_KEY', REVERB_APP_KEY);
+  console.log('REVERB_CLUSTER', REVERB_CLUSTER);
+  console.log('url', `https://${REVERB_HOST}::${REVERB_PORT}/broadcasting/auth`,);  
   return new Echo({
     broadcaster: 'reverb',
     key: REVERB_APP_KEY,

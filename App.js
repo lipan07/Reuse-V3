@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import { Alert, AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer } from '@react-navigation/native';
-import messaging from '@react-native-firebase/messaging';
+import { getMessaging, onMessage, onNotificationOpenedApp, getInitialNotification } from '@react-native-firebase/messaging';
+import { getApp } from '@react-native-firebase/app';
 import AppNavigator from './components/AppNavigator';
 import { NotificationProvider, useNotification } from './context/NotificationContext';
 import notifee, { AndroidImportance, EventType } from '@notifee/react-native';
@@ -60,7 +61,8 @@ const AppInner = () => {
     }, []);
 
     useEffect(() => {
-        const unsubscribe = messaging().onMessage(async remoteMessage => {
+        const messaging = getMessaging(getApp());
+        const unsubscribe = onMessage(messaging, async remoteMessage => {
             console.log('📬 [FCM] Foreground message received:', remoteMessage);
             console.log('📬 [FCM] Message data:', JSON.stringify(remoteMessage.data, null, 2));
             incrementNotificationCount();
@@ -71,7 +73,8 @@ const AppInner = () => {
 
     // Handle FCM notification opened when app is in background
     useEffect(() => {
-        const unsubscribe = messaging().onNotificationOpenedApp(remoteMessage => {
+        const messaging = getMessaging(getApp());
+        const unsubscribe = onNotificationOpenedApp(messaging, remoteMessage => {
             console.log('📱 [FCM] Notification opened app from background:', remoteMessage);
             if (remoteMessage?.data) {
                 handleNotificationPress({ data: remoteMessage.data });
@@ -83,8 +86,8 @@ const AppInner = () => {
 
     // Check if app was opened from a notification (killed state)
     useEffect(() => {
-        messaging()
-            .getInitialNotification()
+        const messaging = getMessaging(getApp());
+        getInitialNotification(messaging)
             .then(remoteMessage => {
                 if (remoteMessage) {
                     console.log('📱 [FCM] App opened from killed state by notification:', remoteMessage);

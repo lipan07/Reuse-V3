@@ -67,7 +67,7 @@ const Others = ({ product, buyerId }) => {
             negotiable: 'handshake',
             urgent: 'alert',
             verified: 'check-decagram',
-            default: 'information'
+            default: 'tag'
         };
         return iconMap[fieldName] || iconMap.default;
     }

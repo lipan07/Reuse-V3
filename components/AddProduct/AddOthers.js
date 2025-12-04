@@ -71,7 +71,7 @@ const AddOthers = ({ route, navigation }) => {
             id: productData.id,
             adTitle: productData.title || '',
             description: productData.post_details?.description || '',
-            amount: productData.amount?.toString() || '',
+            amount: productData.type === 'donate' ? '' : (productData.amount?.toString() || ''),
             address: productData.address || '',
             latitude: productData.latitude || null,
             longitude: productData.longitude || null,
@@ -212,23 +212,25 @@ const AddOthers = ({ route, navigation }) => {
               </View>
             </View>
 
-            {/* Amount Field */}
-            <View style={modernStyles.fieldContainer}>
-              <View style={modernStyles.labelContainer}>
-                <Icon name="cash-outline" size={normalize(18)} color="#666" style={modernStyles.labelIcon} />
-                <Text style={modernStyles.label}>Amount *</Text>
+            {/* Amount Field - Hidden for donate type */}
+            {formData.listingType !== 'donate' && (
+              <View style={modernStyles.fieldContainer}>
+                <View style={modernStyles.labelContainer}>
+                  <Icon name="cash-outline" size={normalize(18)} color="#666" style={modernStyles.labelIcon} />
+                  <Text style={modernStyles.label}>Amount *</Text>
+                </View>
+                <View style={modernStyles.inputWrapper}>
+                  <TextInput
+                    style={modernStyles.input}
+                    placeholder="Enter amount"
+                    placeholderTextColor="#999"
+                    keyboardType="numeric"
+                    value={formData.amount}
+                    onChangeText={v => handleChange('amount', v)}
+                  />
+                </View>
               </View>
-              <View style={modernStyles.inputWrapper}>
-                <TextInput
-                  style={modernStyles.input}
-                  placeholder="Enter amount"
-                  placeholderTextColor="#999"
-                  keyboardType="numeric"
-                  value={formData.amount}
-                  onChangeText={v => handleChange('amount', v)}
-                />
-              </View>
-            </View>
+            )}
 
             {/* Address Field */}
             <View style={modernStyles.fieldContainer}>

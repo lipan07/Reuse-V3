@@ -37,6 +37,7 @@ const ChatBox = ({ route }) => {
   const [channel, setChannel] = useState(null);
   const [onlineStatuses, setOnlineStatuses] = useState({});
   const [otherPerson, setOtherPerson] = useState(null);
+  const [productInfo, setProductInfo] = useState(null);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -252,6 +253,26 @@ const ChatBox = ({ route }) => {
       openChat(sellerId, buyerId, postId);
     }
   }, [chatId]);
+
+  // Fetch product details
+  useEffect(() => {
+    const fetchProductInfo = async () => {
+      if (!postId) return;
+      try {
+        const token = await AsyncStorage.getItem('authToken');
+        const response = await fetch(`${process.env.BASE_URL}/posts/${postId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await response.json();
+        if (data.data) {
+          setProductInfo(data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching product info:', error);
+      }
+    };
+    fetchProductInfo();
+  }, [postId]);
 
   const fetchChatMessages = async (id, page = 1, isInitialLoad = false) => {
     try {
@@ -591,35 +612,49 @@ const ChatBox = ({ route }) => {
           }}
         >
           <Image
-            source={{ uri: postImage }}
+            source={{ uri: postImage || productInfo?.images?.[0] }}
             style={styles.headerImage}
           />
           <View style={{ flex: 1 }}>
-            <Text style={styles.headerTitle} numberOfLines={1}>
-              {postTitle || 'Chat'}
+            {/* First Line: Post Title */}
+            <Text style={styles.headerTitle} numberOfLines={2}>
+              {postTitle || productInfo?.title || 'Chat'}
             </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
-              <Text style={{ fontSize: 15, color: '#333', fontWeight: '500' }}>
-                {otherUserName}
-              </Text>
-              <View
-                style={{
-                  width: normalize(8),
-                  height: normalize(8),
-                  borderRadius: normalize(4),
-                  backgroundColor: otherPersonStatus === 'online' ? 'red' : '#b0b0b0',
-                  marginLeft: normalize(10),
-                  marginRight: normalize(4),
-                }}
-              />
-              {otherPersonStatus === 'online' ? (
-                <BlinkText>Online</BlinkText>
-              ) : (
-
-                  <Text style={{ fontSize: normalize(13), color: '#b0b0b0', fontWeight: '500' }}>
+            {/* Second Line: Amount, Category, User Name, Online/Offline */}
+            <View style={styles.secondLineRow}>
+              {productInfo && productInfo.type !== 'donate' && productInfo.amount && (
+                <Text style={styles.productPrice}>
+                  ₹{productInfo.amount}
+                </Text>
+              )}
+              {productInfo?.category?.name && (
+                <Text style={styles.productCategory}>
+                  {productInfo.category.name}
+                </Text>
+              )}
+              {/* <Text style={styles.userName}>
+                Status:
+              </Text> */}
+              <View style={styles.statusContainer}>
+                <View
+                  style={{
+                    width: normalize(8),
+                    height: normalize(8),
+                    borderRadius: normalize(4),
+                    backgroundColor: otherPersonStatus === 'online' ? '#4CAF50' : '#b0b0b0',
+                    marginRight: normalize(4),
+                  }}
+                />
+                {otherPersonStatus === 'online' ? (
+                  <Text style={{ fontSize: normalize(12), color: '#4CAF50', fontWeight: '500' }}>
+                    Online
+                  </Text>
+                ) : (
+                    <Text style={{ fontSize: normalize(12), color: '#b0b0b0', fontWeight: '500' }}>
                     Offline
                   </Text>
-              )}
+                )}
+              </View>
             </View>
           </View>
           <MaterialIcons name="chevron-right" size={28} color="#888" style={{ marginLeft: 8 }} />
@@ -690,9 +725,9 @@ const styles = StyleSheet.create({
   },
   messageContainer: {
     maxWidth: '80%',
-    padding: normalize(12),
+    padding: normalize(10),
     borderRadius: normalize(14),
-    marginVertical: normalize(5),
+    marginVertical: normalize(3),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
@@ -708,7 +743,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
   footer: {
-    paddingVertical: normalizeVertical(12),
+    paddingVertical: normalizeVertical(8),
     paddingHorizontal: normalize(16),
     backgroundColor: '#fff',
     borderTopWidth: 1,
@@ -723,15 +758,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
     borderRadius: normalize(24),
     paddingHorizontal: normalize(16),
-    paddingVertical: normalize(8),
+    paddingVertical: normalize(6),
   },
   input: {
     flex: 1,
-    fontSize: normalize(16),
+    fontSize: normalize(14),
     color: '#1F2937',
     maxHeight: normalize(100),
-    minHeight: normalize(40),
-    paddingVertical: normalize(8),
+    minHeight: normalize(36),
+    paddingVertical: normalize(6),
     marginRight: normalize(8),
   },
   sendButton: {
@@ -757,38 +792,39 @@ const styles = StyleSheet.create({
   },
   messageText: {
     color: '#fff',
-    fontSize: normalize(15),
+    fontSize: normalize(13),
+    lineHeight: normalize(18),
   },
   timeText: {
     color: '#eee',
-    fontSize: normalize(11),
+    fontSize: normalize(10),
     marginRight: normalize(4),
   },
   tickText: {
     color: '#eee',
-    fontSize: normalize(11),
+    fontSize: normalize(10),
   },
   tickTextBlue: {
     color: '#4fc3f7',
-    fontSize: normalize(11),
+    fontSize: normalize(10),
   },
   timeTickRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: normalize(4),
+    marginTop: normalize(2),
     marginLeft: normalize(2),
   },
   dateSeparatorContainer: {
     alignItems: 'center',
-    marginVertical: normalize(12),
+    marginVertical: normalize(8),
   },
   dateSeparatorText: {
     backgroundColor: '#dbeafe',
     color: '#333',
-    paddingHorizontal: normalize(16),
-    paddingVertical: normalize(4),
+    paddingHorizontal: normalize(12),
+    paddingVertical: normalize(3),
     borderRadius: normalize(12),
-    fontSize: normalize(13),
+    fontSize: normalize(12),
     fontWeight: 'bold',
     overflow: 'hidden',
   },
@@ -818,6 +854,36 @@ const styles = StyleSheet.create({
     color: '#222',
     flex: 1,
     marginTop: normalize(2)
+  },
+  secondLineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: normalize(4),
+    flexWrap: 'wrap',
+    gap: normalize(8),
+  },
+  productPrice: {
+    fontSize: normalize(13),
+    fontWeight: '600',
+    color: '#4CAF50',
+  },
+  productCategory: {
+    fontSize: normalize(12),
+    color: '#666',
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: normalize(8),
+    paddingVertical: normalize(2),
+    borderRadius: normalize(4),
+  },
+  userName: {
+    fontSize: normalize(13),
+    color: '#333',
+    fontWeight: '500',
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: normalize(8),
   },
   loadingContainer: {
     flex: 1,

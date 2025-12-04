@@ -421,8 +421,12 @@ const ProductDetails = () => {
             // Generate web link for sharing (only if baseUrl is available)
             const webLink = baseUrl ? `${baseUrl}/product/${product.id}` : productLink;
 
+            const priceText = product?.type === 'donate'
+                ? 'Free (Donation)'
+                : `Price: ₹${product?.amount || product?.post_details?.amount || 'Not specified'}`;
+
             const shareMessage = `Check out this ${product.title} on Reuse!\n\n` +
-                `Price: ₹${product?.amount || product?.post_details?.amount || 'Not specified'}\n` +
+                `${priceText}\n` +
                 `Category: ${product.category?.name || 'Uncategorized'}\n` +
                 `Location: ${product.address || 'Not specified'}\n\n` +
                 `View details: ${webLink}\n` +
@@ -711,11 +715,13 @@ const ProductDetails = () => {
 
                 {/* Compact Product Header */}
                 <View style={styles.headerContainer}>
-                    <View style={styles.headerTopRow}>
-                        <Text style={styles.priceText}>
-                            {product?.amount ? `₹${product.amount}` : (product?.post_details?.amount ? `₹${product.post_details.amount}` : '---')}
-                        </Text>
-                    </View>
+                    {product?.type !== 'donate' && (
+                        <View style={styles.headerTopRow}>
+                            <Text style={styles.priceText}>
+                                {product?.amount ? `₹${product.amount}` : (product?.post_details?.amount ? `₹${product.post_details.amount}` : '---')}
+                            </Text>
+                        </View>
+                    )}
 
                     <Text style={styles.titleText}>{product.title || 'No title'}</Text>
 

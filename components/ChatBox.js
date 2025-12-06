@@ -615,45 +615,63 @@ const ChatBox = ({ route }) => {
             source={{ uri: postImage || productInfo?.images?.[0] }}
             style={styles.headerImage}
           />
-          <View style={{ flex: 1 }}>
-            {/* First Line: Post Title */}
-            <Text style={styles.headerTitle} numberOfLines={2}>
-              {postTitle || productInfo?.title || 'Chat'}
-            </Text>
-            {/* Second Line: Amount, Category, User Name, Online/Offline */}
-            <View style={styles.secondLineRow}>
-              {productInfo && productInfo.type !== 'donate' && productInfo.amount && (
-                <Text style={styles.productPrice}>
-                  ₹{productInfo.amount}
-                </Text>
-              )}
-              {productInfo?.category?.name && (
-                <Text style={styles.productCategory}>
-                  {productInfo.category.name}
-                </Text>
-              )}
-              {/* <Text style={styles.userName}>
-                Status:
-              </Text> */}
-              <View style={styles.statusContainer}>
-                <View
-                  style={{
-                    width: normalize(8),
-                    height: normalize(8),
-                    borderRadius: normalize(4),
-                    backgroundColor: otherPersonStatus === 'online' ? '#4CAF50' : '#b0b0b0',
-                    marginRight: normalize(4),
-                  }}
-                />
-                {otherPersonStatus === 'online' ? (
-                  <Text style={{ fontSize: normalize(12), color: '#4CAF50', fontWeight: '500' }}>
-                    Online
+          <View style={styles.headerContent}>
+            <View style={styles.headerTopSection}>
+              <Text style={styles.headerTitle} numberOfLines={1}>
+                {postTitle || productInfo?.title || 'Chat'}
+              </Text>
+              {productInfo?.type && (
+                <View style={[
+                  styles.listingTypeBadge,
+                  productInfo.type === 'donate' && styles.listingTypeBadgeDonate,
+                  productInfo.type === 'sell' && styles.listingTypeBadgeSell,
+                  productInfo.type === 'rent' && styles.listingTypeBadgeRent,
+                  (productInfo.type === 'post_requirement' || productInfo.type === 'requirement') && styles.listingTypeBadgeYellow,
+                ]}>
+                  <Text style={[
+                    styles.listingTypeText,
+                    productInfo.type === 'donate' && styles.listingTypeTextDonate,
+                    productInfo.type === 'sell' && styles.listingTypeTextSell,
+                    productInfo.type === 'rent' && styles.listingTypeTextRent,
+                    (productInfo.type === 'post_requirement' || productInfo.type === 'requirement') && styles.listingTypeTextYellow,
+                  ]}>
+                    {productInfo.type === 'donate' ? 'DONATE' :
+                      productInfo.type === 'rent' ? 'RENT' :
+                        productInfo.type === 'post_requirement' || productInfo.type === 'requirement' ? 'REQUIREMENT' :
+                          'SELL'}
                   </Text>
-                ) : (
-                    <Text style={{ fontSize: normalize(12), color: '#b0b0b0', fontWeight: '500' }}>
-                    Offline
-                  </Text>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.headerBottomSection}>
+              <View style={styles.headerMetaInfo}>
+                {productInfo && productInfo.type !== 'donate' && productInfo.amount && (
+                  <Text style={styles.productPrice}>₹{productInfo.amount}</Text>
                 )}
+                {productInfo?.category?.name && (
+                  <>
+                    {productInfo && productInfo.type !== 'donate' && productInfo.amount && (
+                      <Text style={styles.metaSeparator}>•</Text>
+                    )}
+                    <Text style={styles.productCategory}>{productInfo.category.name}</Text>
+                  </>
+                )}
+              </View>
+              <View style={styles.userStatusContainer}>
+                <Text style={styles.userName}>{otherUserName}</Text>
+                <View style={styles.statusDotContainer}>
+                  <View style={[
+                    styles.statusDot,
+                    otherPersonStatus === 'online' && styles.statusDotOnline
+                  ]} />
+                  <Text style={[
+                    styles.statusText,
+                    otherPersonStatus === 'online' && styles.statusTextOnline
+                  ]}>
+                    {otherPersonStatus === 'online' ? 'Online' : 'Offline'}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
@@ -831,59 +849,125 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: normalize(12),
-    borderBottomWidth: 1,
-    borderColor: '#F3F4F6',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: normalize(16),
+    paddingVertical: normalize(12),
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#E5E7EB',
   },
   headerImage: {
-    width: normalize(48),
-    height: normalize(48),
-    borderRadius: normalize(8),
+    width: normalize(50),
+    height: normalize(50),
+    borderRadius: normalize(10),
     marginRight: normalize(12),
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#F3F4F6',
   },
-  headerTitle: {
-    fontSize: normalize(18),
-    fontWeight: '700',
-    color: '#222',
+  headerContent: {
     flex: 1,
-    marginTop: normalize(2)
   },
-  secondLineRow: {
+  headerTopSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: normalize(4),
-    flexWrap: 'wrap',
+    marginBottom: normalize(4),
     gap: normalize(8),
+  },
+  headerTitle: {
+    fontSize: normalize(15),
+    fontWeight: '600',
+    color: '#111827',
+    flex: 1,
+    lineHeight: normalize(20),
+  },
+  listingTypeBadge: {
+    paddingHorizontal: normalize(8),
+    paddingVertical: normalize(3),
+    borderRadius: normalize(4),
+  },
+  listingTypeBadgeDonate: {
+    backgroundColor: '#FEE2E2',
+  },
+  listingTypeBadgeSell: {
+    backgroundColor: '#D1FAE5',
+  },
+  listingTypeBadgeRent: {
+    backgroundColor: '#DBEAFE',
+  },
+  listingTypeBadgeYellow: {
+    backgroundColor: '#FEF3C7',
+  },
+  listingTypeText: {
+    fontSize: normalize(8),
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  listingTypeTextDonate: {
+    color: '#DC2626',
+  },
+  listingTypeTextSell: {
+    color: '#059669',
+  },
+  listingTypeTextRent: {
+    color: '#2563EB',
+  },
+  listingTypeTextYellow: {
+    color: '#D97706',
+  },
+  headerBottomSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  headerMetaInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   productPrice: {
     fontSize: normalize(13),
     fontWeight: '600',
-    color: '#4CAF50',
+    color: '#059669',
+  },
+  metaSeparator: {
+    fontSize: normalize(12),
+    color: '#9CA3AF',
+    marginHorizontal: normalize(6),
   },
   productCategory: {
     fontSize: normalize(12),
-    color: '#666',
-    backgroundColor: '#F3F4F6',
-    paddingHorizontal: normalize(8),
-    paddingVertical: normalize(2),
-    borderRadius: normalize(4),
+    color: '#6B7280',
+    fontWeight: '400',
   },
-  userName: {
-    fontSize: normalize(13),
-    color: '#333',
-    fontWeight: '500',
-  },
-  statusContainer: {
+  userStatusContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: normalize(8),
+    gap: normalize(6),
+  },
+  userName: {
+    fontSize: normalize(12),
+    color: '#374151',
+    fontWeight: '500',
+  },
+  statusDotContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: normalize(4),
+  },
+  statusDot: {
+    width: normalize(6),
+    height: normalize(6),
+    borderRadius: normalize(3),
+    backgroundColor: '#9CA3AF',
+  },
+  statusDotOnline: {
+    backgroundColor: '#10B981',
+  },
+  statusText: {
+    fontSize: normalize(11),
+    color: '#9CA3AF',
+    fontWeight: '400',
+  },
+  statusTextOnline: {
+    color: '#10B981',
   },
   loadingContainer: {
     flex: 1,

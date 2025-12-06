@@ -380,43 +380,55 @@ const MyAdsPage = ({ navigation }) => {
       />
       <BottomNavBar navigation={navigation} />
 
-      {/* Modern Centered Action Modal */}
+      {/* Modern Bottom Sheet Action Modal */}
       <Modal
         visible={isPopupVisible}
         transparent={true}
-        animationType="fade"
+        animationType="slide"
         onRequestClose={hidePopup}
       >
         <TouchableWithoutFeedback onPress={hidePopup}>
           <View style={styles.modernModalOverlay}>
             <TouchableWithoutFeedback>
-              <View style={styles.modernModalContainer}>
-                {/* Product Preview */}
+              <View style={styles.modernBottomSheet}>
+                {/* Drag Handle */}
+                <View style={styles.dragHandle} />
+
+                {/* Product Preview Card */}
                 {selectedProduct && (
-                  <View style={styles.modernProductPreview}>
+                  <View style={styles.productPreviewCard}>
                     {selectedProduct.images && selectedProduct.images.length > 0 ? (
                       <Image
                         source={{ uri: selectedProduct.images[0] }}
-                        style={styles.modernPreviewImage}
+                        style={styles.previewImageLarge}
                       />
                     ) : (
-                      <View style={styles.modernPreviewImagePlaceholder}>
-                        <Icon name="image" size={30} color="#CCC" />
+                        <View style={styles.previewImageLargePlaceholder}>
+                          <Icon name="image" size={40} color="#CCC" />
                       </View>
                     )}
-                    <View style={styles.modernPreviewInfo}>
-                      <Text style={styles.modernPreviewTitle} numberOfLines={2}>{selectedProduct.title}</Text>
-                      <Text style={styles.modernPreviewPrice}>₹{selectedProduct.post_details?.amount || selectedProduct.amount || selectedProduct.price || '0'}</Text>
+                    <View style={styles.productInfoCard}>
+                      <Text style={styles.productTitleLarge} numberOfLines={2}>
+                        {selectedProduct.title}
+                      </Text>
+                      <View style={styles.priceTagContainer}>
+                        <Text style={styles.priceTagLabel}>Price</Text>
+                        <Text style={styles.priceTagValue}>
+                          ₹{selectedProduct.post_details?.amount || selectedProduct.amount || selectedProduct.price || '0'}
+                        </Text>
+                      </View>
                     </View>
                   </View>
                 )}
 
-                <View style={styles.modernDivider} />
+                {/* Quick Actions Title */}
+                <Text style={styles.actionsTitle}>Quick Actions</Text>
 
-                {/* Action Options */}
-                <View style={styles.modernActionContainer}>
+                {/* Action Buttons - List Style */}
+                <View style={styles.actionsList}>
                   <TouchableOpacity
-                    style={styles.modernActionItem}
+                    style={styles.actionListItem}
+                    activeOpacity={0.7}
                     onPress={() => {
                       hidePopup();
                       setTimeout(() => {
@@ -424,14 +436,19 @@ const MyAdsPage = ({ navigation }) => {
                       }, 300);
                     }}
                   >
-                    <View style={[styles.modernActionIcon, { backgroundColor: '#E3F2FD' }]}>
-                      <Icon name="eye" size={22} color="#007BFF" />
+                    <View style={[styles.actionListIcon, { backgroundColor: '#EBF5FF' }]}>
+                      <Icon name="eye" size={20} color="#007BFF" />
                     </View>
-                    <Text style={styles.modernActionText}>View Ad</Text>
+                    <View style={styles.actionListContent}>
+                      <Text style={styles.actionListTitle}>View Ad</Text>
+                      <Text style={styles.actionListSubtitle}>See how others see it</Text>
+                    </View>
+                    <Icon name="chevron-right" size={20} color="#CCC" />
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={styles.modernActionItem}
+                    style={styles.actionListItem}
+                    activeOpacity={0.7}
                     onPress={() => {
                       hidePopup();
                       setTimeout(() => {
@@ -439,14 +456,19 @@ const MyAdsPage = ({ navigation }) => {
                       }, 300);
                     }}
                   >
-                    <View style={[styles.modernActionIcon, { backgroundColor: '#F3E5F5' }]}>
-                      <Icon name="heart" size={22} color="#9C27B0" />
+                    <View style={[styles.actionListIcon, { backgroundColor: '#FCE8F3' }]}>
+                      <Icon name="heart" size={20} color="#EC4899" />
                     </View>
-                    <Text style={styles.modernActionText}>Interested</Text>
+                    <View style={styles.actionListContent}>
+                      <Text style={styles.actionListTitle}>Interested Users</Text>
+                      <Text style={styles.actionListSubtitle}>View who liked your ad</Text>
+                    </View>
+                    <Icon name="chevron-right" size={20} color="#CCC" />
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={styles.modernActionItem}
+                    style={styles.actionListItem}
+                    activeOpacity={0.7}
                     onPress={() => {
                       hidePopup();
                       setTimeout(() => {
@@ -455,44 +477,51 @@ const MyAdsPage = ({ navigation }) => {
                       }, 300);
                     }}
                   >
-                    <View style={[styles.modernActionIcon, { backgroundColor: '#E8F5E9' }]}>
-                      <Icon name="pencil" size={22} color="#4CAF50" />
+                    <View style={[styles.actionListIcon, { backgroundColor: '#ECFDF5' }]}>
+                      <Icon name="pencil" size={20} color="#10B981" />
                     </View>
-                    <Text style={styles.modernActionText}>Edit Ad</Text>
+                    <View style={styles.actionListContent}>
+                      <Text style={styles.actionListTitle}>Edit Listing</Text>
+                      <Text style={styles.actionListSubtitle}>Update details & photos</Text>
+                    </View>
+                    <Icon name="chevron-right" size={20} color="#CCC" />
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={styles.modernActionItem}
+                    style={[styles.actionListItem, styles.promoteBadge]}
+                    activeOpacity={0.7}
                     onPress={handleBoost}
                   >
-                    <View style={[styles.modernActionIcon, { backgroundColor: '#FFF8E1' }]}>
-                      <Icon name="rocket" size={22} color="#FFA000" />
+                    <View style={[styles.actionListIcon, { backgroundColor: '#FFF7ED' }]}>
+                      <Icon name="rocket" size={20} color="#F59E0B" />
                     </View>
-                    <Text style={styles.modernActionText}>Promote</Text>
+                    <View style={styles.actionListContent}>
+                      <View style={styles.promoteHeader}>
+                        <Text style={styles.actionListTitle}>Promote Ad</Text>
+                        <View style={styles.promoBadge}>
+                          <Text style={styles.promoBadgeText}>24h</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.actionListSubtitle}>Get 10x more visibility</Text>
+                    </View>
+                    <Icon name="chevron-right" size={20} color="#CCC" />
                   </TouchableOpacity>
                 </View>
 
-                <View style={styles.modernDivider} />
-
-                {/* Delete Button */}
-                <TouchableOpacity
-                  style={styles.modernDeleteButton}
-                  onPress={() => {
-                    hidePopup();
-                    showDeleteConfirmModal();
-                  }}
-                >
-                  <Icon name="trash-o" size={18} color="#FF3B30" />
-                  <Text style={styles.modernDeleteButtonText}>Remove Listing</Text>
-                </TouchableOpacity>
-
-                {/* Cancel Button */}
-                <TouchableOpacity
-                  style={styles.modernCancelButton}
-                  onPress={hidePopup}
-                >
-                  <Text style={styles.modernCancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
+                {/* Danger Zone */}
+                <View style={styles.dangerZone}>
+                  <TouchableOpacity
+                    style={styles.deleteActionItem}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      hidePopup();
+                      showDeleteConfirmModal();
+                    }}
+                  >
+                    <Icon name="trash-o" size={20} color="#EF4444" />
+                    <Text style={styles.deleteActionText}>Delete Listing</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </TouchableWithoutFeedback>
           </View>
@@ -650,124 +679,179 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  // Modern Centered Modal Styles
+  // Modern Bottom Sheet Styles
   modernModalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: normalize(20),
+    justifyContent: 'flex-end',
   },
-  modernModalContainer: {
+  modernBottomSheet: {
     backgroundColor: '#FFFFFF',
-    borderRadius: normalize(20),
-    width: '100%',
-    maxWidth: normalize(400),
-    padding: normalize(20),
+    borderTopLeftRadius: normalize(24),
+    borderTopRightRadius: normalize(24),
+    paddingTop: normalizeVertical(12),
+    paddingBottom: Platform.select({
+      ios: normalizeVertical(20) + bottomSafeArea,
+      android: normalizeVertical(20),
+      default: normalizeVertical(20),
+    }),
+    maxHeight: height * 0.85,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 20,
+    shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 24,
   },
-  modernProductPreview: {
+  dragHandle: {
+    width: normalize(40),
+    height: normalizeVertical(4),
+    backgroundColor: '#E5E7EB',
+    borderRadius: normalize(2),
+    alignSelf: 'center',
+    marginBottom: normalizeVertical(20),
+  },
+  productPreviewCard: {
+    marginHorizontal: normalize(20),
+    marginBottom: normalizeVertical(20),
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: normalizeVertical(16),
+    backgroundColor: '#F9FAFB',
+    borderRadius: normalize(16),
+    padding: normalize(12),
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
-  modernPreviewImage: {
-    width: normalize(60),
-    height: normalize(60),
+  previewImageLarge: {
+    width: normalize(80),
+    height: normalize(80),
     borderRadius: normalize(12),
-    marginRight: normalize(12),
-    resizeMode: 'cover',
+    backgroundColor: '#F3F4F6',
   },
-  modernPreviewImagePlaceholder: {
-    width: normalize(60),
-    height: normalize(60),
+  previewImageLargePlaceholder: {
+    width: normalize(80),
+    height: normalize(80),
     borderRadius: normalize(12),
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: normalize(12),
   },
-  modernPreviewInfo: {
+  productInfoCard: {
     flex: 1,
+    marginLeft: normalize(12),
+    justifyContent: 'space-between',
   },
-  modernPreviewTitle: {
+  productTitleLarge: {
     fontSize: normalize(16),
     fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: normalizeVertical(4),
+    color: '#111827',
+    lineHeight: normalize(22),
   },
-  modernPreviewPrice: {
-    fontSize: normalize(18),
-    fontWeight: 'bold',
-    color: '#4CAF50',
-  },
-  modernDivider: {
-    height: 1,
-    backgroundColor: '#F0F0F0',
-    marginVertical: normalizeVertical(16),
-  },
-  modernActionContainer: {
+  priceTagContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: normalizeVertical(16),
+    alignItems: 'center',
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: normalize(12),
+    paddingVertical: normalizeVertical(6),
+    borderRadius: normalize(8),
+    alignSelf: 'flex-start',
   },
-  modernActionItem: {
-    width: '48%',
+  priceTagLabel: {
+    fontSize: normalize(11),
+    fontWeight: '600',
+    color: '#059669',
+    marginRight: normalize(4),
+  },
+  priceTagValue: {
+    fontSize: normalize(16),
+    fontWeight: '800',
+    color: '#047857',
+  },
+  actionsTitle: {
+    fontSize: normalize(14),
+    fontWeight: '700',
+    color: '#6B7280',
+    marginLeft: normalize(20),
+    marginBottom: normalizeVertical(12),
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  actionsList: {
+    marginHorizontal: normalize(20),
+    backgroundColor: '#FFFFFF',
+    borderRadius: normalize(16),
+    overflow: 'hidden',
+  },
+  actionListItem: {
+    flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: normalizeVertical(16),
-    paddingHorizontal: normalize(12),
-    backgroundColor: '#FAFAFA',
-    borderRadius: normalize(12),
-    marginBottom: normalizeVertical(12),
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
+    paddingHorizontal: normalize(16),
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
   },
-  modernActionIcon: {
-    width: normalize(48),
-    height: normalize(48),
-    borderRadius: normalize(24),
+  promoteBadge: {
+    borderBottomWidth: 0,
+  },
+  actionListIcon: {
+    width: normalize(44),
+    height: normalize(44),
+    borderRadius: normalize(22),
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: normalizeVertical(8),
   },
-  modernActionText: {
-    fontSize: normalize(14),
+  actionListContent: {
+    flex: 1,
+    marginLeft: normalize(12),
+  },
+  actionListTitle: {
+    fontSize: normalize(16),
     fontWeight: '600',
-    color: '#333',
-    textAlign: 'center',
+    color: '#111827',
+    marginBottom: normalizeVertical(2),
   },
-  modernDeleteButton: {
+  actionListSubtitle: {
+    fontSize: normalize(13),
+    color: '#6B7280',
+    lineHeight: normalize(18),
+  },
+  promoteHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  promoBadge: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: normalize(6),
+    paddingVertical: normalizeVertical(2),
+    borderRadius: normalize(4),
+    marginLeft: normalize(6),
+  },
+  promoBadgeText: {
+    fontSize: normalize(10),
+    fontWeight: '700',
+    color: '#D97706',
+  },
+  dangerZone: {
+    marginTop: normalizeVertical(16),
+    marginHorizontal: normalize(20),
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+    paddingTop: normalizeVertical(16),
+  },
+  deleteActionItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFF5F5',
     paddingVertical: normalizeVertical(14),
+    backgroundColor: '#FEF2F2',
     borderRadius: normalize(12),
-    marginBottom: normalizeVertical(12),
     borderWidth: 1,
-    borderColor: '#FFE5E5',
+    borderColor: '#FEE2E2',
   },
-  modernDeleteButtonText: {
+  deleteActionText: {
     fontSize: normalize(15),
     fontWeight: '600',
-    color: '#FF3B30',
+    color: '#EF4444',
     marginLeft: normalize(8),
-  },
-  modernCancelButton: {
-    backgroundColor: '#F5F5F5',
-    paddingVertical: normalizeVertical(14),
-    borderRadius: normalize(12),
-    alignItems: 'center',
-  },
-  modernCancelButtonText: {
-    fontSize: normalize(15),
-    fontWeight: '600',
-    color: '#666',
   },
   confirmContainer: {
     backgroundColor: '#fff',

@@ -83,8 +83,8 @@ const Header = () => {
                   />
                   <View style={styles.titleContainer}>
                      <View style={styles.appNameRow}>
-                        <Text style={styles.appNameFirstLetter}>M</Text>
-                        <Text style={styles.appNameRest}>USTAFA</Text>
+                        <Text style={styles.appNameFirstLetter}>n</Text>
+                        <Text style={styles.appNameRest}>earX</Text>
                      </View>
                      <Text style={styles.appSubName}>BHARAT</Text>
                   </View>

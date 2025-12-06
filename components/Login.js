@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal, FlatList, TouchableWithoutFeedback, StatusBar, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal, FlatList, TouchableWithoutFeedback, StatusBar, Platform, Animated } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
-import ModalScreen from './SupportElement/ModalScreen';
 import { getMessaging, getToken, onMessage } from '@react-native-firebase/messaging';
 import { getApp } from '@react-native-firebase/app';
 
@@ -91,6 +90,106 @@ const countryCodes = [
    { code: '+598', name: 'Uruguay', flag: '🇺🇾' },
    { code: '+599', name: 'Netherlands Antilles', flag: '🇧🇶' },
 ];
+
+const Toast = ({ visible, type, title, message, onClose }) => {
+   const slideAnim = useRef(new Animated.Value(-100)).current;
+   const opacityAnim = useRef(new Animated.Value(0)).current;
+
+   useEffect(() => {
+      if (visible) {
+         // Slide in
+         Animated.parallel([
+            Animated.spring(slideAnim, {
+               toValue: 0,
+               tension: 50,
+               friction: 8,
+               useNativeDriver: true,
+            }),
+            Animated.timing(opacityAnim, {
+               toValue: 1,
+               duration: 300,
+               useNativeDriver: true,
+            }),
+         ]).start();
+
+         // Auto dismiss after 4 seconds
+         const timer = setTimeout(() => {
+            hideToast();
+         }, 4000);
+
+         return () => clearTimeout(timer);
+      }
+   }, [visible]);
+
+   const hideToast = () => {
+      Animated.parallel([
+         Animated.timing(slideAnim, {
+            toValue: -100,
+            duration: 300,
+            useNativeDriver: true,
+         }),
+         Animated.timing(opacityAnim, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+         }),
+      ]).start(() => {
+         onClose();
+      });
+   };
+
+   if (!visible) return null;
+
+   const getToastStyles = () => {
+      switch (type) {
+         case 'success':
+            return {
+               backgroundColor: '#10b981',
+               iconName: 'check-circle',
+               iconColor: '#fff',
+            };
+         case 'error':
+            return {
+               backgroundColor: '#ef4444',
+               iconName: 'error',
+               iconColor: '#fff',
+            };
+         case 'info':
+         default:
+            return {
+               backgroundColor: '#3b82f6',
+               iconName: 'info',
+               iconColor: '#fff',
+            };
+      }
+   };
+
+   const toastStyles = getToastStyles();
+
+   return (
+      <Animated.View
+         style={[
+            styles.toastContainer,
+            {
+               backgroundColor: toastStyles.backgroundColor,
+               transform: [{ translateY: slideAnim }],
+               opacity: opacityAnim,
+            },
+         ]}
+      >
+         <View style={styles.toastContent}>
+            <MaterialIcons name={toastStyles.iconName} size={24} color={toastStyles.iconColor} />
+            <View style={styles.toastTextContainer}>
+               <Text style={styles.toastTitle}>{title}</Text>
+               <Text style={styles.toastMessage}>{message}</Text>
+            </View>
+            <TouchableOpacity onPress={hideToast} style={styles.toastCloseButton}>
+               <MaterialIcons name="close" size={20} color="#fff" />
+            </TouchableOpacity>
+         </View>
+      </Animated.View>
+   );
+};
 
 const Login = () => {
    const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -323,7 +422,7 @@ const Login = () => {
       <>
          <StatusBar backgroundColor="#f8f9fa" barStyle="dark-content" />
          <View style={styles.container}>
-            <ModalScreen
+            <Toast
                visible={showAlert}
                type={alertType}
                title={alertTitle}
@@ -657,6 +756,48 @@ const styles = StyleSheet.create({
    },
    countryList: {
       paddingBottom: 20,
+   },
+   // Toast Notification Styles
+   toastContainer: {
+      position: 'absolute',
+      top: Platform.OS === 'ios' ? 50 : 10,
+      left: 16,
+      right: 16,
+      borderRadius: 12,
+      shadowColor: '#000',
+      shadowOffset: {
+         width: 0,
+         height: 4,
+      },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 8,
+      zIndex: 9999,
+   },
+   toastContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 16,
+   },
+   toastTextContainer: {
+      flex: 1,
+      marginLeft: 12,
+      marginRight: 8,
+   },
+   toastTitle: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: '700',
+      marginBottom: 2,
+   },
+   toastMessage: {
+      color: '#fff',
+      fontSize: 14,
+      opacity: 0.95,
+      lineHeight: 18,
+   },
+   toastCloseButton: {
+      padding: 4,
    },
 });
 

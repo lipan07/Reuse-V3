@@ -72,6 +72,7 @@ const ListingTypeSelection = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>What would you like to do?</Text>
+        <Text style={styles.headerSubtitle}>Choose your listing type to get started</Text>
       </View>
 
       <ScrollView 
@@ -82,15 +83,21 @@ const ListingTypeSelection = () => {
           {listingTypes.map((type) => (
             <TouchableOpacity
               key={type.id}
-              style={[styles.optionCard, { borderColor: `${type.color}30` }]}
+              style={[styles.optionCard, { borderColor: `${type.color}20` }]}
               onPress={() => handleSelection(type.id)}
-              activeOpacity={0.7}
+              activeOpacity={0.8}
             >
-              <View style={[styles.iconContainer, { backgroundColor: `${type.color}15` }]}>
-                <Icon name={type.icon} size={normalize(28)} color={type.color} />
+              <View style={[styles.iconContainer, { 
+                backgroundColor: `${type.color}12`,
+                borderColor: `${type.color}25`
+              }]}>
+                <Icon name={type.icon} size={normalize(26)} color={type.color} />
               </View>
               <Text style={[styles.optionTitle, { color: type.color }]}>{type.title}</Text>
               <Text style={styles.optionDescription}>{type.description}</Text>
+              <View style={[styles.arrowContainer, { backgroundColor: `${type.color}10` }]}>
+                <Icon name="chevron-forward" size={normalize(16)} color={type.color} />
+              </View>
             </TouchableOpacity>
           ))}
         </View>
@@ -104,25 +111,41 @@ const ListingTypeSelection = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8F9FA',
   },
   header: {
     paddingHorizontal: normalize(20),
-    paddingTop: normalizeVertical(15),
-    paddingBottom: normalizeVertical(15),
+    paddingTop: normalizeVertical(12),
+    paddingBottom: normalizeVertical(12),
     backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomWidth: 0,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
   },
   headerTitle: {
-    fontSize: normalize(22),
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: normalize(20),
+    fontWeight: '700',
+    color: '#1A1A1A',
     textAlign: 'center',
+    marginBottom: normalizeVertical(4),
+    letterSpacing: -0.3,
+  },
+  headerSubtitle: {
+    fontSize: normalize(12),
+    color: '#6B7280',
+    textAlign: 'center',
+    fontWeight: '400',
   },
   scrollContent: {
     padding: normalize(12),
-    paddingTop: normalizeVertical(20),
+    paddingTop: normalizeVertical(16),
+    paddingBottom: normalizeVertical(16),
   },
   gridContainer: {
     flexDirection: 'row',
@@ -131,13 +154,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: normalize(4),
   },
   optionCard: {
-    width: (width - normalize(48)) / 2,
+    width: (width - normalize(40)) / 2,
     backgroundColor: '#FFFFFF',
     borderRadius: normalize(12),
-    padding: normalize(16),
-    marginBottom: normalizeVertical(12),
-    borderWidth: 1.5,
+    padding: normalize(14),
+    marginBottom: normalizeVertical(10),
+    borderWidth: 1,
     alignItems: 'center',
+    position: 'relative',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -145,26 +169,40 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.08,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 3,
   },
   iconContainer: {
-    width: normalize(56),
-    height: normalize(56),
-    borderRadius: normalize(28),
+    width: normalize(52),
+    height: normalize(52),
+    borderRadius: normalize(16),
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: normalizeVertical(10),
+    marginBottom: normalizeVertical(8),
+    borderWidth: 1,
   },
   optionTitle: {
-    fontSize: normalize(16),
-    fontWeight: '600',
+    fontSize: normalize(15),
+    fontWeight: '700',
     marginBottom: normalizeVertical(4),
     textAlign: 'center',
+    letterSpacing: -0.2,
   },
   optionDescription: {
-    fontSize: normalize(12),
-    color: '#666',
+    fontSize: normalize(11),
+    color: '#6B7280',
     textAlign: 'center',
+    fontWeight: '400',
+    lineHeight: normalize(14),
+  },
+  arrowContainer: {
+    position: 'absolute',
+    top: normalize(8),
+    right: normalize(8),
+    width: normalize(20),
+    height: normalize(20),
+    borderRadius: normalize(10),
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

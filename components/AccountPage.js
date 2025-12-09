@@ -87,7 +87,7 @@ const AccountPage = ({ navigation }) => {
                 </View>
                 <View style={styles.linksWrapper}>
                     {renderAccountLink('Following', 'users', () => navigation.navigate('FollowingPage'), '#FF9800')}
-                    {renderAccountLink('Buy Packages', 'shopping-cart', () => navigation.navigate('PackagePage'), '#FF9800')}
+                    {/* {renderAccountLink('Buy Packages', 'shopping-cart', () => navigation.navigate('PackagePage'), '#FF9800')} */}
                     {renderAccountLink('Settings', 'cog', () => navigation.navigate('Settings'), '#2196F3')}
                     {renderAccountLink('Help and Support', 'question-circle', () => navigation.navigate('HelpSupport'), '#F44336')}
                     {renderAccountLink('Feedback', 'comment-alt', () => navigation.navigate('Feedback'), '#4CAF50')}

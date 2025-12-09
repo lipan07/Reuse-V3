@@ -6,6 +6,7 @@ import FA6Icon from 'react-native-vector-icons/FontAwesome6';
 import FA5Icon from 'react-native-vector-icons/FontAwesome5';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const { width } = Dimensions.get('window');
 const scale = width / 375;
@@ -81,7 +82,8 @@ const ParentCategoryPanel = memo(({ categories, onSelectCategory, isLoading, isE
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerText}>All Categories</Text>
+        <Text style={styles.headerText}>Browse Categories</Text>
+        <Text style={styles.headerSubtext}>Select a category to continue</Text>
       </View>
 
       <ScrollView 
@@ -95,24 +97,42 @@ const ParentCategoryPanel = memo(({ categories, onSelectCategory, isLoading, isE
             const iconInfo = iconMapping[item.guard_name] || { name: 'tag', type: 'MC' };
             const IconComponent = getIconComponent(iconInfo);
             const categoryColor = item.color || '#6b7280';
+            const hasChildren = item.children && item.children.length > 0;
 
             return (
               <TouchableOpacity
                 key={item.id.toString()}
-                style={[styles.optionCard, { borderColor: `${categoryColor}30` }]}
+                style={[styles.optionCard, { borderColor: `${categoryColor}20` }]}
                 onPress={() => onSelectCategory(item)}
-                activeOpacity={0.7}
+                activeOpacity={0.8}
               >
-                <View style={[styles.iconContainer, { backgroundColor: `${categoryColor}15` }]}>
+                <View style={[styles.iconContainer, { 
+                  backgroundColor: `${categoryColor}12`,
+                  borderColor: `${categoryColor}25`
+                }]}>
                   <IconComponent
                     name={iconInfo.name}
-                    size={normalize(28)}
+                    size={normalize(26)}
                     color={categoryColor}
                   />
                 </View>
                 <Text style={[styles.optionTitle, { color: categoryColor }]} numberOfLines={2}>
                   {item.name}
                 </Text>
+                {hasChildren && (
+                  <View style={[styles.badgeContainer, { backgroundColor: `${categoryColor}10` }]}>
+                    <Text style={[styles.badgeText, { color: categoryColor }]}>
+                      {item.children.length} {item.children.length === 1 ? 'option' : 'options'}
+                    </Text>
+                  </View>
+                )}
+                <View style={[styles.arrowContainer, { backgroundColor: `${categoryColor}10` }]}>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={normalize(16)}
+                    color={categoryColor}
+                  />
+                </View>
               </TouchableOpacity>
             );
           })}
@@ -126,25 +146,41 @@ const ParentCategoryPanel = memo(({ categories, onSelectCategory, isLoading, isE
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8F9FA',
   },
   header: {
     paddingHorizontal: normalize(20),
-    paddingTop: normalizeVertical(15),
-    paddingBottom: normalizeVertical(15),
+    paddingTop: normalizeVertical(12),
+    paddingBottom: normalizeVertical(12),
     backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomWidth: 0,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
   },
   headerText: {
-    fontSize: normalize(22),
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: normalize(20),
+    fontWeight: '700',
+    color: '#1A1A1A',
     textAlign: 'center',
+    marginBottom: normalizeVertical(3),
+    letterSpacing: -0.3,
+  },
+  headerSubtext: {
+    fontSize: normalize(12),
+    color: '#6B7280',
+    textAlign: 'center',
+    fontWeight: '400',
   },
   scrollContent: {
     padding: normalize(12),
-    paddingTop: normalizeVertical(20),
+    paddingTop: normalizeVertical(16),
+    paddingBottom: normalizeVertical(16),
   },
   gridContainer: {
     flexDirection: 'row',
@@ -153,13 +189,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: normalize(4),
   },
   optionCard: {
-    width: (width - normalize(48)) / 2,
+    width: (width - normalize(40)) / 2,
     backgroundColor: '#FFFFFF',
     borderRadius: normalize(12),
-    padding: normalize(16),
-    marginBottom: normalizeVertical(12),
-    borderWidth: 1.5,
+    padding: normalize(14),
+    marginBottom: normalizeVertical(10),
+    borderWidth: 1,
     alignItems: 'center',
+    position: 'relative',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -167,20 +204,43 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.08,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 3,
   },
   iconContainer: {
-    width: normalize(56),
-    height: normalize(56),
-    borderRadius: normalize(28),
+    width: normalize(52),
+    height: normalize(52),
+    borderRadius: normalize(16),
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: normalizeVertical(10),
+    marginBottom: normalizeVertical(8),
+    borderWidth: 1,
   },
   optionTitle: {
     fontSize: normalize(14),
-    fontWeight: '600',
+    fontWeight: '700',
     textAlign: 'center',
+    letterSpacing: -0.2,
+    lineHeight: normalize(18),
+  },
+  badgeContainer: {
+    marginTop: normalizeVertical(6),
+    paddingHorizontal: normalize(8),
+    paddingVertical: normalize(3),
+    borderRadius: normalize(10),
+  },
+  badgeText: {
+    fontSize: normalize(10),
+    fontWeight: '600',
+  },
+  arrowContainer: {
+    position: 'absolute',
+    top: normalize(8),
+    right: normalize(8),
+    width: normalize(20),
+    height: normalize(20),
+    borderRadius: normalize(10),
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loaderContainer: {
     flex: 1,
@@ -195,8 +255,9 @@ const styles = StyleSheet.create({
     padding: normalize(32),
   },
   emptyText: {
-    color: '#888888',
+    color: '#6B7280',
     fontSize: normalize(16),
+    fontWeight: '500',
   },
 });
 

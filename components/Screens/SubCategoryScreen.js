@@ -141,6 +141,7 @@ const SubCategoryScreen = () => {
                 subcategories={subcategories}
                 onSelectSubcategory={handleSubcategorySelect}
                 parentCategoryName={parentCategory.name}
+                parentCategoryColor={parentCategory.color}
             />
             <BottomNavBar />
         </View>

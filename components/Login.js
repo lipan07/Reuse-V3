@@ -192,21 +192,32 @@ const Toast = ({ visible, type, title, message, onClose }) => {
 };
 
 const Login = () => {
+   const [activeTab, setActiveTab] = useState('login'); // 'login' or 'signup'
    const [isLoggedIn, setIsLoggedIn] = useState(false);
-   const [countryCode, setCountryCode] = useState('+91');
-   const [phoneNumber, setPhoneNumber] = useState('');
-   const [otp, setOtp] = useState('');
-   const [showOtpField, setShowOtpField] = useState(false);
+
+   // Login states
+   const [loginEmail, setLoginEmail] = useState('');
+   const [loginOtp, setLoginOtp] = useState('');
+   const [loginShowOtpField, setLoginShowOtpField] = useState(false);
+   const [loginTimer, setLoginTimer] = useState(0);
+   const [loginShowTimer, setLoginShowTimer] = useState(false);
+   const [loginResendCount, setLoginResendCount] = useState(0);
+
+   // Signup states
+   const [signupName, setSignupName] = useState('');
+   const [signupEmail, setSignupEmail] = useState('');
+   const [signupCountryCode, setSignupCountryCode] = useState('+91');
+   const [signupPhoneNumber, setSignupPhoneNumber] = useState('');
+
+   // Common states
    const [isModalVisible, setIsModalVisible] = useState(false);
    const [searchQuery, setSearchQuery] = useState('');
    const [showAlert, setShowAlert] = useState(false);
    const [alertType, setAlertType] = useState('info');
    const [alertTitle, setAlertTitle] = useState('');
    const [alertMessage, setAlertMessage] = useState('');
-   const [timer, setTimer] = useState(0);
-   const [showTimer, setShowTimer] = useState(false);
-   const [resendCount, setResendCount] = useState(0);
    const [isResending, setIsResending] = useState(false);
+   const [isSubmitting, setIsSubmitting] = useState(false);
    const navigation = useNavigation();
    const otpInputRef = useRef(null);
 
@@ -223,15 +234,15 @@ const Login = () => {
 
    useEffect(() => {
       let interval;
-      if (showTimer && timer > 0) {
+      if (loginShowTimer && loginTimer > 0) {
          interval = setInterval(() => {
-            setTimer(prevTimer => prevTimer - 1);
+            setLoginTimer(prevTimer => prevTimer - 1);
          }, 1000);
-      } else if (timer === 0 && showTimer) {
-         setShowTimer(false);
+      } else if (loginTimer === 0 && loginShowTimer) {
+         setLoginShowTimer(false);
       }
       return () => clearInterval(interval);
-   }, [showTimer, timer]);
+   }, [loginShowTimer, loginTimer]);
 
    // Progressive resend timer intervals (in minutes)
    const getResendInterval = (count) => {
@@ -240,28 +251,64 @@ const Login = () => {
       return intervals[index];
    };
 
-   const sendOtp = async () => {
+   // Reset login form when switching tabs
+   useEffect(() => {
+      if (activeTab === 'login') {
+         setLoginShowOtpField(false);
+         setLoginOtp('');
+         setLoginTimer(0);
+         setLoginShowTimer(false);
+         setLoginResendCount(0);
+      } else {
+         setSignupName('');
+         setSignupEmail('');
+         setSignupPhoneNumber('');
+         setSignupCountryCode('+91');
+      }
+   }, [activeTab]);
+
+   // LOGIN FLOW FUNCTIONS
+   const sendLoginOtp = async () => {
+      if (!loginEmail || loginEmail.trim().length === 0) {
+         setAlertType('error');
+         setAlertTitle('Email Required');
+         setAlertMessage('Please enter your email address');
+         setShowAlert(true);
+         return;
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(loginEmail.trim())) {
+         setAlertType('error');
+         setAlertTitle('Invalid Email');
+         setAlertMessage('Please enter a valid email address');
+         setShowAlert(true);
+         return;
+      }
+
+      setIsSubmitting(true);
       try {
+         const requestBody = {
+            email: loginEmail.trim(),
+         };
+
          const response = await fetch(`${BASE_URL}/send-otp`, {
             method: 'POST',
             headers: {
                Accept: 'application/json',
                'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-               phoneNumber: phoneNumber,
-               countryCode: countryCode,
-            }),
+            body: JSON.stringify(requestBody),
          });
 
          const data = await response.json();
 
          if (response.ok) {
-            setResendCount(data.resend_count || 0);
+            setLoginResendCount(data.resend_count || 0);
             const intervalMinutes = getResendInterval(data.resend_count || 0);
-            setTimer(intervalMinutes * 60); // Convert to seconds
-            setShowTimer(true);
-            setShowOtpField(true);
+            setLoginTimer(intervalMinutes * 60); // Convert to seconds
+            setLoginShowTimer(true);
+            setLoginShowOtpField(true);
 
             setAlertType('success');
             setAlertTitle('OTP Sent');
@@ -282,38 +329,47 @@ const Login = () => {
          setAlertTitle('Connection Error');
          setAlertMessage('Please check your internet connection');
          setShowAlert(true);
+      } finally {
+         setIsSubmitting(false);
       }
    };
 
-   const resendOtp = async () => {
-      if (isResending || timer > 0) return;
+   const resendLoginOtp = async () => {
+      if (isResending || loginTimer > 0) return;
 
       setIsResending(true);
       try {
+         const requestBody = {
+            email: loginEmail.trim(),
+         };
+
          const response = await fetch(`${BASE_URL}/resend-otp`, {
             method: 'POST',
             headers: {
                Accept: 'application/json',
                'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-               phoneNumber: phoneNumber,
-               countryCode: countryCode,
-            }),
+            body: JSON.stringify(requestBody),
          });
 
          const data = await response.json();
 
          if (response.ok) {
-            setResendCount(data.resend_count || 0);
+            setLoginResendCount(data.resend_count || 0);
             const intervalMinutes = getResendInterval(data.resend_count || 0);
-            setTimer(intervalMinutes * 60); // Convert to seconds
-            setShowTimer(true);
+            setLoginTimer(intervalMinutes * 60);
+            setLoginShowTimer(true);
+            setLoginShowOtpField(true);
+            setLoginOtp(''); // Clear previous OTP
 
             setAlertType('success');
             setAlertTitle('OTP Resent');
             setAlertMessage(`OTP resent successfully! Next resend available in ${intervalMinutes} minutes.`);
             setShowAlert(true);
+
+            setTimeout(() => {
+               otpInputRef.current?.focus();
+            }, 100);
          } else {
             setAlertType('error');
             setAlertTitle('Failed to Resend OTP');
@@ -330,22 +386,26 @@ const Login = () => {
       }
    };
 
-   const handlePhoneNumberSubmit = async () => {
-      if (!phoneNumber || phoneNumber.length < 10) {
+   const handleLoginOtpSubmit = async () => {
+      if (!loginOtp || loginOtp.trim().length < 4) {
          setAlertType('error');
-         setAlertTitle('Invalid Phone');
-         setAlertMessage('Please enter a valid 10-digit phone number');
+         setAlertTitle('Invalid OTP');
+         setAlertMessage('Please enter a valid OTP');
          setShowAlert(true);
          return;
       }
 
-      await sendOtp();
-   };
-
-   const handleOtpSubmit = async () => {
+      setIsSubmitting(true);
       try {
          const messaging = getMessaging(getApp());
          const fcmToken = await getToken(messaging);
+
+         const requestBody = {
+            email: loginEmail.trim(),
+            otp: loginOtp.trim(),
+            fcmToken: `${fcmToken}`,
+            platform: `${Platform.OS}`
+         };
 
          const response = await fetch(`${BASE_URL}/login`, {
             method: 'POST',
@@ -353,12 +413,7 @@ const Login = () => {
                Accept: 'application/json',
                'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-               phoneNumber: `${phoneNumber}`,
-               otp: `${otp}`,
-               fcmToken: `${fcmToken}`,
-               platform: `${Platform.OS}`
-            }),
+            body: JSON.stringify(requestBody),
          });
 
          const data = await response.json();
@@ -368,7 +423,7 @@ const Login = () => {
                ['authToken', data.token],
                ['userId', data.user.id.toString()],
                ['name', data.user.name],
-               ['phoneNo', data.user.phone_no],
+               ['phoneNo', data.user.phone_no || ''],
                ['userName', data.user.name || ''],
                ['userImage', data.user.images?.url || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png']
             ]);
@@ -377,7 +432,7 @@ const Login = () => {
          } else {
             setAlertType('error');
             setAlertTitle('Login Failed');
-            setAlertMessage(data.message || 'Invalid credentials');
+            setAlertMessage(data.message || 'Invalid OTP');
             setShowAlert(true);
          }
       } catch (error) {
@@ -385,20 +440,114 @@ const Login = () => {
          setAlertTitle('Connection Error');
          setAlertMessage('Please check your internet connection');
          setShowAlert(true);
+      } finally {
+         setIsSubmitting(false);
+      }
+   };
+
+   // SIGNUP FLOW FUNCTIONS
+   const handleSignup = async () => {
+      // Validate name
+      if (!signupName || signupName.trim().length === 0) {
+         setAlertType('error');
+         setAlertTitle('Name Required');
+         setAlertMessage('Please enter your name');
+         setShowAlert(true);
+         return;
+      }
+
+      // Validate email
+      if (!signupEmail || signupEmail.trim().length === 0) {
+         setAlertType('error');
+         setAlertTitle('Email Required');
+         setAlertMessage('Please enter your email address');
+         setShowAlert(true);
+         return;
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(signupEmail.trim())) {
+         setAlertType('error');
+         setAlertTitle('Invalid Email');
+         setAlertMessage('Please enter a valid email address');
+         setShowAlert(true);
+         return;
+      }
+
+      // Validate phone if provided
+      if (signupPhoneNumber.trim().length > 0 && signupPhoneNumber.trim().length < 10) {
+         setAlertType('error');
+         setAlertTitle('Invalid Phone');
+         setAlertMessage('Please enter a valid phone number (at least 10 digits)');
+         setShowAlert(true);
+         return;
+      }
+
+      setIsSubmitting(true);
+      try {
+         const requestBody = {
+            name: signupName.trim(),
+            email: signupEmail.trim(),
+         };
+
+         // Add optional phone if provided
+         if (signupPhoneNumber.trim()) {
+            requestBody.phoneNumber = signupPhoneNumber.trim();
+            requestBody.countryCode = signupCountryCode;
+         }
+
+         const response = await fetch(`${BASE_URL}/signup`, {
+            method: 'POST',
+            headers: {
+               Accept: 'application/json',
+               'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody),
+         });
+
+         const data = await response.json();
+
+         if (response.ok) {
+            setAlertType('success');
+            setAlertTitle('Account Created');
+            setAlertMessage('Your account has been created successfully! Please login with your email.');
+            setShowAlert(true);
+
+            // Switch to login tab and pre-fill email
+            setTimeout(() => {
+               setActiveTab('login');
+               setLoginEmail(signupEmail.trim());
+               setSignupName('');
+               setSignupEmail('');
+               setSignupPhoneNumber('');
+            }, 1500);
+         } else {
+            setAlertType('error');
+            setAlertTitle('Signup Failed');
+            setAlertMessage(data.message || data.errors?.email?.[0] || 'Failed to create account. Please try again.');
+            setShowAlert(true);
+         }
+      } catch (error) {
+         setAlertType('error');
+         setAlertTitle('Connection Error');
+         setAlertMessage('Please check your internet connection');
+         setShowAlert(true);
+      } finally {
+         setIsSubmitting(false);
       }
    };
 
    const handleLogout = async () => {
       await AsyncStorage.clear();
       setIsLoggedIn(false);
-      setShowOtpField(false);
-      setShowTimer(false);
-      setCountryCode('+91');
-      setPhoneNumber('');
-      setOtp('');
-      setResendCount(0);
-      setTimer(0);
+      setLoginShowOtpField(false);
+      setLoginEmail('');
+      setLoginOtp('');
+      setLoginResendCount(0);
+      setLoginTimer(0);
+      setLoginShowTimer(false);
       setIsResending(false);
+      setIsSubmitting(false);
    };
 
    const filteredCountries = countryCodes.filter(country =>
@@ -410,7 +559,9 @@ const Login = () => {
       <TouchableOpacity
          style={styles.countryCodeItem}
          onPress={() => {
-            setCountryCode(item.code);
+            if (activeTab === 'signup') {
+               setSignupCountryCode(item.code);
+            }
             setIsModalVisible(false);
          }}
       >
@@ -430,106 +581,187 @@ const Login = () => {
                onClose={() => setShowAlert(false)}
             />
 
-            <Text style={styles.loginTitle}>Welcome to <Text style={styles.brandName}>Reuse</Text>!</Text>
-            <Text style={styles.loginSubtitle}>Login to your account</Text>
+            <Text style={styles.loginTitle}>Welcome to <Text style={styles.brandName}>nearX</Text>!</Text>
+            <Text style={styles.loginSubtitle}>
+               {activeTab === 'login' ? 'Login to your account' : 'Create your account'}
+            </Text>
 
-            <View style={styles.phoneInputContainer}>
-               <TouchableOpacity
-                  style={styles.countryCodeInput}
-                  onPress={() => setIsModalVisible(true)}
-                  activeOpacity={0.8}
-               >
-                  <Text style={styles.countryCodeText}>{countryCode}</Text>
-                  <MaterialIcons name="arrow-drop-down" size={24} color="#666" />
-               </TouchableOpacity>
-
-               <TextInput
-                  style={styles.phoneNumberInput}
-                  value={phoneNumber}
-                  onChangeText={setPhoneNumber}
-                  keyboardType="phone-pad"
-                  placeholder="Phone number"
-                  placeholderTextColor="#bbb"
-               />
-            </View>
-
-            {showOtpField && (
+            {/* LOGIN FLOW */}
+            {activeTab === 'login' && (
                <>
+                  {/* Email Field */}
                   <TextInput
-                     ref={otpInputRef}
                      style={styles.input}
-                     placeholder="Enter OTP"
+                     value={loginEmail}
+                     onChangeText={setLoginEmail}
+                     keyboardType="email-address"
+                     placeholder="Email *"
                      placeholderTextColor="#bbb"
-                     value={otp}
-                     onChangeText={setOtp}
-                     keyboardType="number-pad"
-                     autoFocus
+                     autoCapitalize="none"
+                     editable={!loginShowOtpField}
                   />
-                  {showTimer && (
-                     <Text style={styles.timerText}>
-                        Resend available in: {Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, '0')}
-                     </Text>
+
+                  {/* OTP Field - Show after Send OTP */}
+                  {loginShowOtpField && (
+                     <>
+                        <TextInput
+                           ref={otpInputRef}
+                           style={styles.input}
+                           placeholder="Enter OTP"
+                           placeholderTextColor="#bbb"
+                           value={loginOtp}
+                           onChangeText={setLoginOtp}
+                           keyboardType="number-pad"
+                           autoFocus
+                        />
+                        {loginShowTimer && (
+                           <Text style={styles.timerText}>
+                              Resend available in: {Math.floor(loginTimer / 60)}:{(loginTimer % 60).toString().padStart(2, '0')}
+                           </Text>
+                        )}
+                        {loginResendCount > 0 && (
+                           <Text style={styles.resendCountText}>
+                              Resend attempts: {loginResendCount}/5
+                           </Text>
+                        )}
+                     </>
                   )}
-                  {resendCount > 0 && (
-                     <Text style={styles.resendCountText}>
-                        Resend attempts: {resendCount}/5
-                     </Text>
+
+                  {/* Send OTP Button - Show when OTP field is not visible */}
+                  {!loginShowOtpField && (
+                     <TouchableOpacity
+                        style={[
+                           styles.loginButton,
+                           isSubmitting && styles.disabledButton
+                        ]}
+                        onPress={sendLoginOtp}
+                        activeOpacity={0.85}
+                        disabled={isSubmitting}
+                     >
+                        <Text style={styles.buttonText}>
+                           {isSubmitting ? 'Sending...' : 'Send OTP'}
+                        </Text>
+                     </TouchableOpacity>
+                  )}
+
+                  {/* Login Button - Show when OTP field is visible AND timer is active */}
+                  {loginShowOtpField && loginShowTimer && (
+                     <TouchableOpacity
+                        style={[
+                           styles.loginButton,
+                           isSubmitting && styles.disabledButton
+                        ]}
+                        onPress={handleLoginOtpSubmit}
+                        activeOpacity={0.85}
+                        disabled={isSubmitting}
+                     >
+                        <Text style={styles.buttonText}>
+                           {isSubmitting ? 'Verifying...' : 'Login'}
+                        </Text>
+                     </TouchableOpacity>
+                  )}
+
+                  {/* Resend OTP Button - Show when OTP field is visible AND timer has expired */}
+                  {loginShowOtpField && !loginShowTimer && (
+                     <TouchableOpacity
+                        style={[
+                           styles.resendButton,
+                           isResending && styles.disabledButton
+                        ]}
+                        onPress={resendLoginOtp}
+                        activeOpacity={0.85}
+                        disabled={isResending}
+                     >
+                        <Text style={[
+                           styles.resendButtonText,
+                           isResending && styles.disabledText
+                        ]}>
+                           {isResending ? 'Resending...' : 'Resend OTP'}
+                        </Text>
+                     </TouchableOpacity>
                   )}
                </>
             )}
 
-            {/* Send OTP Button - Only show when OTP field is not visible */}
-            {!showOtpField && (
-               <TouchableOpacity
-                  style={[
-                     styles.loginButton,
-                     isResending && styles.disabledButton
-                  ]}
-                  onPress={handlePhoneNumberSubmit}
-                  activeOpacity={0.85}
-                  disabled={isResending}
-               >
-                  <Text style={styles.buttonText}>
-                     {isResending ? 'Sending...' : 'Send OTP'}
-                  </Text>
-               </TouchableOpacity>
+            {/* SIGNUP FLOW */}
+            {activeTab === 'signup' && (
+               <>
+                  {/* Name Field */}
+                  <TextInput
+                     style={styles.input}
+                     value={signupName}
+                     onChangeText={setSignupName}
+                     placeholder="Name *"
+                     placeholderTextColor="#bbb"
+                     autoCapitalize="words"
+                  />
+
+                  {/* Email Field */}
+                  <TextInput
+                     style={styles.input}
+                     value={signupEmail}
+                     onChangeText={setSignupEmail}
+                     keyboardType="email-address"
+                     placeholder="Email *"
+                     placeholderTextColor="#bbb"
+                     autoCapitalize="none"
+                  />
+
+                  {/* Phone Number Field - Optional */}
+                  <View style={styles.phoneInputContainer}>
+                     <TouchableOpacity
+                        style={styles.countryCodeInput}
+                        onPress={() => setIsModalVisible(true)}
+                        activeOpacity={0.8}
+                     >
+                        <Text style={styles.countryCodeText}>{signupCountryCode}</Text>
+                        <MaterialIcons name="arrow-drop-down" size={24} color="#666" />
+                     </TouchableOpacity>
+
+                     <TextInput
+                        style={styles.phoneNumberInput}
+                        value={signupPhoneNumber}
+                        onChangeText={setSignupPhoneNumber}
+                        keyboardType="phone-pad"
+                        placeholder="Phone Number (Optional)"
+                        placeholderTextColor="#bbb"
+                     />
+                  </View>
+
+                  {/* Signup Button */}
+                  <TouchableOpacity
+                     style={[
+                        styles.loginButton,
+                        isSubmitting && styles.disabledButton
+                     ]}
+                     onPress={handleSignup}
+                     activeOpacity={0.85}
+                     disabled={isSubmitting}
+                  >
+                     <Text style={styles.buttonText}>
+                        {isSubmitting ? 'Creating Account...' : 'Sign Up'}
+                     </Text>
+                  </TouchableOpacity>
+               </>
             )}
 
-            {/* Verify OTP Button - Show when OTP field is visible */}
-            {showOtpField && (
-               <TouchableOpacity
-                  style={[
-                     styles.loginButton,
-                     isResending && styles.disabledButton
-                  ]}
-                  onPress={handleOtpSubmit}
-                  activeOpacity={0.85}
-                  disabled={isResending}
-               >
-                  <Text style={styles.buttonText}>
-                     Verify OTP
+            {/* Link to switch between Login and Signup */}
+            {!isLoggedIn && (
+               <View style={styles.switchContainer}>
+                  <Text style={styles.switchText}>
+                     {activeTab === 'login' ? "Don't have an account? " : 'Already have an account? '}
                   </Text>
-               </TouchableOpacity>
-            )}
-
-            {/* Resend OTP Button - Only show when OTP field is visible AND timer has expired */}
-            {showOtpField && !showTimer && (
-               <TouchableOpacity
-                  style={[
-                     styles.resendButton,
-                     isResending && styles.disabledButton
-                  ]}
-                  onPress={resendOtp}
-                  activeOpacity={0.85}
-                  disabled={isResending}
-               >
-                  <Text style={[
-                     styles.resendButtonText,
-                     isResending && styles.disabledText
-                  ]}>
-                     {isResending ? 'Resending...' : 'Resend OTP'}
-                  </Text>
-               </TouchableOpacity>
+                  <TouchableOpacity
+                     onPress={() => {
+                        setActiveTab(activeTab === 'login' ? 'signup' : 'login');
+                     }}
+                     activeOpacity={0.7}
+                  >
+                     <Text style={styles.switchLink}>
+                        {activeTab === 'login' ? 'Sign Up' : 'Login'}
+                     </Text>
+                  </TouchableOpacity>
+               </View>
             )}
 
             {isLoggedIn && (
@@ -606,11 +838,28 @@ const styles = StyleSheet.create({
       marginBottom: 28,
       textAlign: 'center',
    },
+   switchContainer: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginTop: 20,
+      marginBottom: 10,
+   },
+   switchText: {
+      fontSize: 14,
+      color: '#636e72',
+   },
+   switchLink: {
+      fontSize: 14,
+      color: '#0984e3',
+      fontWeight: '600',
+      textDecorationLine: 'underline',
+   },
    freeServiceText: {
       textAlign: 'center',
       fontSize: 14,
       color: '#b2bec3',
-      marginBottom: 28,
+      marginTop: 20,
    },
    phoneInputContainer: {
       flexDirection: 'row',
@@ -665,7 +914,7 @@ const styles = StyleSheet.create({
    },
    resendButton: {
       backgroundColor: 'transparent',
-      height: 48,
+      height: 52,
       borderRadius: 12,
       justifyContent: 'center',
       alignItems: 'center',

@@ -194,6 +194,7 @@ const Toast = ({ visible, type, title, message, onClose }) => {
 const Login = () => {
    const [activeTab, setActiveTab] = useState('login'); // 'login' or 'signup'
    const [isLoggedIn, setIsLoggedIn] = useState(false);
+   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
    // Login states
    const [loginEmail, setLoginEmail] = useState('');
@@ -223,10 +224,16 @@ const Login = () => {
 
    useEffect(() => {
       const checkLoginStatus = async () => {
-         const token = await AsyncStorage.getItem('authToken');
-         if (token) {
-            setIsLoggedIn(true);
-            navigation.navigate('Home');
+         try {
+            const token = await AsyncStorage.getItem('authToken');
+            if (token) {
+               setIsLoggedIn(true);
+               navigation.navigate('Home');
+            }
+         } catch (error) {
+            console.error('Error checking login status:', error);
+         } finally {
+            setIsCheckingAuth(false);
          }
       };
       checkLoginStatus();
@@ -569,6 +576,11 @@ const Login = () => {
       </TouchableOpacity>
    );
 
+   // Don't render until auth check is complete
+   if (isCheckingAuth) {
+      return null;
+   }
+
    return (
       <>
          <StatusBar backgroundColor="#f8f9fa" barStyle="dark-content" />
@@ -601,8 +613,8 @@ const Login = () => {
                      editable={!loginShowOtpField}
                   />
 
-                  {/* OTP Field - Show after Send OTP */}
-                  {loginShowOtpField && (
+                  {/* OTP Field - Show only when timer is active */}
+                  {loginShowOtpField && loginShowTimer && (
                      <>
                         <TextInput
                            ref={otpInputRef}
@@ -614,11 +626,9 @@ const Login = () => {
                            keyboardType="number-pad"
                            autoFocus
                         />
-                        {loginShowTimer && (
-                           <Text style={styles.timerText}>
-                              Resend available in: {Math.floor(loginTimer / 60)}:{(loginTimer % 60).toString().padStart(2, '0')}
-                           </Text>
-                        )}
+                        <Text style={styles.timerText}>
+                           Resend available in: {Math.floor(loginTimer / 60)}:{(loginTimer % 60).toString().padStart(2, '0')}
+                        </Text>
                         {loginResendCount > 0 && (
                            <Text style={styles.resendCountText}>
                               Resend attempts: {loginResendCount}/5

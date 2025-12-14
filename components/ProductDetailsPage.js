@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
     View,
     ScrollView,
@@ -19,6 +19,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MapView, { Marker } from 'react-native-maps';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Video from 'react-native-video';
 // import ImageView from 'react-native-image-viewing'; // Replaced with custom EnhancedImageViewer
 import Others from './ProductDetails/Others';
 import ReportPostModal from './ReportPostModal';
@@ -37,6 +38,8 @@ const ProductDetails = () => {
     const [product, setProduct] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [playingVideoIndex, setPlayingVideoIndex] = useState(null);
+    const [videoRefs, setVideoRefs] = useState({});
     const [showReportModal, setShowReportModal] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
     const [modalType, setModalType] = useState('info');
@@ -56,6 +59,25 @@ const ProductDetails = () => {
     const flatListRef = useRef(null);
     const scrollViewRef = useRef(null);
     const autoScrollInterval = useRef(null);
+    const videoRefsMap = useRef({}); // Use ref to track video refs without causing re-renders
+
+    // Combine images and videos into a single media array
+    // This must be called before any useEffect that uses mediaItems
+    const mediaItems = useMemo(() => {
+        if (!product) return [];
+        const items = [];
+        if (product.images && Array.isArray(product.images)) {
+            product.images.forEach((url) => {
+                items.push({ type: 'image', url });
+            });
+        }
+        if (product.videos && Array.isArray(product.videos)) {
+            product.videos.forEach((url) => {
+                items.push({ type: 'video', url });
+            });
+        }
+        return items;
+    }, [product?.images, product?.videos]);
 
     // Set product from productDetails (if coming from navigation)
     useEffect(() => {
@@ -213,19 +235,26 @@ const ProductDetails = () => {
     }, [navigation]);
 
     useEffect(() => {
-        if (!product?.images || product.images.length <= 1) return;
+        if (!mediaItems || mediaItems.length <= 1) return;
 
         const scrollImages = () => {
             setCurrentImageIndex(prev => {
-                const nextIndex = (prev + 1) % product.images.length;
+                const nextIndex = (prev + 1) % mediaItems.length;
                 flatListRef.current?.scrollToIndex({
                     index: nextIndex,
                     animated: true
                 });
+                // Update playing video index when auto-scrolling
+                setPlayingVideoIndex(nextIndex);
                 return nextIndex;
             });
         };
 
+        // Clear any existing interval first
+        if (autoScrollInterval.current) {
+            clearInterval(autoScrollInterval.current);
+        }
+        
         autoScrollInterval.current = setInterval(scrollImages, 3000);
 
         return () => {
@@ -233,22 +262,33 @@ const ProductDetails = () => {
                 clearInterval(autoScrollInterval.current);
             }
         };
-    }, [product?.images]);
+    }, [mediaItems]);
 
     const handleScroll = (event) => {
+        if (!mediaItems || mediaItems.length === 0) return;
+
         const contentOffset = event.nativeEvent.contentOffset.x;
         const index = Math.round(contentOffset / width);
-        setCurrentImageIndex(index);
+        
+        // Only update if index actually changed to prevent unnecessary re-renders
+        if (currentImageIndex !== index) {
+            setCurrentImageIndex(index);
+            // Pause all videos except the current one
+            setPlayingVideoIndex(index);
+        }
 
         // Reset auto-scroll timer after manual interaction
         clearInterval(autoScrollInterval.current);
-        autoScrollInterval.current = setInterval(() => {
-            setCurrentImageIndex(prev => {
-                const nextIndex = (prev + 1) % product.images.length;
-                flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
-                return nextIndex;
-            });
-        }, 3000);
+        if (mediaItems.length > 1) {
+            autoScrollInterval.current = setInterval(() => {
+                setCurrentImageIndex(prev => {
+                    const nextIndex = (prev + 1) % mediaItems.length;
+                    flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
+                    setPlayingVideoIndex(nextIndex);
+                    return nextIndex;
+                });
+            }, 3000);
+        }
     };
 
     const handleTouchStart = () => setIsScrolling(true);
@@ -513,10 +553,18 @@ const ProductDetails = () => {
     };
 
     const openImageViewer = (index) => {
-        navigation.navigate('ImageViewer', {
-            images: product.images,
-            selectedIndex: index
-        });
+        // Only open image viewer for images, not videos
+        if (!mediaItems || mediaItems.length === 0) return;
+
+        const imageUrls = mediaItems.filter(item => item.type === 'image').map(item => item.url);
+        const imageIndex = mediaItems.slice(0, index + 1).filter(item => item.type === 'image').length - 1;
+
+        if (imageIndex >= 0 && imageUrls.length > 0) {
+            navigation.navigate('ImageViewer', {
+                images: imageUrls,
+                selectedIndex: imageIndex
+            });
+        }
     };
 
     const renderDetails = () => {
@@ -602,40 +650,66 @@ const ProductDetails = () => {
                 ref={scrollViewRef}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Image Gallery */}
+                {/* Media Gallery (Images + Videos) */}
                 <View style={styles.galleryContainer}>
-                    {product.images?.length > 0 ? (
+                    {mediaItems && mediaItems.length > 0 ? (
                         <FlatList
                             ref={flatListRef}
-                            data={product.images}
+                            data={mediaItems}
                             horizontal
                             pagingEnabled
                             showsHorizontalScrollIndicator={false}
                             onScroll={handleScroll}
                             scrollEventThrottle={16}
                             renderItem={({ item, index }) => (
-                                <TouchableOpacity
-                                    activeOpacity={0.9}
-                                    onPress={() => openImageViewer(index)}
-                                >
-                                    <Image
-                                        source={{ uri: item }}
-                                        style={styles.galleryImage}
-                                    />
-                                </TouchableOpacity>
+                                <View style={{ width: width, height: '100%' }}>
+                                    {item.type === 'image' ? (
+                                        <TouchableOpacity
+                                            activeOpacity={0.9}
+                                            onPress={() => openImageViewer(index)}
+                                            style={{ width: '100%', height: '100%' }}
+                                        >
+                                            <Image
+                                                source={{ uri: item.url }}
+                                                style={styles.galleryImage}
+                                            />
+                                        </TouchableOpacity>
+                                    ) : (
+                                        <View style={styles.videoContainer}>
+                                            <Video
+                                                ref={(ref) => {
+                                                    // Store ref in useRef to avoid re-renders
+                                                    if (ref) {
+                                                        videoRefsMap.current[index] = ref;
+                                                    } else {
+                                                        delete videoRefsMap.current[index];
+                                                    }
+                                                }}
+                                                source={{ uri: item.url }}
+                                                style={styles.videoPlayer}
+                                                controls={true}
+                                                resizeMode="contain"
+                                                paused={playingVideoIndex !== index}
+                                                ignoreSilentSwitch="ignore"
+                                                playInBackground={false}
+                                                playWhenInactive={false}
+                                            />
+                                        </View>
+                                    )}
+                                </View>
                             )}
-                            keyExtractor={(item, index) => index.toString()}
+                            keyExtractor={(item, index) => `${item.type}-${index}`}
                         />
                     ) : (
                         <View style={styles.noImageContainer}>
                             <Icon name="image-off" size={normalize(24)} color="#ccc" />
-                            <Text style={styles.noImageText}>No images available</Text>
+                                <Text style={styles.noImageText}>No media available</Text>
                         </View>
                     )}
 
-                    {product.images?.length > 1 && (
+                    {mediaItems && mediaItems.length > 1 && (
                         <View style={styles.imageIndicator}>
-                            {product.images.map((_, index) => (
+                            {mediaItems.map((_, index) => (
                                 <View
                                     key={index}
                                     style={[

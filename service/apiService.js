@@ -6,7 +6,7 @@ export const submitForm = async (formData, subcategory) => {
 
     // Append standard fields
     Object.keys(formData).forEach((key) => {
-        if (!['images', 'deletedImages'].includes(key)) {
+        if (!['images', 'deletedImages', 'videoId'].includes(key)) {
             formDataToSend.append(key, formData[key]);
         }
     });

@@ -22,6 +22,17 @@ const styles = StyleSheet.create({
         height: '100%',
         resizeMode: 'cover',
     },
+    videoContainer: {
+        width: width,
+        height: '100%',
+        backgroundColor: '#000',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    videoPlayer: {
+        width: '100%',
+        height: '100%',
+    },
     noImageContainer: {
         height: '100%',
         justifyContent: 'center',

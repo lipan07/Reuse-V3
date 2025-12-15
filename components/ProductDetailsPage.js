@@ -17,6 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import MapView, { Marker } from 'react-native-maps';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Video from 'react-native-video';
@@ -234,34 +235,13 @@ const ProductDetails = () => {
         return () => backHandler.remove();
     }, [navigation]);
 
+    // Auto-scroll disabled - user controls scrolling manually
     useEffect(() => {
-        if (!mediaItems || mediaItems.length <= 1) return;
-
-        const scrollImages = () => {
-            setCurrentImageIndex(prev => {
-                const nextIndex = (prev + 1) % mediaItems.length;
-                flatListRef.current?.scrollToIndex({
-                    index: nextIndex,
-                    animated: true
-                });
-                // Update playing video index when auto-scrolling
-                setPlayingVideoIndex(nextIndex);
-                return nextIndex;
-            });
-        };
-
-        // Clear any existing interval first
+        // Clear any existing interval
         if (autoScrollInterval.current) {
             clearInterval(autoScrollInterval.current);
+            autoScrollInterval.current = null;
         }
-        
-        autoScrollInterval.current = setInterval(scrollImages, 3000);
-
-        return () => {
-            if (autoScrollInterval.current) {
-                clearInterval(autoScrollInterval.current);
-            }
-        };
     }, [mediaItems]);
 
     const handleScroll = (event) => {
@@ -277,18 +257,7 @@ const ProductDetails = () => {
             setPlayingVideoIndex(index);
         }
 
-        // Reset auto-scroll timer after manual interaction
-        clearInterval(autoScrollInterval.current);
-        if (mediaItems.length > 1) {
-            autoScrollInterval.current = setInterval(() => {
-                setCurrentImageIndex(prev => {
-                    const nextIndex = (prev + 1) % mediaItems.length;
-                    flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
-                    setPlayingVideoIndex(nextIndex);
-                    return nextIndex;
-                });
-            }, 3000);
-        }
+        // Auto-scroll is disabled - no need to reset timer
     };
 
     const handleTouchStart = () => setIsScrolling(true);
@@ -689,7 +658,7 @@ const ProductDetails = () => {
                                                 style={styles.videoPlayer}
                                                 controls={true}
                                                 resizeMode="contain"
-                                                paused={playingVideoIndex !== index}
+                                                    paused={true}
                                                 ignoreSilentSwitch="ignore"
                                                 playInBackground={false}
                                                 playWhenInactive={false}
@@ -709,15 +678,29 @@ const ProductDetails = () => {
 
                     {mediaItems && mediaItems.length > 1 && (
                         <View style={styles.imageIndicator}>
-                            {mediaItems.map((_, index) => (
-                                <View
-                                    key={index}
-                                    style={[
-                                        styles.indicatorDot,
-                                        currentImageIndex === index && styles.activeDot
-                                    ]}
-                                />
-                            ))}
+                            {mediaItems.map((item, index) => {
+                                const isActive = currentImageIndex === index;
+                                const isVideo = item.type === 'video';
+                                return (
+                                    <View
+                                        key={index}
+                                        style={[
+                                            styles.indicatorDot,
+                                            isVideo && styles.videoIndicatorDot,
+                                            isActive && styles.activeDot,
+                                            isVideo && isActive && styles.activeVideoDot
+                                        ]}
+                                    >
+                                        {isVideo ? (
+                                            <Icon
+                                                name="play"
+                                                size={isActive ? normalize(10) : normalize(8)}
+                                                color={isActive ? "#000000" : "#000000"}
+                                            />
+                                        ) : null}
+                                    </View>
+                                );
+                            })}
                         </View>
                     )}
 

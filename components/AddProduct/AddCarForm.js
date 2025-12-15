@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingVi
 import Icon from 'react-native-vector-icons/Ionicons';
 import { submitForm } from '../../service/apiService';
 import ImagePickerComponent from './SubComponent/ImagePickerComponent';
+import VideoPickerComponent from './SubComponent/VideoPickerComponent';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AddressAutocomplete from '../AddressAutocomplete';
 import styles from '../../assets/css/AddProductForm.styles.js';
@@ -105,10 +106,13 @@ const AddCarForm = ({ route, navigation }) => {
     longitude: null,
     images: [],
     deletedImages: [],
+    videoUrl: null,
+    videoId: null,
     show_phone: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!product);
+  const [isVideoUploading, setIsVideoUploading] = useState(false);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalType, setModalType] = useState('info');
@@ -163,6 +167,8 @@ const AddCarForm = ({ route, navigation }) => {
               isNew: false,
             })) || [],
             deletedImages: [],
+            videoUrl: productData.videos?.[0] || productData.video_url || productData.videoUrl || null,
+            videoId: productData.video_id || productData.videoId || null,
             show_phone: productData.show_phone === true || productData.show_phone === 1 || productData.show_phone === '1',
           });
         }
@@ -480,14 +486,34 @@ const AddCarForm = ({ route, navigation }) => {
                 setFormData={setFormData}
               />
             </View>
+
+            {/* Video Picker */}
+            <View style={modernStyles.fieldContainer}>
+              <View style={modernStyles.labelContainer}>
+                <Icon name="videocam-outline" size={normalize(18)} color="#666" style={modernStyles.labelIcon} />
+                <Text style={modernStyles.label}>Video</Text>
+              </View>
+              <VideoPickerComponent
+                formData={formData}
+                setFormData={setFormData}
+                propertyTitle={formData.adTitle}
+                onUploadStateChange={setIsVideoUploading}
+                onShowAlert={(type, title, message) => {
+                  setModalType(type);
+                  setModalTitle(title);
+                  setModalMessage(message);
+                  setIsModalVisible(true);
+                }}
+              />
+            </View>
           </ScrollView>
 
           {/* Sticky Submit Button */}
           <View style={modernStyles.stickyButton}>
             <TouchableOpacity
               onPress={handleSubmit}
-              style={[modernStyles.submitButton, (isSubmitting || isLoading) && modernStyles.disabledButton]}
-              disabled={isSubmitting || isLoading}
+              style={[modernStyles.submitButton, (isSubmitting || isLoading || isVideoUploading) && modernStyles.disabledButton]}
+              disabled={isSubmitting || isLoading || isVideoUploading}
               activeOpacity={0.8}
             >
               {isSubmitting ? (

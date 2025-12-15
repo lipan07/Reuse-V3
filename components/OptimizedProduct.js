@@ -35,6 +35,9 @@ const OptimizedProduct = memo(({ item, distance }) => {
 
   // Image count badge
   const imageCount = item.images?.length || 0;
+  
+  // Check if video is available when no images
+  const hasVideo = !imageUri && item.videos && item.videos.length > 0;
 
   return (
     <TouchableOpacity
@@ -76,6 +79,13 @@ const OptimizedProduct = memo(({ item, distance }) => {
             style={styles.productImage}
             resizeMode="cover"
           />
+        ) : hasVideo ? (
+          <View style={styles.videoPlaceholderContainer}>
+            <View style={styles.videoIndicator}>
+              <Icon name="videocam" size={normalize(40)} color="#FFFFFF" />
+              <Text style={styles.videoIndicatorText}>Video Available</Text>
+            </View>
+          </View>
         ) : (
           <View style={styles.placeholderContainer}>
             <Icon name="image" size={normalize(40)} color="#ccc" />
@@ -155,6 +165,28 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: normalize(12),
     color: '#999',
+    textAlign: 'center',
+  },
+  videoPlaceholderContainer: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+    position: 'relative',
+  },
+  videoIndicator: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderRadius: normalize(8),
+    padding: normalize(16),
+  },
+  videoIndicatorText: {
+    color: '#FFFFFF',
+    fontSize: normalize(12),
+    fontWeight: '600',
+    marginTop: normalize(8),
     textAlign: 'center',
   },
   productTag: {

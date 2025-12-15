@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Alert, ActivityIndicator, StyleSheet, Platform } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
@@ -9,20 +9,31 @@ import RNFS from 'react-native-fs';
 import backblazeService from '../../../service/backblazeService';
 import styles from '../../../assets/css/AddProductForm.styles.js';
 
-const VideoPickerComponent = ({ formData, setFormData, propertyTitle = '' }) => {
+const VideoPickerComponent = ({ formData, setFormData, propertyTitle = '', onUploadStateChange, onShowAlert }) => {
     const [isUploading, setIsUploading] = useState(false);
     const [isCompressing, setIsCompressing] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [compressionProgress, setCompressionProgress] = useState(0);
 
+    // Notify parent component of upload state changes
+    useEffect(() => {
+        if (onUploadStateChange) {
+            onUploadStateChange(isUploading || isCompressing);
+        }
+    }, [isUploading, isCompressing, onUploadStateChange]);
+
     const handleVideoPick = async () => {
         // Check if already has a video
         if (formData.videoUrl) {
-            Alert.alert(
-                'Video Already Uploaded',
-                'You already have a video uploaded. Remove it first to upload a new one.',
-                [{ text: 'OK' }]
-            );
+            if (onShowAlert) {
+                onShowAlert('warning', 'Video Already Uploaded', 'You already have a video uploaded. Remove it first to upload a new one.');
+            } else {
+                Alert.alert(
+                    'Video Already Uploaded',
+                    'You already have a video uploaded. Remove it first to upload a new one.',
+                    [{ text: 'OK' }]
+                );
+            }
             return;
         }
 
@@ -40,7 +51,11 @@ const VideoPickerComponent = ({ formData, setFormData, propertyTitle = '' }) => 
         }
 
         if (result.errorMessage) {
-            Alert.alert('Error', result.errorMessage);
+            if (onShowAlert) {
+                onShowAlert('error', 'Error', result.errorMessage);
+            } else {
+                Alert.alert('Error', result.errorMessage);
+            }
             return;
         }
 
@@ -50,12 +65,21 @@ const VideoPickerComponent = ({ formData, setFormData, propertyTitle = '' }) => 
             // Validate video duration (3 minutes = 180 seconds = 180000 milliseconds)
             const maxDuration = 3 * 60 * 1000; // 3 minutes in milliseconds
             if (selectedVideo.duration && selectedVideo.duration > maxDuration) {
-                Alert.alert(
-                    'Video Too Long',
-                    'Please select a video that is 3 minutes or less. Your video is ' +
-                    Math.round(selectedVideo.duration / 1000) + ' seconds long.',
-                    [{ text: 'OK' }]
-                );
+                if (onShowAlert) {
+                    onShowAlert(
+                        'warning',
+                        'Video Too Long',
+                        'Please select a video that is 3 minutes or less. Your video is ' +
+                        Math.round(selectedVideo.duration / 1000) + ' seconds long.'
+                    );
+                } else {
+                    Alert.alert(
+                        'Video Too Long',
+                        'Please select a video that is 3 minutes or less. Your video is ' +
+                        Math.round(selectedVideo.duration / 1000) + ' seconds long.',
+                        [{ text: 'OK' }]
+                    );
+                }
                 return;
             }
 
@@ -227,7 +251,11 @@ const VideoPickerComponent = ({ formData, setFormData, propertyTitle = '' }) => 
         try {
             const token = await AsyncStorage.getItem('authToken');
             if (!token) {
-                Alert.alert('Error', 'Please login first');
+                if (onShowAlert) {
+                    onShowAlert('error', 'Authentication Required', 'Please login first to upload videos.');
+                } else {
+                    Alert.alert('Error', 'Please login first');
+                }
                 setIsUploading(false);
                 return;
             }
@@ -270,7 +298,7 @@ const VideoPickerComponent = ({ formData, setFormData, propertyTitle = '' }) => 
                     videoId: result.fileId || null, // Store fileId for reference
                 }));
 
-                Alert.alert('Success', 'Video uploaded successfully!');
+                // No success modal needed - UI already shows success indicator
             } else {
                 const errorMsg = result?.error || result?.message || 'Failed to upload video';
                 console.error('Upload failed:', errorMsg);
@@ -293,7 +321,11 @@ const VideoPickerComponent = ({ formData, setFormData, propertyTitle = '' }) => 
                 }
             }
 
-            Alert.alert('Upload Error', errorMessage);
+            if (onShowAlert) {
+                onShowAlert('error', 'Upload Error', errorMessage);
+            } else {
+                Alert.alert('Upload Error', errorMessage);
+            }
         } finally {
             setIsUploading(false);
             setUploadProgress(0);
@@ -301,25 +333,28 @@ const VideoPickerComponent = ({ formData, setFormData, propertyTitle = '' }) => 
     };
 
     const handleVideoRemove = () => {
+        const removeVideo = () => {
+            setFormData((prev) => ({
+                ...prev,
+                videoUrl: null,
+                videoId: null,
+            }));
+        };
+
+        // Use Alert for confirmation since ModalScreen doesn't support confirm dialogs
         Alert.alert(
             'Remove Video',
             'Are you sure you want to remove this video?',
             [
                 {
                     text: 'Cancel',
-                    style: 'cancel',
+                    style: 'cancel'
                 },
                 {
                     text: 'Remove',
                     style: 'destructive',
-                    onPress: () => {
-                        setFormData((prev) => ({
-                            ...prev,
-                            videoUrl: null,
-                            videoId: null,
-                        }));
-                    },
-                },
+                    onPress: removeVideo
+                }
             ]
         );
     };
@@ -328,7 +363,7 @@ const VideoPickerComponent = ({ formData, setFormData, propertyTitle = '' }) => 
         <>
             <Text style={styles.label}>Upload Video (Optional)</Text>
             <Text style={styles.hintText}>
-                Video will be uploaded directly to Backblaze storage
+                Video will be uploaded to cloud storage
             </Text>
 
             {!formData.videoUrl ? (
@@ -362,7 +397,7 @@ const VideoPickerComponent = ({ formData, setFormData, propertyTitle = '' }) => 
                                             <MaterialIcons name="cloud-upload" size={22} color="#007BFF" />
                                         </View>
                                         <View style={customStyles.progressHeaderText}>
-                                            <Text style={customStyles.progressTitle}>Uploading to Backblaze</Text>
+                                                <Text style={customStyles.progressTitle}>Uploading Video</Text>
                                             <Text style={customStyles.progressSubtext}>Uploading your video...</Text>
                                         </View>
                                         <View style={customStyles.percentContainer}>

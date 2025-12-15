@@ -198,6 +198,28 @@ export default StyleSheet.create({
     fontSize: normalize(11), // Smaller font
     color: '#555',
   },
+  videoPlaceholderContainer: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+    position: 'relative',
+  },
+  videoIndicator: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderRadius: normalize(8),
+    padding: normalize(16),
+  },
+  videoIndicatorText: {
+    color: '#FFFFFF',
+    fontSize: normalize(12),
+    fontWeight: '600',
+    marginTop: normalize(8),
+    textAlign: 'center',
+  },
   popupOverlay: {
     position: 'absolute',
     top: 0,

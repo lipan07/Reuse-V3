@@ -48,11 +48,13 @@ const AddHousesApartments = ({ route, navigation }) => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!product);
+  const [isVideoUploading, setIsVideoUploading] = useState(false);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalType, setModalType] = useState('info');
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
+  const [shouldNavigateOnClose, setShouldNavigateOnClose] = useState(false);
   const [showPropertyTypeModal, setShowPropertyTypeModal] = useState(false);
   const [showBedroomModal, setShowBedroomModal] = useState(false);
   const [showBathroomModal, setShowBathroomModal] = useState(false);
@@ -162,6 +164,7 @@ const AddHousesApartments = ({ route, navigation }) => {
       setModalType(response.alert.type);
       setModalTitle(response.alert.title);
       setModalMessage(response.alert.message);
+      setShouldNavigateOnClose(true); // Only navigate back on form submission success
       setIsModalVisible(true);
 
       setIsSubmitting(false);
@@ -603,6 +606,14 @@ const AddHousesApartments = ({ route, navigation }) => {
                 formData={formData}
                 setFormData={setFormData}
                 propertyTitle={formData.adTitle}
+                onUploadStateChange={setIsVideoUploading}
+                onShowAlert={(type, title, message) => {
+                  setModalType(type);
+                  setModalTitle(title);
+                  setModalMessage(message);
+                  setShouldNavigateOnClose(false); // Don't navigate back on video upload success
+                  setIsModalVisible(true);
+                }}
               />
             </View>
           </ScrollView>
@@ -611,8 +622,8 @@ const AddHousesApartments = ({ route, navigation }) => {
           <View style={modernStyles.stickyButton}>
             <TouchableOpacity
               onPress={handleSubmit}
-              style={[modernStyles.submitButton, (isSubmitting || isLoading) && modernStyles.disabledButton]}
-              disabled={isSubmitting || isLoading}
+              style={[modernStyles.submitButton, (isSubmitting || isLoading || isVideoUploading) && modernStyles.disabledButton]}
+              disabled={isSubmitting || isLoading || isVideoUploading}
               activeOpacity={0.8}
             >
               {isSubmitting ? (
@@ -637,7 +648,10 @@ const AddHousesApartments = ({ route, navigation }) => {
         message={modalMessage}
         onClose={() => {
           setIsModalVisible(false);
-          if (modalType === 'success') navigation.goBack();
+          // Only navigate back if it's a form submission success, not video upload success
+          if (modalType === 'success' && shouldNavigateOnClose) {
+            navigation.goBack();
+          }
         }}
       />
 

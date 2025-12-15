@@ -439,6 +439,14 @@ const Home = () => {
                   onError={() => console.warn('Failed to load image:', imageUri)}
                 />
               ))
+            ) : item.videos && item.videos.length > 0 ? (
+              // Show video indicator when only video is available
+              <View style={styles.videoPlaceholderContainer}>
+                <View style={styles.videoIndicator}>
+                  <Icon name="videocam" size={normalize(40)} color="#FFFFFF" />
+                  <Text style={styles.videoIndicatorText}>Video Available</Text>
+                </View>
+              </View>
             ) : (
               <View style={styles.placeholderContainer}>
                 <Text style={styles.placeholderText}>

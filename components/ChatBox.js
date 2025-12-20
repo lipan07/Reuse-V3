@@ -644,34 +644,32 @@ const ChatBox = ({ route }) => {
               )}
             </View>
 
-            <View style={styles.headerBottomSection}>
-              <View style={styles.headerMetaInfo}>
-                {productInfo && productInfo.type !== 'donate' && productInfo.amount && (
-                  <Text style={styles.productPrice}>₹{productInfo.amount}</Text>
-                )}
-                {productInfo?.category?.name && (
-                  <>
-                    {productInfo && productInfo.type !== 'donate' && productInfo.amount && (
-                      <Text style={styles.metaSeparator}>•</Text>
-                    )}
-                    <Text style={styles.productCategory}>{productInfo.category.name}</Text>
-                  </>
-                )}
-              </View>
-              <View style={styles.userStatusContainer}>
-                <Text style={styles.userName}>{otherUserName}</Text>
-                <View style={styles.statusDotContainer}>
-                  <View style={[
-                    styles.statusDot,
-                    otherPersonStatus === 'online' && styles.statusDotOnline
-                  ]} />
-                  <Text style={[
-                    styles.statusText,
-                    otherPersonStatus === 'online' && styles.statusTextOnline
-                  ]}>
-                    {otherPersonStatus === 'online' ? 'Online' : 'Offline'}
-                  </Text>
-                </View>
+            <View style={styles.headerMetaInfo}>
+              {productInfo && productInfo.type !== 'donate' && productInfo.amount && (
+                <Text style={styles.productPrice}>₹{productInfo.amount}</Text>
+              )}
+              {productInfo?.category?.name && (
+                <>
+                  {productInfo && productInfo.type !== 'donate' && productInfo.amount && (
+                    <Text style={styles.metaSeparator}>•</Text>
+                  )}
+                  <Text style={styles.productCategory}>{productInfo.category.name}</Text>
+                </>
+              )}
+            </View>
+            <View style={styles.userStatusContainer}>
+              <Text style={styles.userName}>{otherUserName}</Text>
+              <View style={styles.statusDotContainer}>
+                <View style={[
+                  styles.statusDot,
+                  otherPersonStatus === 'online' && styles.statusDotOnline
+                ]} />
+                <Text style={[
+                  styles.statusText,
+                  otherPersonStatus === 'online' && styles.statusTextOnline
+                ]}>
+                  {otherPersonStatus === 'online' ? 'Online' : 'Offline'}
+                </Text>
               </View>
             </View>
           </View>
@@ -912,15 +910,10 @@ const styles = StyleSheet.create({
   listingTypeTextYellow: {
     color: '#D97706',
   },
-  headerBottomSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
   headerMetaInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    marginBottom: normalize(4),
   },
   productPrice: {
     fontSize: normalize(13),
@@ -940,12 +933,13 @@ const styles = StyleSheet.create({
   userStatusContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: normalize(6),
+    gap: normalize(8),
   },
   userName: {
     fontSize: normalize(12),
     color: '#374151',
     fontWeight: '500',
+    marginBottom: normalize(2),
   },
   statusDotContainer: {
     flexDirection: 'row',
@@ -959,15 +953,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#9CA3AF',
   },
   statusDotOnline: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#F97316',
   },
   statusText: {
     fontSize: normalize(11),
-    color: '#9CA3AF',
-    fontWeight: '400',
+    color: '#6B7280',
+    fontWeight: '500',
   },
   statusTextOnline: {
-    color: '#10B981',
+    color: '#F97316',
   },
   loadingContainer: {
     flex: 1,

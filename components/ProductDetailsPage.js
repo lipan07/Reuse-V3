@@ -522,18 +522,13 @@ const ProductDetails = () => {
     };
 
     const openImageViewer = (index) => {
-        // Only open image viewer for images, not videos
+        // Open media viewer with both images and videos
         if (!mediaItems || mediaItems.length === 0) return;
 
-        const imageUrls = mediaItems.filter(item => item.type === 'image').map(item => item.url);
-        const imageIndex = mediaItems.slice(0, index + 1).filter(item => item.type === 'image').length - 1;
-
-        if (imageIndex >= 0 && imageUrls.length > 0) {
-            navigation.navigate('ImageViewer', {
-                images: imageUrls,
-                selectedIndex: imageIndex
-            });
-        }
+        navigation.navigate('ImageViewer', {
+            mediaItems: mediaItems,
+            selectedIndex: index
+        });
     };
 
     const renderDetails = () => {

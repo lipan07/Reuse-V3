@@ -109,36 +109,40 @@ const AddressAutocomplete = ({
     return (
         <View style={[localStyles.container, customStyles?.container]}>
             <View style={{ position: 'relative' }}>
-                <TextInput
-                    style={[localStyles.input, customStyles?.input]}
-                    placeholder="Search Address"
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                    onFocus={() => setFocused(true)}
-                    onBlur={() => setTimeout(() => setFocused(false), 150)} // allow press
-                    placeholderTextColor="#888"
-                />
-                {searchQuery !== '' && !loading && (
-                    <TouchableOpacity
-                        style={localStyles.clearIcon}
-                        onPress={clearAddress}
-                    >
-                        <Ionicons name="close-circle" size={20} color="#999" />
-                    </TouchableOpacity>
-                )}
-                {loading && (
-                    <ActivityIndicator
-                        size="small"
-                        color="#999"
-                        style={localStyles.loader}
+                <View style={localStyles.inputWrapper}>
+                    <Ionicons name="location" size={18} color="#2563eb" style={localStyles.locationIcon} />
+                    <TextInput
+                        style={[localStyles.input, customStyles?.input]}
+                        placeholder="Search location..."
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        onFocus={() => setFocused(true)}
+                        onBlur={() => setTimeout(() => setFocused(false), 200)}
+                        placeholderTextColor="#9CA3AF"
                     />
-                )}
+                    {loading && (
+                        <ActivityIndicator
+                            size="small"
+                            color="#2563eb"
+                            style={localStyles.loader}
+                        />
+                    )}
+                    {searchQuery !== '' && !loading && (
+                        <TouchableOpacity
+                            style={localStyles.clearIcon}
+                            onPress={clearAddress}
+                        >
+                            <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+                        </TouchableOpacity>
+                    )}
+                </View>
             </View>
 
             {focused && predictions.length > 0 && (
                 <ScrollView
-                    style={localStyles.predictionsContainer}
+                    style={[localStyles.predictionsContainer, customStyles?.predictionsContainer]}
                     keyboardShouldPersistTaps="always"
+                    nestedScrollEnabled={true}
                 >
                     {predictions.map((item) => (
                         <TouchableOpacity
@@ -146,7 +150,8 @@ const AddressAutocomplete = ({
                             style={[localStyles.predictionItem, customStyles?.predictionItem]}
                             onPress={() => handlePlaceSelect(item.place_id)}
                         >
-                            <Text style={[localStyles.predictionText, customStyles?.predictionText]}>
+                            <Ionicons name="location-outline" size={16} color="#6B7280" style={{ marginRight: 10 }} />
+                            <Text style={[localStyles.predictionText, customStyles?.predictionText]} numberOfLines={2}>
                                 {item.description}
                             </Text>
                         </TouchableOpacity>
@@ -161,48 +166,62 @@ const localStyles = StyleSheet.create({
     container: {
         position: 'relative',
         marginBottom: 16,
-        zIndex: 10,
+        zIndex: 100,
+    },
+    inputWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F3F4F6',
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        paddingHorizontal: 12,
+    },
+    locationIcon: {
+        marginRight: 8,
     },
     input: {
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 4,
-        padding: 12,
-        fontSize: 16,
-        paddingRight: 34,
+        flex: 1,
+        paddingVertical: 12,
+        fontSize: 14,
+        color: '#1F2937',
     },
     clearIcon: {
-        position: 'absolute',
-        right: 10,
-        top: 12,
-        zIndex: 1,
+        padding: 4,
     },
     loader: {
-        position: 'absolute',
-        right: 10,
-        top: 12,
+        marginRight: 4,
     },
     predictionsContainer: {
-        backgroundColor: '#fff',
+        position: 'absolute',
+        top: 50,
+        left: 0,
+        right: 0,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 10,
         borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 4,
-        marginTop: 4,
-        maxHeight: 180,
-        elevation: 3,
+        borderColor: '#E5E7EB',
+        maxHeight: 200,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.15,
-        shadowRadius: 4,
+        shadowRadius: 8,
+        elevation: 8,
+        zIndex: 1000,
     },
     predictionItem: {
-        padding: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 14,
         borderBottomWidth: 1,
-        borderColor: '#eee',
+        borderBottomColor: '#F3F4F6',
     },
     predictionText: {
-        fontSize: 14,
-        color: '#333',
+        flex: 1,
+        fontSize: 13,
+        color: '#374151',
+        lineHeight: 18,
     },
 });
 

@@ -72,6 +72,7 @@ export default StyleSheet.create({
     paddingTop: normalizeVertical(8),
   },
   productImage: { width: '100%', height: '100%', resizeMode: 'cover' },
+  slideContainer: { flex: 1, width: '100%', height: '100%' },
   noProductsText: { fontSize: normalize(11), textAlign: 'center', marginTop: normalizeVertical(12) },
   recentSearchItem: {
     paddingVertical: normalizeVertical(5),
@@ -405,8 +406,18 @@ export default StyleSheet.create({
     backgroundColor: '#f5f5f5',
     borderRadius: normalize(8),
     paddingHorizontal: normalize(12),
-    marginRight: normalize(8),
     minHeight: normalize(40),
+  },
+  searchIcon: {
+    marginRight: normalize(8),
+  },
+  searchDisplayText: {
+    flex: 1,
+    fontSize: normalize(14),
+    color: '#333',
+  },
+  searchPlaceholder: {
+    color: '#888',
   },
   searchInput: {
     flex: 1,

@@ -31,10 +31,19 @@ const appOpenAd = AppOpenAd.createForAdRequest(adUnitIdAppOpen, {
 
 const PAGE_SIZE = 15;
 
+const PLACEHOLDER_TEXTS = [
+  'What are you looking for?',
+  'Tap to search & filter',
+  'Find what you need...',
+  'Browse categories & filters',
+];
+
 const Home = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const [filters, setFilters] = useState({});
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const placeholderOpacity = useRef(new Animated.Value(1)).current;
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [products, setProducts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -252,6 +261,28 @@ const Home = () => {
   }, [isLoading, hasMore, activeFilters, fetchProducts]);
 
 
+  // Rotate placeholder text every 3 seconds with fade animation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Fade out
+      Animated.timing(placeholderOpacity, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => {
+        // Change text
+        setPlaceholderIndex((prev) => (prev + 1) % PLACEHOLDER_TEXTS.length);
+        // Fade in
+        Animated.timing(placeholderOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }).start();
+      });
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     const checkLoginStatus = async () => {
       const token = await AsyncStorage.getItem('authToken');
@@ -436,11 +467,9 @@ const Home = () => {
                   key={index}
                   source={{ uri: imageUri }}
                   style={styles.productImage}
-                  onError={() => console.warn('Failed to load image:', imageUri)}
                 />
               ))
             ) : item.videos && item.videos.length > 0 ? (
-              // Show video indicator when only video is available
               <View style={styles.videoPlaceholderContainer}>
                 <View style={styles.videoIndicator}>
                   <Icon name="videocam" size={normalize(40)} color="#FFFFFF" />
@@ -722,56 +751,30 @@ const Home = () => {
             style={styles.bannerAd}
           />
         </View> */}
-            <View style={styles.searchContainer}>
-              {/* Search Input */}
+            {/* Search Bar - Tap to open Filter Screen */}
+            <TouchableOpacity
+              style={styles.searchContainer}
+              onPress={() => navigation.navigate('FilterScreen', {
+                initialFilters: { ...activeFilters, search, category: selectedCategory }
+              })}
+              activeOpacity={0.7}
+            >
               <View style={styles.searchInputWrapper}>
-                <TextInput
-                  style={styles.searchInput}
-                  onChangeText={handleInputChange}
-                  value={search}
-                  placeholder="Search products..."
-                  placeholderTextColor="#888"
-                  onFocus={() => setShowRecentSearches(true)}
-                  onSubmitEditing={handleSearchPress}
-                  returnKeyType="search"
-                />
-                {search.length > 0 && (
-                  <TouchableOpacity
-                    onPress={clearSearch}
-                    style={styles.clearButton}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  >
-                    <Icon name="close" size={normalize(16)} color="#888" />
-                  </TouchableOpacity>
+                <Icon name="search" size={normalize(18)} color="#888" style={styles.searchIcon} />
+                {search ? (
+                  <Text style={styles.searchDisplayText}>{search}</Text>
+                ) : (
+                  <Animated.Text style={[styles.searchDisplayText, styles.searchPlaceholder, { opacity: placeholderOpacity }]}>
+                    {PLACEHOLDER_TEXTS[placeholderIndex]}
+                  </Animated.Text>
                 )}
-              </View>
-
-              {/* Physical Search Button with Icon */}
-              <TouchableOpacity
-                style={styles.searchButton}
-                onPress={handleSearchPress}
-                disabled={search.length === 0}
-              >
-                <View style={styles.searchButtonContent}>
-                  <Icon name="search" size={normalize(18)} color="#fff" style={styles.searchButtonIcon} />
-                </View>
-              </TouchableOpacity>
-
-              {/* Filter Button */}
-              <TouchableOpacity
-                style={styles.filterButton}
-                onPress={() => navigation.navigate('FilterScreen', {
-                  initialFilters: { ...activeFilters, search, category: selectedCategory }
-                })}
-              >
-                <Icon name="filter-list" size={normalize(20)} color="#fff" />
                 {activeFilterCount > 0 && (
                   <View style={styles.filterBadge}>
                     <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
                   </View>
                 )}
-              </TouchableOpacity>
-            </View>
+              </View>
+            </TouchableOpacity>
             {/* {isLoading && products.length === 0 && (
           <ActivityIndicator size="large" color="#007bff" style={styles.loaderTop} />
         )} */}

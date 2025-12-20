@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
     View, Text, TextInput, TouchableOpacity, ScrollView,
     KeyboardAvoidingView, Platform, ActivityIndicator, StatusBar,
-    Animated, PanResponder, Dimensions
+    Dimensions
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute } from '@react-navigation/native';
@@ -15,8 +15,6 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import styles from '../assets/css/FilterScreen.styles.js';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const SLIDER_WIDTH = SCREEN_WIDTH * 0.68 - 48;
-const THUMB_SIZE = 24;
 
 // Subcategory data for categories with children
 const CATEGORY_SUBCATEGORIES = {
@@ -105,20 +103,6 @@ const CATEGORY_SUBCATEGORIES = {
     ],
 };
 
-const PRICE_VALUES = [
-    0, 1000, 5000, 10000, 25000, 50000, 75000, 100000,
-    150000, 200000, 300000, 500000, 750000, 1000000,
-    1500000, 2000000, 3000000, 5000000, 7500000, 10000000,
-    15000000, 20000000, 30000000, 50000000, 75000000, 100000000
-];
-
-const formatPrice = (value) => {
-    if (value === 0) return '₹0';
-    if (value >= 10000000) return `₹${(value / 10000000).toFixed(value % 10000000 === 0 ? 0 : 1)} Cr`;
-    if (value >= 100000) return `₹${(value / 100000).toFixed(value % 100000 === 0 ? 0 : 1)} L`;
-    if (value >= 1000) return `₹${(value / 1000).toFixed(0)}K`;
-    return `₹${value}`;
-};
 
 const FilterScreen = ({ navigation }) => {
     const route = useRoute();
@@ -142,60 +126,25 @@ const FilterScreen = ({ navigation }) => {
     // Get subcategories for selected category
     const currentSubcategories = filters.category ? CATEGORY_SUBCATEGORIES[filters.category] || [] : [];
 
-    // Price slider state
-    const [minPriceIndex, setMinPriceIndex] = useState(0);
-    const [maxPriceIndex, setMaxPriceIndex] = useState(PRICE_VALUES.length - 1);
-    const sliderWidth = useRef(SLIDER_WIDTH);
+    // Price input state
+    const [minPrice, setMinPrice] = useState('');
+    const [maxPrice, setMaxPrice] = useState('');
 
-    const minThumbX = useRef(new Animated.Value(0)).current;
-    const maxThumbX = useRef(new Animated.Value(SLIDER_WIDTH)).current;
-
+    // Initialize price inputs from filters
     useEffect(() => {
-        const minPrice = PRICE_VALUES[minPriceIndex];
-        const maxPrice = PRICE_VALUES[maxPriceIndex];
+        if (filters.priceRange && filters.priceRange.length >= 2) {
+            setMinPrice(filters.priceRange[0] || '');
+            setMaxPrice(filters.priceRange[1] || '');
+        }
+    }, []);
+
+    // Update filters when price inputs change
+    useEffect(() => {
         setFilters(prev => ({
             ...prev,
-            priceRange: [minPrice.toString(), maxPrice.toString()]
+            priceRange: [minPrice, maxPrice]
         }));
-    }, [minPriceIndex, maxPriceIndex]);
-
-    const minPanResponder = useRef(
-        PanResponder.create({
-            onStartShouldSetPanResponder: () => true,
-            onMoveShouldSetPanResponder: () => true,
-            onPanResponderMove: (_, gestureState) => {
-                const newX = Math.max(0, Math.min(gestureState.moveX - 40, maxThumbX._value - THUMB_SIZE));
-                minThumbX.setValue(newX);
-                const newIndex = Math.round((newX / sliderWidth.current) * (PRICE_VALUES.length - 1));
-                if (newIndex !== minPriceIndex && newIndex < maxPriceIndex) {
-                    setMinPriceIndex(newIndex);
-                }
-            },
-            onPanResponderRelease: () => {
-                const finalX = (minPriceIndex / (PRICE_VALUES.length - 1)) * sliderWidth.current;
-                Animated.spring(minThumbX, { toValue: finalX, useNativeDriver: false }).start();
-            },
-        })
-    ).current;
-
-    const maxPanResponder = useRef(
-        PanResponder.create({
-            onStartShouldSetPanResponder: () => true,
-            onMoveShouldSetPanResponder: () => true,
-            onPanResponderMove: (_, gestureState) => {
-                const newX = Math.max(minThumbX._value + THUMB_SIZE, Math.min(gestureState.moveX - 40, sliderWidth.current));
-                maxThumbX.setValue(newX);
-                const newIndex = Math.round((newX / sliderWidth.current) * (PRICE_VALUES.length - 1));
-                if (newIndex !== maxPriceIndex && newIndex > minPriceIndex) {
-                    setMaxPriceIndex(newIndex);
-                }
-            },
-            onPanResponderRelease: () => {
-                const finalX = (maxPriceIndex / (PRICE_VALUES.length - 1)) * sliderWidth.current;
-                Animated.spring(maxThumbX, { toValue: finalX, useNativeDriver: false }).start();
-            },
-        })
-    ).current;
+    }, [minPrice, maxPrice]);
 
     // Categories data
     const categories = [
@@ -296,6 +245,8 @@ const FilterScreen = ({ navigation }) => {
             address: '',
         };
         setFilters(clearedFilters);
+        setMinPrice('');
+        setMaxPrice('');
         navigation.navigate('Home', { filters: clearedFilters });
     }, [navigation]);
 
@@ -356,12 +307,18 @@ const FilterScreen = ({ navigation }) => {
                         color={isSelected ? category.color : category.color}
                     />
                 </View>
-                <Text style={[
-                    styles.categoryText,
-                    isSelected && styles.categoryTextSelected
-                ]} numberOfLines={1}>
-                    {category.name}
-                </Text>
+                <View style={styles.categoryTextContainer}>
+                    <Text
+                        style={[
+                            styles.categoryText,
+                            isSelected && styles.categoryTextSelected
+                        ]}
+                        numberOfLines={2}
+                        ellipsizeMode="tail"
+                    >
+                        {category.name}
+                    </Text>
+                </View>
             </TouchableOpacity>
         );
     };
@@ -545,48 +502,41 @@ const FilterScreen = ({ navigation }) => {
                                         </View>
                                     </View>
 
-                                    {/* Price Range Slider - Hide for Donate category */}
+                                    {/* Price Range Inputs - Hide for Donate category */}
                                     {!isDonateCategory && (
                                         <View style={styles.filterSection}>
-                                            <Text style={styles.sectionTitle}>{isJobCategory ? 'Salary Range' : 'Price Range'}</Text>
-                                            <View style={styles.priceDisplayRow}>
-                                                <View style={styles.priceDisplayBox}>
-                                                    <Text style={styles.priceDisplayLabel}>Min</Text>
-                                                    <Text style={styles.priceDisplayValue}>{formatPrice(PRICE_VALUES[minPriceIndex])}</Text>
+                                            <Text style={styles.sectionTitle}>{isJobCategory ? 'Salary Range (₹)' : 'Price Range (₹)'}</Text>
+                                            <View style={styles.priceInputContainer}>
+                                                <View style={styles.priceInputWrapper}>
+                                                    {/* <Text style={styles.priceInputPrefix}>₹</Text> */}
+                                                    <TextInput
+                                                        style={styles.priceInput}
+                                                        value={minPrice}
+                                                        onChangeText={(text) => {
+                                                            // Allow only numbers
+                                                            const numericValue = text.replace(/[^0-9]/g, '');
+                                                            setMinPrice(numericValue);
+                                                        }}
+                                                        placeholder="Minimum"
+                                                        placeholderTextColor="#9CA3AF"
+                                                        keyboardType="numeric"
+                                                    />
                                                 </View>
-                                                <Text style={styles.priceDisplayDash}>—</Text>
-                                                <View style={styles.priceDisplayBox}>
-                                                    <Text style={styles.priceDisplayLabel}>Max</Text>
-                                                    <Text style={styles.priceDisplayValue}>{formatPrice(PRICE_VALUES[maxPriceIndex])}</Text>
+                                                <View style={styles.priceInputWrapper}>
+                                                    {/* <Text style={styles.priceInputPrefix}>₹</Text> */}
+                                                    <TextInput
+                                                        style={styles.priceInput}
+                                                        value={maxPrice}
+                                                        onChangeText={(text) => {
+                                                            // Allow only numbers
+                                                            const numericValue = text.replace(/[^0-9]/g, '');
+                                                            setMaxPrice(numericValue);
+                                                        }}
+                                                        placeholder="Maximum"
+                                                        placeholderTextColor="#9CA3AF"
+                                                        keyboardType="numeric"
+                                                    />
                                                 </View>
-                                            </View>
-                                            <View style={styles.sliderContainer}>
-                                                <View style={styles.sliderTrack} />
-                                                <Animated.View
-                                                    style={[
-                                                        styles.sliderFill,
-                                                        {
-                                                            left: minThumbX,
-                                                            right: Animated.subtract(SLIDER_WIDTH, maxThumbX),
-                                                        }
-                                                    ]}
-                                                />
-                                                <Animated.View
-                                                    style={[styles.sliderThumb, { left: minThumbX }]}
-                                                    {...minPanResponder.panHandlers}
-                                                >
-                                                    <View style={styles.thumbInner} />
-                                                </Animated.View>
-                                                <Animated.View
-                                                    style={[styles.sliderThumb, { left: maxThumbX }]}
-                                                    {...maxPanResponder.panHandlers}
-                                                >
-                                                    <View style={styles.thumbInner} />
-                                                </Animated.View>
-                                            </View>
-                                            <View style={styles.sliderLabels}>
-                                                <Text style={styles.sliderLabelText}>₹100</Text>
-                                                <Text style={styles.sliderLabelText}>₹10 Cr</Text>
                                             </View>
                                         </View>
                                     )}

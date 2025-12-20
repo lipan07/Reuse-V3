@@ -6,7 +6,7 @@ const verticalScale = height / 812;
 const normalize = (size) => Math.round(scale * size);
 const normalizeVertical = (size) => Math.round(verticalScale * size);
 
-const LEFT_PANEL_WIDTH = width * 0.32;
+const LEFT_PANEL_WIDTH = width * 0.35;
 
 export default StyleSheet.create({
     container: {
@@ -54,6 +54,7 @@ export default StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#E5E7EB',
         backgroundColor: '#FFFFFF',
+        minHeight: normalize(48),
     },
     categoryItemSelected: {
         backgroundColor: '#2563eb',
@@ -66,13 +67,20 @@ export default StyleSheet.create({
         backgroundColor: '#F3F4F6',
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: normalize(8),
+        marginRight: normalize(10),
+        flexShrink: 0,
+    },
+    categoryTextContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        minWidth: 0,
+        paddingRight: normalize(4),
     },
     categoryText: {
-        flex: 1,
         fontSize: normalize(11),
         fontWeight: '500',
         color: '#374151',
+        lineHeight: normalize(16),
     },
     categoryTextSelected: {
         color: '#FFFFFF',
@@ -149,14 +157,9 @@ export default StyleSheet.create({
         zIndex: 100,
     },
     locationInput: {
-        backgroundColor: '#F3F4F6',
-        borderRadius: normalize(10),
-        paddingHorizontal: normalize(14),
-        paddingVertical: normalize(12),
-        fontSize: normalize(14),
-        color: '#1F2937',
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
+        textAlign: 'left',
+        paddingLeft: 0,
+        paddingRight: 0,
     },
     locationPredictions: {
         position: 'absolute',
@@ -216,89 +219,43 @@ export default StyleSheet.create({
         fontWeight: '600',
     },
 
-    // Price Range Slider
-    priceDisplayRow: {
+    // Price Range Inputs
+    priceInputContainer: {
+        marginTop: normalize(8),
         flexDirection: 'row',
-        alignItems: 'center',
+        gap: normalize(12),
+    },
+    priceInputRow: {
         marginBottom: normalize(16),
     },
-    priceDisplayBox: {
-        flex: 1,
-        backgroundColor: '#F3F4F6',
-        borderRadius: normalize(10),
-        paddingVertical: normalize(10),
-        paddingHorizontal: normalize(12),
-        alignItems: 'center',
-    },
-    priceDisplayLabel: {
-        fontSize: normalize(10),
+    priceInputLabel: {
+        fontSize: normalize(13),
         fontWeight: '600',
-        color: '#9CA3AF',
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
-        marginBottom: normalize(2),
+        color: '#374151',
+        marginBottom: normalize(8),
     },
-    priceDisplayValue: {
-        fontSize: normalize(14),
-        fontWeight: '700',
-        color: '#1F2937',
-    },
-    priceDisplayDash: {
-        fontSize: normalize(16),
-        color: '#9CA3AF',
-        marginHorizontal: normalize(10),
-    },
-    sliderContainer: {
-        height: normalize(40),
-        justifyContent: 'center',
-        position: 'relative',
-    },
-    sliderTrack: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        height: normalize(4),
-        backgroundColor: '#E5E7EB',
-        borderRadius: normalize(2),
-    },
-    sliderFill: {
-        position: 'absolute',
-        height: normalize(4),
-        backgroundColor: '#2563eb',
-        borderRadius: normalize(2),
-    },
-    sliderThumb: {
-        position: 'absolute',
-        width: normalize(24),
-        height: normalize(24),
-        borderRadius: normalize(12),
-        backgroundColor: '#FFFFFF',
-        borderWidth: 2,
-        borderColor: '#2563eb',
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: '#2563eb',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-        elevation: 4,
-        marginLeft: -normalize(12),
-    },
-    thumbInner: {
-        width: normalize(10),
-        height: normalize(10),
-        borderRadius: normalize(5),
-        backgroundColor: '#2563eb',
-    },
-    sliderLabels: {
+    priceInputWrapper: {
+        flex: 1,
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: normalize(8),
+        alignItems: 'center',
+        backgroundColor: '#F9FAFB',
+        borderRadius: normalize(12),
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        paddingHorizontal: normalize(14),
+        height: normalize(48),
     },
-    sliderLabelText: {
-        fontSize: normalize(11),
-        color: '#9CA3AF',
-        fontWeight: '500',
+    priceInputPrefix: {
+        fontSize: normalize(16),
+        fontWeight: '600',
+        color: '#374151',
+        marginRight: normalize(8),
+    },
+    priceInput: {
+        flex: 1,
+        fontSize: normalize(15),
+        color: '#1F2937',
+        padding: 0,
     },
 
     // Legacy price inputs

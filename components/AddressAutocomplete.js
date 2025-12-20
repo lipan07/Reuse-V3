@@ -175,22 +175,31 @@ const localStyles = StyleSheet.create({
         borderRadius: 10,
         borderWidth: 1,
         borderColor: '#E5E7EB',
-        paddingHorizontal: 12,
+        paddingLeft: 12,
+        paddingRight: 8,
+        minHeight: 48,
     },
     locationIcon: {
-        marginRight: 8,
+        marginRight: 10,
+        flexShrink: 0,
     },
     input: {
         flex: 1,
         paddingVertical: 12,
+        paddingRight: 8,
         fontSize: 14,
         color: '#1F2937',
+        textAlign: 'left',
     },
     clearIcon: {
         padding: 4,
+        marginLeft: 4,
+        flexShrink: 0,
     },
     loader: {
+        marginLeft: 4,
         marginRight: 4,
+        flexShrink: 0,
     },
     predictionsContainer: {
         position: 'absolute',

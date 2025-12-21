@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Modal, TouchableWithoutFeedback, ActivityIndicator, Dimensions, Animated, Platform, ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BottomNavBar from './BottomNavBar';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -17,6 +18,7 @@ const isIphoneX = Platform.OS === 'ios' && (height >= 812 || width >= 812);
 const bottomSafeArea = isIphoneX ? 34 : 0;
 
 const MyAdsPage = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const [products, setProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isPopupVisible, setPopupVisible] = useState(false);
@@ -386,11 +388,16 @@ const MyAdsPage = ({ navigation }) => {
         transparent={true}
         animationType="slide"
         onRequestClose={hidePopup}
+        statusBarTranslucent={true}
+        presentationStyle="overFullScreen"
       >
-        <TouchableWithoutFeedback onPress={hidePopup}>
-          <View style={styles.modernModalOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={styles.modernBottomSheet}>
+        <View style={styles.modernModalOverlay} pointerEvents="box-none">
+          <TouchableWithoutFeedback onPress={hidePopup}>
+            <View style={styles.modalBackdrop} />
+          </TouchableWithoutFeedback>
+          <TouchableWithoutFeedback onPress={() => { }}>
+            <View style={styles.modernBottomSheet} pointerEvents="box-none">
+              <View style={styles.bottomSheetContent}>
                 {/* Drag Handle */}
                 <View style={styles.dragHandle} />
 
@@ -522,10 +529,12 @@ const MyAdsPage = ({ navigation }) => {
                     <Text style={styles.deleteActionText}>Delete Listing</Text>
                   </TouchableOpacity>
                 </View>
+                {/* Safe area spacer - only for content, not container */}
+                {insets.bottom > 0 && <View style={{ height: insets.bottom }} />}
               </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
       </Modal>
 
       {/* Modern Delete Confirmation Modal */}
@@ -682,25 +691,36 @@ const styles = StyleSheet.create({
   // Modern Bottom Sheet Styles
   modernModalOverlay: {
     flex: 1,
+    position: 'relative',
+  },
+  modalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
   },
   modernBottomSheet: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    width: '100%',
+  },
+  bottomSheetContent: {
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: normalize(24),
     borderTopRightRadius: normalize(24),
     paddingTop: normalizeVertical(12),
-    paddingBottom: Platform.select({
-      ios: normalizeVertical(20) + bottomSafeArea,
-      android: normalizeVertical(20),
-      default: normalizeVertical(20),
-    }),
+    paddingBottom: 0,
     maxHeight: height * 0.85,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -8 },
     shadowOpacity: 0.15,
     shadowRadius: 20,
     elevation: 24,
+    width: '100%',
   },
   dragHandle: {
     width: normalize(40),
@@ -836,6 +856,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#F3F4F6',
     paddingTop: normalizeVertical(16),
+    paddingBottom: 0,
+    marginBottom: 0,
   },
   deleteActionItem: {
     flexDirection: 'row',
@@ -846,6 +868,7 @@ const styles = StyleSheet.create({
     borderRadius: normalize(12),
     borderWidth: 1,
     borderColor: '#FEE2E2',
+    marginBottom: 0,
   },
   deleteActionText: {
     fontSize: normalize(15),

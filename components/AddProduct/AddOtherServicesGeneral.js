@@ -237,10 +237,14 @@ const AddOtherServicesGeneral = ({ route, navigation }) => {
                                     initialLatitude={formData.latitude}
                                     initialLongitude={formData.longitude}
                                     onAddressSelect={handleAddressSelect}
-                                    styles={{
-                                        input: modernStyles.addressInput,
-                                        container: { marginBottom: 0 }
-                                    }}
+                  styles={{
+                    container: modernStyles.locationContainer,
+                    inputWrapper: modernStyles.locationInputWrapper,
+                    input: modernStyles.locationInput,
+                    predictionsContainer: modernStyles.locationPredictions,
+                    predictionItem: modernStyles.locationPredictionItem,
+                    predictionText: modernStyles.locationPredictionText,
+                  }}
                                 />
                             </View>
                         </View>
@@ -512,7 +516,7 @@ const modernStyles = StyleSheet.create({
   submitButton: {
     backgroundColor: '#4CAF50',
     borderRadius: normalize(12),
-    paddingVertical: normalizeVertical(16),
+    paddingVertical: normalizeVertical(12),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -543,6 +547,60 @@ const modernStyles = StyleSheet.create({
     fontSize: normalize(15),
     color: '#6B7280',
     fontWeight: '500',
+  },
+  locationContainer: {
+    marginBottom: 0,
+    zIndex: 100,
+  },
+  locationInputWrapper: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: normalize(12),
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    paddingLeft: normalize(16),
+    paddingRight: normalize(8),
+    minHeight: normalizeVertical(48),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  locationInput: {
+    flex: 1,
+    paddingVertical: normalizeVertical(14),
+    paddingRight: normalize(8),
+    fontSize: normalize(15),
+    color: '#1F2937',
+    textAlign: 'left',
+  },
+  locationPredictions: {
+    position: 'absolute',
+    top: normalize(48),
+    left: 0,
+    right: 0,
+    backgroundColor: '#FFFFFF',
+    borderRadius: normalize(10),
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    maxHeight: normalize(180),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 1000,
+  },
+  locationPredictionItem: {
+    paddingVertical: normalize(12),
+    paddingHorizontal: normalize(14),
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  locationPredictionText: {
+    fontSize: normalize(13),
+    color: '#374151',
+    lineHeight: normalize(18),
   },
 });
 

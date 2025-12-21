@@ -376,15 +376,17 @@ const FilterScreen = ({ navigation }) => {
                                                     <MCIcon
                                                         name={sub.icon}
                                                         size={18}
-                                                        color={isSelected ? '#2563eb' : '#6B7280'}
+                                                        color={isSelected ? '#16a34a' : '#6B7280'}
                                                     />
                                                 </View>
-                                                <Text style={[
-                                                    styles.subcategoryText,
-                                                    isSelected && styles.subcategoryTextSelected
-                                                ]} numberOfLines={1}>
-                                                    {sub.name}
-                                                </Text>
+                                                <View style={styles.subcategoryTextContainer}>
+                                                    <Text style={[
+                                                        styles.subcategoryText,
+                                                        isSelected && styles.subcategoryTextSelected
+                                                    ]} numberOfLines={2}>
+                                                        {sub.name}
+                                                    </Text>
+                                                </View>
                                                 {isSelected && (
                                                     <View style={styles.subcategoryCheck}>
                                                         <Ionicons name="checkmark" size={12} color="#FFFFFF" />
@@ -552,26 +554,30 @@ const FilterScreen = ({ navigation }) => {
             {/* Bottom Action Buttons */}
             <View style={styles.bottomActions}>
                 <TouchableOpacity
-                    style={styles.clearButton}
+                    style={[styles.clearButton, loading && styles.buttonDisabled]}
                     onPress={handleClearFilters}
                     disabled={loading}
+                    activeOpacity={0.7}
                 >
-                    <MCIcon name="filter-remove" size={18} color="#2563eb" />
-                    <Text style={styles.clearButtonText}>Clear All</Text>
+                    <View style={styles.clearButtonContent}>
+                        <Ionicons name="refresh-outline" size={20} color="#6B7280" />
+                        <Text style={styles.clearButtonText}>Clear All</Text>
+                    </View>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                    style={styles.applyButton}
+                    style={[styles.applyButton, loading && styles.buttonDisabled]}
                     onPress={handleSubmit}
                     disabled={loading}
+                    activeOpacity={0.8}
                 >
                     {loading ? (
                         <ActivityIndicator color="#FFFFFF" size="small" />
                     ) : (
-                        <>
-                            <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
+                            <View style={styles.applyButtonContent}>
+                                <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
                             <Text style={styles.applyButtonText}>Apply Filters</Text>
-                        </>
+                            </View>
                     )}
                 </TouchableOpacity>
             </View>

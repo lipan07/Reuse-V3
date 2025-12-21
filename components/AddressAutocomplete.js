@@ -109,7 +109,7 @@ const AddressAutocomplete = ({
     return (
         <View style={[localStyles.container, customStyles?.container]}>
             <View style={{ position: 'relative' }}>
-                <View style={localStyles.inputWrapper}>
+                <View style={[localStyles.inputWrapper, customStyles?.inputWrapper]}>
                     <Ionicons name="location" size={18} color="#2563eb" style={localStyles.locationIcon} />
                     <TextInput
                         style={[localStyles.input, customStyles?.input]}

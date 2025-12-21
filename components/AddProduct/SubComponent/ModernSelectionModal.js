@@ -11,6 +11,7 @@ import {
   ScrollView,
   TextInput,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 // Responsive scaling functions
@@ -34,6 +35,7 @@ const ModernSelectionModal = ({
   searchable = false, // Enable search for long lists
   multiColumn = false, // Display options in grid for short options
 }) => {
+  const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
 
   // Normalize options to always have label/value format
@@ -60,10 +62,15 @@ const ModernSelectionModal = ({
       transparent={true}
       animationType="slide"
       onRequestClose={onClose}
+      statusBarTranslucent={true}
+      presentationStyle="overFullScreen"
     >
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
-          <TouchableWithoutFeedback>
+      <View style={styles.overlay} pointerEvents="box-none">
+        <TouchableWithoutFeedback onPress={onClose}>
+          <View style={styles.modalBackdrop} />
+        </TouchableWithoutFeedback>
+        <TouchableWithoutFeedback onPress={() => {}}>
+          <View style={styles.modernBottomSheet} pointerEvents="box-none">
             <View style={styles.bottomSheet}>
               {/* Handle bar */}
               <View style={styles.handleBar} />
@@ -134,10 +141,12 @@ const ModernSelectionModal = ({
               <TouchableOpacity style={styles.closeButton} onPress={onClose}>
                 <Text style={styles.closeButtonText}>Cancel</Text>
               </TouchableOpacity>
+              {/* Safe area spacer - only for content, not container */}
+              {insets.bottom > 0 && <View style={{ height: insets.bottom }} />}
             </View>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
+            </View>
+        </TouchableWithoutFeedback>
+      </View>
     </Modal>
   );
 };
@@ -145,20 +154,37 @@ const ModernSelectionModal = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
+    position: 'relative',
+  },
+  modalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+  },
+  modernBottomSheet: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    width: '100%',
   },
   bottomSheet: {
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: normalize(20),
     borderTopRightRadius: normalize(20),
     paddingTop: normalizeVertical(8),
+    paddingBottom: 0,
     maxHeight: height * 0.75,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 20,
+    width: '100%',
+    marginBottom: 0,
   },
   handleBar: {
     width: normalize(36),
@@ -269,11 +295,7 @@ const styles = StyleSheet.create({
     marginHorizontal: normalize(20),
     borderRadius: normalize(12),
     alignItems: 'center',
-    marginBottom: Platform.select({
-      ios: normalizeVertical(12) + bottomSafeArea,
-      android: normalizeVertical(12),
-      default: normalizeVertical(12),
-    }),
+    marginBottom: normalizeVertical(12),
     marginTop: normalizeVertical(8),
   },
   closeButtonText: {

@@ -93,7 +93,6 @@ const ImagePickerComponent = ({ formData, setFormData }) => {
 
     return (
         <>
-            <Text style={styles.label}>Upload Images *</Text>
             <TouchableOpacity
                 style={styles.uploadArea}
                 onPress={handleImagePick}

@@ -332,19 +332,67 @@ const VideoPickerComponent = ({ formData, setFormData, propertyTitle = '', onUpl
         }
     };
 
-    const handleVideoRemove = () => {
-        const removeVideo = () => {
-            setFormData((prev) => ({
-                ...prev,
-                videoUrl: null,
-                videoId: null,
-            }));
+    const handleVideoRemove = async () => {
+        const removeVideo = async () => {
+            try {
+                const currentVideoUrl = formData.videoUrl;
+                const currentVideoId = formData.videoId;
+                const isExistingVideo = currentVideoUrl && !currentVideoUrl.startsWith('file://');
+
+                // If it's an existing video (from edit), mark it for deletion
+                if (isExistingVideo) {
+                    // Try to delete from Backblaze (but don't block if it fails)
+                    // The backend will also try to delete it when the form is submitted
+                    try {
+                        if (currentVideoId) {
+                            // Delete using file ID
+                            await backblazeService.deleteVideo(currentVideoId);
+                            console.log('Video deleted from Backblaze using file ID');
+                        } else if (currentVideoUrl) {
+                            // Delete using URL (via backend)
+                            await backblazeService.deleteVideoByUrl(currentVideoUrl, currentVideoId);
+                            console.log('Video deleted from Backblaze using URL');
+                        }
+                    } catch (deleteError) {
+                        console.warn('Failed to delete video from Backblaze immediately:', deleteError.message || deleteError);
+                        // Continue with removal even if Backblaze delete fails
+                        // The video will still be removed from the form and backend will try to delete it
+                    }
+
+                    // Track deleted video for backend processing
+                    setFormData((prev) => ({
+                        ...prev,
+                        videoUrl: null,
+                        videoId: null,
+                        deletedVideoUrl: currentVideoUrl, // Track for backend
+                        deletedVideoId: currentVideoId, // Track for backend
+                    }));
+                } else {
+                    // New video that wasn't uploaded yet, just remove it
+                    setFormData((prev) => ({
+                        ...prev,
+                        videoUrl: null,
+                        videoId: null,
+                    }));
+                }
+
+                if (onShowAlert) {
+                    onShowAlert('success', 'Video Removed', 'Video has been removed successfully.');
+                }
+            } catch (error) {
+                console.error('Error removing video:', error);
+                if (onShowAlert) {
+                    onShowAlert('error', 'Error', 'Failed to remove video. Please try again.');
+                } else {
+                    Alert.alert('Error', 'Failed to remove video. Please try again.');
+                }
+            }
         };
 
         // Use Alert for confirmation since ModalScreen doesn't support confirm dialogs
         Alert.alert(
             'Remove Video',
-            'Are you sure you want to remove this video?',
+            'Are you sure you want to remove this video? It will be deleted from storage.',
             [
                 {
                     text: 'Cancel',
@@ -360,54 +408,57 @@ const VideoPickerComponent = ({ formData, setFormData, propertyTitle = '', onUpl
     };
 
     return (
-        <>
-            <Text style={styles.label}>Upload Video (Optional)</Text>
-            <Text style={styles.hintText}>
-                Video will be uploaded to cloud storage
-            </Text>
-
+        <View style={customStyles.container}>
             {!formData.videoUrl ? (
-                <View style={styles.uploadArea}>
+                <View style={customStyles.uploadArea}>
                     {(isUploading || isCompressing) ? (
                         <View style={customStyles.progressWrapper}>
                             {isCompressing ? (
                                 <View style={customStyles.progressCard}>
-                                    <View style={customStyles.progressHeader}>
-                                        <View style={[customStyles.iconContainer, { backgroundColor: '#FFF3E0' }]}>
-                                            <MaterialIcons name="compress" size={22} color="#FF9800" />
+                                    <View style={customStyles.progressContent}>
+                                        <View style={customStyles.progressLeft}>
+                                            <View style={customStyles.iconContainer}>
+                                                <MaterialIcons name="settings" size={24} color="#007BFF" />
+                                            </View>
+                                            <View style={customStyles.progressTextContainer}>
+                                                <Text style={customStyles.progressTitle}>Compressing Video</Text>
+                                                <Text style={customStyles.progressSubtext}>Optimizing file size for faster upload</Text>
+                                            </View>
                                         </View>
-                                        <View style={customStyles.progressHeaderText}>
-                                            <Text style={customStyles.progressTitle}>Compressing Video</Text>
-                                            <Text style={customStyles.progressSubtext}>Optimizing file size...</Text>
-                                        </View>
-                                        <View style={customStyles.percentContainer}>
-                                            <Text style={[customStyles.progressPercent, { color: '#FF9800' }]}>
+                                        <View style={customStyles.progressRight}>
+                                            <Text style={customStyles.progressPercent}>
                                                 {Math.round(compressionProgress)}%
                                             </Text>
                                         </View>
                                     </View>
-                                    <View style={customStyles.progressBarContainer}>
-                                        <View style={[customStyles.progressBar, { width: `${compressionProgress}%`, backgroundColor: '#FF9800' }]} />
+                                    <View style={customStyles.progressBarWrapper}>
+                                        <View style={customStyles.progressBarContainer}>
+                                            <View style={[customStyles.progressBar, { width: `${compressionProgress}%` }]} />
+                                        </View>
                                     </View>
                                 </View>
                             ) : (
                                 <View style={customStyles.progressCard}>
-                                    <View style={customStyles.progressHeader}>
-                                        <View style={[customStyles.iconContainer, { backgroundColor: '#E3F2FD' }]}>
-                                            <MaterialIcons name="cloud-upload" size={22} color="#007BFF" />
-                                        </View>
-                                        <View style={customStyles.progressHeaderText}>
+                                    <View style={customStyles.progressContent}>
+                                        <View style={customStyles.progressLeft}>
+                                            <View style={customStyles.iconContainer}>
+                                                <MaterialIcons name="cloud-upload" size={24} color="#007BFF" />
+                                            </View>
+                                            <View style={customStyles.progressTextContainer}>
                                                 <Text style={customStyles.progressTitle}>Uploading Video</Text>
-                                            <Text style={customStyles.progressSubtext}>Uploading your video...</Text>
+                                                <Text style={customStyles.progressSubtext}>Sending to cloud storage</Text>
+                                            </View>
                                         </View>
-                                        <View style={customStyles.percentContainer}>
-                                            <Text style={[customStyles.progressPercent, { color: '#007BFF' }]}>
+                                        <View style={customStyles.progressRight}>
+                                            <Text style={customStyles.progressPercent}>
                                                 {Math.round(uploadProgress)}%
                                             </Text>
                                         </View>
                                     </View>
-                                    <View style={customStyles.progressBarContainer}>
-                                        <View style={[customStyles.progressBar, { width: `${uploadProgress}%`, backgroundColor: '#007BFF' }]} />
+                                    <View style={customStyles.progressBarWrapper}>
+                                        <View style={customStyles.progressBarContainer}>
+                                            <View style={[customStyles.progressBar, { width: `${uploadProgress}%` }]} />
+                                        </View>
                                     </View>
                                 </View>
                             )}
@@ -419,148 +470,180 @@ const VideoPickerComponent = ({ formData, setFormData, propertyTitle = '', onUpl
                             activeOpacity={0.7}
                             style={customStyles.uploadButton}
                         >
-                            <View style={customStyles.uploadContent}>
-                                <MaterialIcons name="videocam" size={32} color="#007BFF" />
-                                <Text style={styles.uploadText}>Tap to select and upload video</Text>
-                                <Text style={customStyles.hintText}>Video will be compressed to reduce size</Text>
-                            </View>
-                            </TouchableOpacity>
+                            <MaterialIcons name="videocam" size={24} color="#007BFF" />
+                            <Text style={customStyles.uploadText}>
+                                {isCompressing ? 'Compressing...' : 'Tap to upload'}
+                            </Text>
+                        </TouchableOpacity>
                     )}
                 </View>
             ) : (
                 <View style={customStyles.videoContainer}>
                     <View style={customStyles.videoInfo}>
-                        <MaterialIcons name="check-circle" size={20} color="#28a745" />
-                        <Text style={customStyles.videoUrlText} numberOfLines={1}>
-                            Video uploaded successfully
-                        </Text>
+                        <View style={customStyles.successIconContainer}>
+                            <MaterialIcons name="check-circle" size={24} color="#007BFF" />
+                        </View>
+                        <View style={customStyles.videoTextContainer}>
+                            <Text style={customStyles.videoUrlText} numberOfLines={1}>
+                                Video uploaded successfully
+                            </Text>
+                            <Text style={customStyles.videoSubtext}>Ready to publish</Text>
+                        </View>
                     </View>
                     <TouchableOpacity
                         style={customStyles.removeButton}
                         onPress={handleVideoRemove}
+                        activeOpacity={0.7}
                     >
-                        <MaterialIcons name="delete" size={20} color="#dc3545" />
+                        <MaterialIcons name="delete-outline" size={16} color="#DC2626" />
                         <Text style={customStyles.removeButtonText}>Remove</Text>
                     </TouchableOpacity>
                 </View>
             )}
-        </>
+        </View>
     );
 };
 
 const customStyles = StyleSheet.create({
+    container: {
+        width: '100%',
+    },
+    uploadArea: {
+        width: '100%',
+    },
     progressWrapper: {
         width: '100%',
-        paddingHorizontal: 4,
     },
     progressCard: {
         width: '100%',
         backgroundColor: '#FFFFFF',
         borderRadius: 12,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        borderWidth: 1,
+        padding: 14,
+        borderWidth: 1.5,
         borderColor: '#E5E7EB',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-        elevation: 3,
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+        elevation: 4,
     },
-    progressHeader: {
+    progressContent: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'space-between',
         marginBottom: 12,
-        width: '100%',
+    },
+    progressLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+        marginRight: 12,
     },
     iconContainer: {
-        width: 42,
-        height: 42,
-        borderRadius: 21,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
         flexShrink: 0,
     },
-    progressHeaderText: {
+    progressTextContainer: {
         flex: 1,
         justifyContent: 'center',
-        paddingRight: 8,
     },
     progressTitle: {
-        fontSize: 15,
+        fontSize: 13,
         fontWeight: '600',
-        color: '#1F2937',
-        letterSpacing: 0.1,
-        marginBottom: 3,
-        lineHeight: 20,
+        color: '#007BFF',
+        marginBottom: 4,
     },
     progressSubtext: {
-        fontSize: 12,
-        color: '#6B7280',
+        fontSize: 11,
+        color: '#666',
         fontWeight: '400',
-        lineHeight: 16,
     },
-    percentContainer: {
+    progressRight: {
         justifyContent: 'center',
         alignItems: 'flex-end',
-        minWidth: 48,
+        minWidth: 50,
         flexShrink: 0,
     },
     progressPercent: {
-        fontSize: 16,
-        fontWeight: '700',
-        letterSpacing: 0.3,
-        lineHeight: 20,
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#007BFF',
+    },
+    progressBarWrapper: {
+        width: '100%',
     },
     progressBarContainer: {
-        height: 6,
-        backgroundColor: '#F3F4F6',
-        borderRadius: 3,
+        height: 4,
+        backgroundColor: '#E0E0E0',
+        borderRadius: 2,
         overflow: 'hidden',
         width: '100%',
     },
     progressBar: {
         height: '100%',
-        borderRadius: 3,
+        borderRadius: 2,
+        backgroundColor: '#007BFF',
     },
     uploadButton: {
-        width: '100%',
-        height: '100%',
-    },
-    uploadContent: {
+        borderWidth: 1,
+        borderColor: '#007BFF',
+        borderRadius: 12,
+        paddingVertical: 14,
         alignItems: 'center',
         justifyContent: 'center',
+        backgroundColor: '#F5F7FA',
+        marginBottom: 18,
         width: '100%',
-        height: '100%',
+        height: 74,
+        alignSelf: 'center',
+        borderStyle: 'dashed',
+    },
+    uploadText: {
+        marginTop: 5,
+        fontSize: 13,
+        color: '#007BFF',
+        textAlign: 'center',
     },
     videoContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: 16,
-        backgroundColor: '#F0FDF4',
+        padding: 12,
+        backgroundColor: '#F5F7FA',
         borderRadius: 12,
-        marginTop: 8,
+        marginTop: 0,
+        marginBottom: 18,
         borderWidth: 1,
-        borderColor: '#BBF7D0',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-        elevation: 2,
+        borderColor: '#007BFF',
     },
     videoInfo: {
         flexDirection: 'row',
         alignItems: 'center',
         flex: 1,
-        gap: 10,
+        marginRight: 12,
+    },
+    successIconContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 10,
+        flexShrink: 0,
+    },
+    videoTextContainer: {
+        flex: 1,
+        justifyContent: 'center',
     },
     videoUrlText: {
-        color: '#166534',
-        fontSize: 14,
-        fontWeight: '500',
-        flex: 1,
+        color: '#007BFF',
+        fontSize: 13,
+        fontWeight: '600',
+        marginBottom: 2,
+    },
+    videoSubtext: {
+        color: '#666',
+        fontSize: 11,
+        fontWeight: '400',
     },
     removeButton: {
         flexDirection: 'row',
@@ -569,12 +652,15 @@ const customStyles = StyleSheet.create({
         paddingVertical: 8,
         borderRadius: 8,
         backgroundColor: '#FEE2E2',
-        gap: 6,
+        borderWidth: 1,
+        borderColor: '#FECACA',
+        gap: 5,
     },
     removeButtonText: {
         color: '#DC2626',
         fontSize: 13,
         fontWeight: '600',
+        letterSpacing: 0.2,
     },
     uploadAreaDisabled: {
         opacity: 0.6,

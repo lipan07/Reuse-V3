@@ -189,6 +189,7 @@ export default StyleSheet.create({
         width: '100%',
         height: normalizeVertical(74),
         alignSelf: 'center',
+        borderStyle: 'dashed',
     },
     uploadText: {
         marginTop: normalize(5),

@@ -360,6 +360,161 @@ class BackblazeService {
             throw error;
         }
     }
+
+    /**
+     * Delete video from Backblaze B2
+     * 
+     * @param {string} fileId - Backblaze file ID
+     * @param {string} fileName - File name (optional, for logging)
+     */
+    async deleteVideo(fileId, fileName = null) {
+        try {
+            if (!fileId) {
+                throw new Error('File ID is required to delete video');
+            }
+
+            // Authorize with Backblaze
+            const { authToken, apiUrl } = await this.authorize();
+
+            // Delete file using Backblaze API
+            const response = await fetch(`${apiUrl}/b2api/v2/b2_delete_file_version`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': authToken,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    fileId: fileId,
+                    fileName: fileName || 'videos/unknown',
+                }),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Backblaze delete error:', errorText);
+                throw new Error(`Failed to delete video from Backblaze: ${errorText}`);
+            }
+
+            const result = await response.json();
+            console.log('Video deleted successfully from Backblaze:', fileName || fileId);
+            
+            return {
+                success: true,
+                fileId: result.fileId,
+                fileName: result.fileName,
+            };
+        } catch (error) {
+            console.error('Backblaze delete error:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Delete video by URL (extracts file ID from URL or uses backend endpoint)
+     * 
+     * @param {string} videoUrl - Full video URL
+     * @param {string} fileId - Optional file ID if available
+     */
+    async deleteVideoByUrl(videoUrl, fileId = null) {
+        try {
+            // If we have fileId, use it directly
+            if (fileId) {
+                // Extract fileName from URL
+                const urlParts = videoUrl.split('/');
+                const fileName = urlParts[urlParts.length - 1] || urlParts[urlParts.length - 2];
+                return await this.deleteVideo(fileId, fileName);
+            }
+
+            // If no fileId, try to delete via backend
+            // Extract file path from URL
+            const urlMatch = videoUrl.match(/\/file\/[^\/]+\/(.+)$/);
+            if (!urlMatch) {
+                throw new Error('Could not extract file path from URL');
+            }
+
+            const filePath = urlMatch[1];
+            
+            // Call backend to delete (backend can handle file lookup)
+            const token = await AsyncStorage.getItem('authToken');
+            if (!token) {
+                throw new Error('Authentication required');
+            }
+
+            const response = await fetch(`${BASE_URL}/backblaze/delete-video`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    filePath: filePath,
+                    videoUrl: videoUrl,
+                }),
+            });
+
+            if (!response.ok) {
+                // Read response body as text first (can only read once)
+                const responseText = await response.text();
+                const contentType = response.headers.get('content-type') || '';
+                let errorMessage = 'Failed to delete video';
+                
+                try {
+                    if (contentType.includes('application/json')) {
+                        // Try to parse as JSON
+                        const errorData = JSON.parse(responseText);
+                        errorMessage = errorData.message || errorData.error || errorMessage;
+                    } else {
+                        // Response is not JSON (likely HTML error page)
+                        console.error('Backend delete video error (non-JSON):', responseText.substring(0, 200));
+                        // Provide user-friendly error message based on status
+                        if (response.status === 404) {
+                            errorMessage = 'Video not found in storage. It may have already been deleted.';
+                        } else if (response.status === 500) {
+                            errorMessage = 'Server error. The video will be deleted when you save the post.';
+                        } else {
+                            errorMessage = `Server error (${response.status}). The video will be deleted when you save the post.`;
+                        }
+                    }
+                } catch (e) {
+                    // If JSON parsing fails, use text or generic message
+                    console.error('Error parsing delete response:', e);
+                    if (response.status === 404) {
+                        errorMessage = 'Video not found in storage. It may have already been deleted.';
+                    } else if (response.status === 500) {
+                        errorMessage = 'Server error. The video will be deleted when you save the post.';
+                    } else {
+                        errorMessage = `Server error (${response.status}). The video will be deleted when you save the post.`;
+                    }
+                }
+                
+                throw new Error(errorMessage);
+            }
+
+            // Response is OK, parse result (using already read responseText)
+            let result;
+            try {
+                if (contentType.includes('application/json')) {
+                    result = JSON.parse(responseText);
+                } else {
+                    // Non-JSON response but status is OK
+                    result = { success: true, message: 'Video deleted successfully' };
+                }
+            } catch (e) {
+                // If parsing fails, assume success since status is OK
+                console.warn('Could not parse delete response, assuming success:', e);
+                result = { success: true, message: 'Video deleted successfully' };
+            }
+            
+            return {
+                success: true,
+                ...result,
+            };
+        } catch (error) {
+            console.error('Error deleting video by URL:', error);
+            throw error;
+        }
+    }
 }
 
 export default new BackblazeService();

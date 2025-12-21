@@ -43,6 +43,8 @@ const AddHousesApartments = ({ route, navigation }) => {
     deletedImages: [],
     videoUrl: null,
     videoId: null,
+    deletedVideoUrl: null,
+    deletedVideoId: null,
     show_phone: false,
     listingType: listingType || 'sell',
   });
@@ -116,7 +118,7 @@ const AddHousesApartments = ({ route, navigation }) => {
               isNew: false,
             })) || [],
             deletedImages: [],
-            videoUrl: productData.video_url || productData.videoUrl || null,
+            videoUrl: productData.videos?.[0] || productData.video_url || productData.videoUrl || null,
             videoId: productData.video_id || productData.videoId || null,
             show_phone: productData.show_phone === true || productData.show_phone === 1 || productData.show_phone === '1',
             listingType: productData.type || 'sell',
@@ -592,7 +594,7 @@ const AddHousesApartments = ({ route, navigation }) => {
             <View style={modernStyles.fieldContainer}>
               <View style={modernStyles.labelContainer}>
                 <Icon name="images-outline" size={normalize(18)} color="#666" style={modernStyles.labelIcon} />
-                <Text style={modernStyles.label}>Photos</Text>
+                <Text style={modernStyles.label}>Upload Images (Optional)</Text>
               </View>
               <ImagePickerComponent
                 formData={formData}
@@ -604,7 +606,7 @@ const AddHousesApartments = ({ route, navigation }) => {
             <View style={modernStyles.fieldContainer}>
               <View style={modernStyles.labelContainer}>
                 <Icon name="videocam-outline" size={normalize(18)} color="#666" style={modernStyles.labelIcon} />
-                <Text style={modernStyles.label}>Video</Text>
+                <Text style={modernStyles.label}>Upload Video (Optional)</Text>
               </View>
               <VideoPickerComponent
                 formData={formData}

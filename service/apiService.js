@@ -6,7 +6,7 @@ export const submitForm = async (formData, subcategory) => {
 
     // Append standard fields
     Object.keys(formData).forEach((key) => {
-        if (!['images', 'deletedImages', 'videoId'].includes(key)) {
+        if (!['images', 'deletedImages', 'videoId', 'deletedVideoUrl', 'deletedVideoId'].includes(key)) {
             formDataToSend.append(key, formData[key]);
         }
     });
@@ -36,6 +36,16 @@ export const submitForm = async (formData, subcategory) => {
         formData.deletedImages.forEach(id =>
             formDataToSend.append('deleted_images[]', id)
         );
+    }
+
+    // Handle deleted video
+    if (formData.deletedVideoUrl || formData.deletedVideoId) {
+        if (formData.deletedVideoUrl) {
+            formDataToSend.append('deleted_video_url', formData.deletedVideoUrl);
+        }
+        if (formData.deletedVideoId) {
+            formDataToSend.append('deleted_video_id', formData.deletedVideoId);
+        }
     }
 
     // Common fields

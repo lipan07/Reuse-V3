@@ -288,7 +288,7 @@ const AddHomeRenovationRepair = ({ route, navigation }) => {
             <View style={modernStyles.fieldContainer}>
               <View style={modernStyles.labelContainer}>
                 <Icon name="images-outline" size={normalize(18)} color="#666" style={modernStyles.labelIcon} />
-                <Text style={modernStyles.label}>Photos</Text>
+                <Text style={modernStyles.label}>Upload Images (Optional)</Text>
               </View>
               <ImagePickerComponent
                 formData={formData}

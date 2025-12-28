@@ -12,7 +12,9 @@ import {
     Dimensions,
     FlatList,
     Share,
-    BackHandler
+    BackHandler,
+    Animated,
+    Easing
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -531,6 +533,38 @@ const ProductDetails = () => {
         });
     };
 
+    // Animated Loader Component - defined inside ProductDetails component
+    const AnimatedLoader = () => {
+        const rotateValue = useRef(new Animated.Value(0)).current;
+
+        useEffect(() => {
+            const rotateAnimation = Animated.loop(
+                Animated.timing(rotateValue, {
+                    toValue: 1,
+                    duration: 2000,
+                    easing: Easing.linear,
+                    useNativeDriver: true,
+                })
+            );
+            rotateAnimation.start();
+            return () => {
+                rotateAnimation.stop();
+                rotateValue.setValue(0);
+            };
+        }, [rotateValue]);
+
+        const rotate = rotateValue.interpolate({
+            inputRange: [0, 1],
+            outputRange: ['0deg', '360deg'],
+        });
+
+        return (
+            <Animated.View style={{ transform: [{ rotate }] }}>
+                <ActivityIndicator size="large" color="#007bff" />
+            </Animated.View>
+        );
+    };
+
     const renderDetails = () => {
         switch (product.category_id) {
             default: return <Others product={product} buyerId={buyerId} />
@@ -664,10 +698,15 @@ const ProductDetails = () => {
                             )}
                             keyExtractor={(item, index) => `${item.type}-${index}`}
                         />
+                    ) : product?.has_video == true ? (
+                        <View style={styles.noImageContainer}>
+                            <AnimatedLoader />
+                            <Text style={styles.videoLoadingText}>Loading...</Text>
+                        </View>
                     ) : (
                         <View style={styles.noImageContainer}>
-                            <Icon name="image-off" size={normalize(24)} color="#ccc" />
-                                <Text style={styles.noImageText}>No media available</Text>
+                                    <Icon name="image-outline" size={normalize(24)} color="#ccc" />
+                                    <Text style={styles.noImageText}>No media available</Text>
                         </View>
                     )}
 

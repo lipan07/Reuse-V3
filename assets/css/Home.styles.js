@@ -259,14 +259,24 @@ export default StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
-  productTag: {
+  tagContainer: {
     position: 'absolute',
     top: 3,
     left: 3,
+    zIndex: 2, // Make sure it appears above the image
+    alignItems: 'flex-start',
+  },
+  productTag: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
-    zIndex: 2, // Make sure it appears above the image
+    marginBottom: 4, // Space for camera icon
+  },
+  cameraIconBelowTag: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: normalize(12),
+    padding: normalize(4),
   },
   rentTag: {
     backgroundColor: 'rgba(76, 175, 79, 0.53)', // Green with 80% opacity
@@ -276,6 +286,9 @@ export default StyleSheet.create({
   },
   pendingTag: {
     backgroundColor: 'rgba(255, 152, 0, 0.7)', // Amber/Orange with 70% opacity
+  },
+  donateTag: {
+    backgroundColor: 'rgba(156, 39, 176, 0.7)', // Purple with 70% opacity
   },
   tagText: {
     color: 'white',

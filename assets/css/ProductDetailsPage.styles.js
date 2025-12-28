@@ -44,6 +44,13 @@ const styles = StyleSheet.create({
         color: '#8E8E93',
         fontSize: normalize(14),
     },
+    videoLoadingText: {
+        marginTop: normalize(12),
+        color: '#007bff',
+        fontSize: normalize(16),
+        fontWeight: '600',
+        textAlign: 'center',
+    },
     imageIndicator: {
         position: 'absolute',
         bottom: normalize(20),

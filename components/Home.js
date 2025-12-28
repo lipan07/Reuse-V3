@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Alert, View, Text, StyleSheet, TouchableOpacity, Image, TextInput, FlatList, ActivityIndicator, DeviceEventEmitter, Animated, RefreshControl, TouchableWithoutFeedback, Keyboard, Dimensions } from 'react-native';
+import { Alert, View, Text, StyleSheet, TouchableOpacity, Image, TextInput, FlatList, ActivityIndicator, DeviceEventEmitter, Animated, Easing, RefreshControl, TouchableWithoutFeedback, Keyboard, Dimensions } from 'react-native';
 import Swiper from 'react-native-swiper';
 import CategoryMenu from './CategoryMenu';
 import BottomNavBar from './BottomNavBar';
@@ -425,8 +425,45 @@ const Home = () => {
     }
   }, [userLocation, products]);
 
+  // Animated Play Icon Component - defined inside Home component
+  const AnimatedPlayIcon = ({ size, color }) => {
+    const scale = useRef(new Animated.Value(1)).current;
+
+    useEffect(() => {
+      const pulseAnimation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(scale, {
+            toValue: 1.15,
+            duration: 1200,
+            easing: Easing.out(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(scale, {
+            toValue: 1,
+            duration: 1200,
+            easing: Easing.in(Easing.ease),
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      pulseAnimation.start();
+      return () => {
+        pulseAnimation.stop();
+        scale.setValue(1);
+      };
+    }, [scale]);
+
+    return (
+      <Animated.View style={{ transform: [{ scale }] }}>
+        <Icon name="play-circle-filled" size={size} color={color} style={{ marginBottom: normalize(10) }} />
+      </Animated.View>
+    );
+  };
+
   const renderProductItem = ({ item }) => {
     const distance = productDistances[item.id];
+    // Check if product has videos
+    const hasVideos = (item.has_video == true);
 
     return (
       <TouchableOpacity
@@ -435,21 +472,33 @@ const Home = () => {
       >
         <View style={styles.imageContainer}>
           {/* Add the tag container here */}
-          <View style={[
-            styles.productTag,
-            item.status === 'pending'
-              ? styles.pendingTag
-              : item.type === 'rent'
-                ? styles.rentTag
-                : styles.sellTag
-          ]}>
-            <Text style={styles.tagText}>
-              {item.status === 'pending'
-                ? 'Pending'
+          <View style={styles.tagContainer}>
+            <View style={[
+              styles.productTag,
+              item.status === 'pending'
+                ? styles.pendingTag
                 : item.type === 'rent'
-                  ? 'Rent'
-                  : 'Sell'}
-            </Text>
+                  ? styles.rentTag
+                  : item.type === 'donate'
+                    ? styles.donateTag
+                    : styles.sellTag
+            ]}>
+              <Text style={styles.tagText}>
+                {item.status === 'pending'
+                  ? 'Pending'
+                  : item.type === 'rent'
+                    ? 'Rent'
+                    : item.type === 'donate'
+                      ? 'Donate'
+                      : 'Sell'}
+              </Text>
+            </View>
+            {/* Camera icon below tag if video exists */}
+            {hasVideos && (
+              <View style={styles.cameraIconBelowTag}>
+                <Icon name="videocam" size={normalize(16)} color="#FF0000" />
+              </View>
+            )}
           </View>
 
           {/* Distance badge */}
@@ -469,15 +518,15 @@ const Home = () => {
                   style={styles.productImage}
                 />
               ))
-            ) : item.videos && item.videos.length > 0 ? (
-              <View style={styles.videoPlaceholderContainer}>
-                <View style={styles.videoIndicator}>
-                  <Icon name="videocam" size={normalize(40)} color="#FFFFFF" />
-                  <Text style={styles.videoIndicatorText}>Video Available</Text>
-                </View>
-              </View>
             ) : (
               <View style={styles.placeholderContainer}>
+                  {/* Show play icon if video available, otherwise show image icon */}
+                  {hasVideos ? (
+                    <AnimatedPlayIcon size={normalize(35)} color="rgba(0, 123, 255, 0.3)" />
+                  ) : (
+                    <Icon name="image" size={normalize(50)} color="#ccc" style={{ marginBottom: normalize(10) }} />
+                  )}
+                  {/* Category text below icon */}
                 <Text style={styles.placeholderText}>
                   {item.category?.name || 'No image available'}
                 </Text>

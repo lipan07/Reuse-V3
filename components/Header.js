@@ -7,11 +7,15 @@ import {
    Platform,
    StatusBar,
    TouchableOpacity,
-   Dimensions
+   Dimensions,
+   Alert,
+   Linking,
+   PermissionsAndroid
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Geolocation from '@react-native-community/geolocation';
 
 const { width, height } = Dimensions.get('window');
 const scale = width / 375;
@@ -36,6 +40,150 @@ const Header = () => {
       }
    };
 
+   // Request location permission
+   const requestLocationPermission = async () => {
+      if (Platform.OS !== 'android') {
+         // iOS handles permissions automatically
+         return true;
+      }
+
+      try {
+         const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+            {
+               title: 'Location Permission',
+               message: 'This app needs access to your location to show nearby products.',
+               buttonNeutral: 'Ask Me Later',
+               buttonNegative: 'Cancel',
+               buttonPositive: 'OK',
+            }
+         );
+         return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch (err) {
+         console.warn('Permission request error:', err);
+         return false;
+      }
+   };
+
+   // Get current device location
+   const getCurrentLocation = () => {
+      return new Promise((resolve, reject) => {
+         Geolocation.getCurrentPosition(
+            (position) => {
+               resolve({
+                  latitude: position.coords.latitude,
+                  longitude: position.coords.longitude,
+               });
+            },
+            (error) => {
+               console.error('Error getting location:', error);
+               reject(error);
+            },
+            {
+               enableHighAccuracy: true,
+               timeout: 15000,
+               maximumAge: 10000,
+            }
+         );
+      });
+   };
+
+   // Reverse geocode to get address from coordinates
+   const getAddressFromCoordinates = async (latitude, longitude) => {
+      try {
+         const API_KEY = process.env.GOOGLE_MAP_API_KEY;
+         const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${API_KEY}`;
+
+         const response = await fetch(url);
+         const data = await response.json();
+
+         if (data.status === 'OK' && data.results.length > 0) {
+            return data.results[0].formatted_address;
+         }
+         return `Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)}`;
+      } catch (error) {
+         console.error('Error reverse geocoding:', error);
+         return `Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)}`;
+      }
+   };
+
+   // Handle location container press
+   const handleLocationPress = async () => {
+      // First check if we have saved location
+      const savedLocation = await AsyncStorage.getItem('defaultLocation');
+
+      if (savedLocation) {
+         // If location exists, navigate to LocationPicker
+         navigation.navigate('LocationPicker');
+         return;
+      }
+
+      // If no saved location, request permission and get current location
+      if (Platform.OS === 'android') {
+         const hasPermission = await requestLocationPermission();
+
+         if (!hasPermission) {
+            Alert.alert(
+               'Permission Required',
+               'Location permission is required to get your current location. Please grant permission in your device settings.',
+               [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                     text: 'Open Settings',
+                     onPress: () => {
+                        Linking.openSettings();
+                     }
+                  },
+                  {
+                     text: 'Pick Manually',
+                     onPress: () => {
+                        navigation.navigate('LocationPicker');
+                     }
+                  }
+               ]
+            );
+            return;
+         }
+      }
+
+      // Get current location
+      try {
+         const location = await getCurrentLocation();
+         const address = await getAddressFromCoordinates(location.latitude, location.longitude);
+
+         // Save location to AsyncStorage
+         const locationData = {
+            latitude: location.latitude.toString(),
+            longitude: location.longitude.toString(),
+            address: address,
+         };
+
+         await AsyncStorage.setItem('defaultLocation', JSON.stringify(locationData));
+         setAddress(address);
+
+         Alert.alert(
+            'Location Saved',
+            'Your location has been saved successfully!',
+            [{ text: 'OK' }]
+         );
+      } catch (error) {
+         console.error('Error getting location:', error);
+         Alert.alert(
+            'Location Error',
+            'Failed to get your current location. Would you like to pick a location manually?',
+            [
+               { text: 'Cancel', style: 'cancel' },
+               {
+                  text: 'Pick Manually',
+                  onPress: () => {
+                     navigation.navigate('LocationPicker');
+                  }
+               }
+            ]
+         );
+      }
+   };
+
    // Fetch address from AsyncStorage
    useEffect(() => {
       const fetchAddress = async () => {
@@ -55,6 +203,27 @@ const Header = () => {
 
       fetchAddress();
    }, []);
+
+   // Refresh address when screen is focused
+   useFocusEffect(
+      React.useCallback(() => {
+         const fetchAddress = async () => {
+            try {
+               const savedLocation = await AsyncStorage.getItem('defaultLocation');
+               if (savedLocation) {
+                  const parsed = JSON.parse(savedLocation);
+                  setAddress(parsed.address || "Set Location");
+               } else {
+                  setAddress("Set Location");
+               }
+            } catch (error) {
+               console.error('Failed to load saved location:', error);
+               setAddress("Set Location");
+            }
+         };
+         fetchAddress();
+      }, [])
+   );
 
 
    return (
@@ -92,7 +261,7 @@ const Header = () => {
                <View style={styles.rightIcons}>
                   <TouchableOpacity
                      style={styles.locationContainer}
-                     onPress={() => navigation.navigate('LocationPicker')}
+                     onPress={handleLocationPress}
                   >
                      {/* Down arrow icon before address */}
                      <Ionicons

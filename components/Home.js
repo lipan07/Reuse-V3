@@ -494,7 +494,7 @@ const Home = () => {
               </Text>
             </View>
             {/* Camera icon below tag if video exists */}
-            {hasVideos && (
+            {hasVideos && !item.images?.length == 0 && (
               <View style={styles.cameraIconBelowTag}>
                 <Icon name="videocam" size={normalize(16)} color="#FF0000" />
               </View>
@@ -522,7 +522,7 @@ const Home = () => {
               <View style={styles.placeholderContainer}>
                   {/* Show play icon if video available, otherwise show image icon */}
                   {hasVideos ? (
-                    <AnimatedPlayIcon size={normalize(35)} color="rgba(0, 123, 255, 0.3)" />
+                    <AnimatedPlayIcon size={normalize(35)} color="rgba(76, 175, 79, 0.81)" />
                   ) : (
                     <Icon name="image" size={normalize(50)} color="#ccc" style={{ marginBottom: normalize(10) }} />
                   )}

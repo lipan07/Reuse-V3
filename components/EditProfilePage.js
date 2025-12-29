@@ -12,7 +12,10 @@ import {
   ActivityIndicator,
   Dimensions,
   Modal,
-  TouchableWithoutFeedback
+  TouchableWithoutFeedback,
+  Linking,
+  Alert,
+  PermissionsAndroid
 } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -108,7 +111,68 @@ const EditProfilePage = () => {
     setUserData({ ...userData, [field]: value });
   };
 
+  const requestStoragePermission = async () => {
+    if (Platform.OS !== 'android') {
+      return true; // iOS handles permissions automatically
+    }
+
+    try {
+      // For Android 13+ (API 33+), use READ_MEDIA_IMAGES
+      if (Platform.Version >= 33) {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+          {
+            title: 'Storage Permission',
+            message: 'This app needs access to your photos to upload images.',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          }
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } else {
+        // For Android 12 and below, use READ_EXTERNAL_STORAGE
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+          {
+            title: 'Storage Permission',
+            message: 'This app needs access to your storage to upload images.',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          }
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      }
+    } catch (err) {
+      console.warn('Permission request error:', err);
+      return false;
+    }
+  };
+
   const handleChooseImage = async () => {
+    // Request storage permissions before opening image picker (Android only)
+    if (Platform.OS === 'android') {
+      const hasPermission = await requestStoragePermission();
+
+      if (!hasPermission) {
+        Alert.alert(
+          'Permission Required',
+          'Storage permission is required to select images. Please grant permission in your device settings.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Open Settings',
+              onPress: () => {
+                Linking.openSettings();
+              }
+            }
+          ]
+        );
+        return;
+      }
+    }
+
     const options = {
       mediaType: 'photo',
       maxWidth: 300,

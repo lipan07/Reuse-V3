@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Alert, ActivityIndicator, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, ActivityIndicator, StyleSheet, Platform, Linking, PermissionsAndroid } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -22,6 +22,45 @@ const VideoPickerComponent = ({ formData, setFormData, propertyTitle = '', onUpl
         }
     }, [isUploading, isCompressing, onUploadStateChange]);
 
+    const requestStoragePermission = async () => {
+        if (Platform.OS !== 'android') {
+            return true; // iOS handles permissions automatically
+        }
+
+        try {
+            // For Android 13+ (API 33+), use READ_MEDIA_VIDEO
+            if (Platform.Version >= 33) {
+                const granted = await PermissionsAndroid.request(
+                    PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
+                    {
+                        title: 'Storage Permission',
+                        message: 'This app needs access to your videos to upload them.',
+                        buttonNeutral: 'Ask Me Later',
+                        buttonNegative: 'Cancel',
+                        buttonPositive: 'OK',
+                    }
+                );
+                return granted === PermissionsAndroid.RESULTS.GRANTED;
+            } else {
+                // For Android 12 and below, use READ_EXTERNAL_STORAGE
+                const granted = await PermissionsAndroid.request(
+                    PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+                    {
+                        title: 'Storage Permission',
+                        message: 'This app needs access to your storage to upload videos.',
+                        buttonNeutral: 'Ask Me Later',
+                        buttonNegative: 'Cancel',
+                        buttonPositive: 'OK',
+                    }
+                );
+                return granted === PermissionsAndroid.RESULTS.GRANTED;
+            }
+        } catch (err) {
+            console.warn('Permission request error:', err);
+            return false;
+        }
+    };
+
     const handleVideoPick = async () => {
         // Check if already has a video
         if (formData.videoUrl) {
@@ -35,6 +74,35 @@ const VideoPickerComponent = ({ formData, setFormData, propertyTitle = '', onUpl
                 );
             }
             return;
+        }
+
+        // Request storage permissions before opening video picker (Android only)
+        if (Platform.OS === 'android') {
+            const hasPermission = await requestStoragePermission();
+
+            if (!hasPermission) {
+                const alertTitle = 'Permission Required';
+                const alertMessage = 'Storage permission is required to select videos. Please grant permission in your device settings.';
+
+                if (onShowAlert) {
+                    onShowAlert('error', alertTitle, alertMessage);
+                } else {
+                    Alert.alert(
+                        alertTitle,
+                        alertMessage,
+                        [
+                            { text: 'Cancel', style: 'cancel' },
+                            {
+                                text: 'Open Settings',
+                                onPress: () => {
+                                    Linking.openSettings();
+                                }
+                            }
+                        ]
+                    );
+                }
+                return;
+            }
         }
 
         const options = {

@@ -107,81 +107,11 @@ const Header = () => {
       }
    };
 
-   // Handle location container press
+   // Handle location container press - Navigate immediately, let LocationPicker handle location
    const handleLocationPress = async () => {
-      // First check if we have saved location
-      const savedLocation = await AsyncStorage.getItem('defaultLocation');
-
-      if (savedLocation) {
-         // If location exists, navigate to LocationPicker
-         navigation.navigate('LocationPicker');
-         return;
-      }
-
-      // If no saved location, request permission and get current location
-      if (Platform.OS === 'android') {
-         const hasPermission = await requestLocationPermission();
-
-         if (!hasPermission) {
-            Alert.alert(
-               'Permission Required',
-               'Location permission is required to get your current location. Please grant permission in your device settings.',
-               [
-                  { text: 'Cancel', style: 'cancel' },
-                  {
-                     text: 'Open Settings',
-                     onPress: () => {
-                        Linking.openSettings();
-                     }
-                  },
-                  {
-                     text: 'Pick Manually',
-                     onPress: () => {
-                        navigation.navigate('LocationPicker');
-                     }
-                  }
-               ]
-            );
-            return;
-         }
-      }
-
-      // Get current location
-      try {
-         const location = await getCurrentLocation();
-         const address = await getAddressFromCoordinates(location.latitude, location.longitude);
-
-         // Save location to AsyncStorage
-         const locationData = {
-            latitude: location.latitude.toString(),
-            longitude: location.longitude.toString(),
-            address: address,
-         };
-
-         await AsyncStorage.setItem('defaultLocation', JSON.stringify(locationData));
-         setAddress(address);
-
-         Alert.alert(
-            'Location Saved',
-            'Your location has been saved successfully!',
-            [{ text: 'OK' }]
-         );
-      } catch (error) {
-         console.error('Error getting location:', error);
-         Alert.alert(
-            'Location Error',
-            'Failed to get your current location. Would you like to pick a location manually?',
-            [
-               { text: 'Cancel', style: 'cancel' },
-               {
-                  text: 'Pick Manually',
-                  onPress: () => {
-                     navigation.navigate('LocationPicker');
-                  }
-               }
-            ]
-         );
-      }
+      // Navigate immediately to LocationPicker
+      // LocationPicker will handle checking saved location and requesting device location
+      navigation.navigate('LocationPicker');
    };
 
    // Fetch address from AsyncStorage
@@ -255,7 +185,7 @@ const Header = () => {
                         <Text style={styles.appNameFirstLetter}>n</Text>
                         <Text style={styles.appNameRest}>earX</Text>
                      </View>
-                     <Text style={styles.appSubName}>BHARAT</Text>
+                     <Text style={styles.appSubName}>International</Text>
                   </View>
                </View>
                <View style={styles.rightIcons}>

@@ -10,7 +10,11 @@ import {
     FlatList,
     ActivityIndicator,
     Dimensions,
-    StatusBar
+    StatusBar,
+    Alert,
+    Linking,
+    PermissionsAndroid,
+    Keyboard
 } from 'react-native';
 import 'react-native-get-random-values';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -19,6 +23,7 @@ import { AlertNotificationRoot } from 'react-native-alert-notification';
 import ModalScreen from '../components/SupportElement/ModalScreen';
 import CustomStatusBar from './Screens/CustomStatusBar';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Geolocation from '@react-native-community/geolocation';
 
 const { width, height } = Dimensions.get('window');
 const scale = width / 375;
@@ -39,26 +44,381 @@ const LocationPicker = ({ navigation }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [predictions, setPredictions] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [loadingMessage, setLoadingMessage] = useState('');
     const [mapReady, setMapReady] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+    const [permissionRequested, setPermissionRequested] = useState(false);
     const skipNextApiCallRef = useRef(false);
+    const isUserTypingRef = useRef(false); // Track if user is typing vs programmatic update
     const mapRef = useRef(null);
 
     const API_KEY = process.env.GOOGLE_MAP_API_KEY || 'your_fallback_key';
     const DEBOUNCE_TIME = 300;
 
+    // Initialize Geolocation on component mount
+    useEffect(() => {
+        console.log('LocationPicker component initialized');
+    }, []);
+
+    // Check if location permission is granted
+    const checkLocationPermission = async () => {
+        if (Platform.OS === 'android') {
+            try {
+                const granted = await PermissionsAndroid.check(
+                    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+                );
+                return granted;
+            } catch (err) {
+                console.warn('Permission check error:', err);
+                return false;
+            }
+        } else {
+            // For iOS, we'll check by trying to get location
+            // iOS permission status is checked automatically by Geolocation
+            return true;
+        }
+    };
+
+    // Request location permission
+    const requestLocationPermission = async () => {
+        if (Platform.OS === 'android') {
+            try {
+                // First check if permission is already granted
+                const hasPermission = await checkLocationPermission();
+                if (hasPermission) {
+                    return true;
+                }
+
+                // Request permission
+                const granted = await PermissionsAndroid.request(
+                    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+                    {
+                        title: 'Location Permission',
+                        message: 'This app needs access to your location to show your current location on the map.',
+                        buttonNeutral: 'Ask Me Later',
+                        buttonNegative: 'Cancel',
+                        buttonPositive: 'OK',
+                    }
+                );
+
+                const isGranted = granted === PermissionsAndroid.RESULTS.GRANTED;
+                console.log('Android permission result:', granted, 'Granted:', isGranted);
+                return isGranted;
+            } catch (err) {
+                console.warn('Permission request error:', err);
+                return false;
+            }
+        } else {
+            // iOS - request authorization explicitly
+            try {
+                await Geolocation.requestAuthorization();
+                console.log('iOS location authorization requested');
+                // Small delay to ensure permission dialog is processed
+                await new Promise(resolve => setTimeout(resolve, 300));
+                return true;
+            } catch (err) {
+                console.warn('iOS permission request error:', err);
+                return false;
+            }
+        }
+    };
+
+    // Get current device location with better error handling and retry logic
+    const getCurrentLocation = () => {
+        return new Promise((resolve, reject) => {
+            console.log('Attempting to get current location...');
+
+            // Configure Geolocation options for better real device support
+            // Using less strict options for better compatibility
+            const options = {
+                enableHighAccuracy: false, // Changed to false for faster response on some devices
+                timeout: 30000, // Increased timeout to 30 seconds
+                maximumAge: 60000, // Accept location up to 1 minute old (faster response)
+                distanceFilter: 10, // Small filter to reduce unnecessary updates
+            };
+
+            let attempts = 0;
+            const maxAttempts = 2;
+
+            const tryGetLocation = () => {
+                attempts++;
+                console.log(`Location attempt ${attempts}/${maxAttempts}...`);
+
+                Geolocation.getCurrentPosition(
+                    (position) => {
+                        console.log('Location received:', {
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                            accuracy: position.coords.accuracy,
+                        });
+                        resolve({
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                        });
+                    },
+                    (error) => {
+                        console.error(`Geolocation error (attempt ${attempts}):`, {
+                            code: error.code,
+                            message: error.message,
+                        });
+
+                        // Retry once with high accuracy if first attempt fails
+                        if (attempts < maxAttempts && error.code !== 1) {
+                            console.log('Retrying with high accuracy...');
+                            const retryOptions = {
+                                enableHighAccuracy: true,
+                                timeout: 30000,
+                                maximumAge: 0,
+                                distanceFilter: 0,
+                            };
+                            setTimeout(() => {
+                                Geolocation.getCurrentPosition(
+                                    (position) => {
+                                        console.log('Location received on retry:', {
+                                            latitude: position.coords.latitude,
+                                            longitude: position.coords.longitude,
+                                        });
+                                        resolve({
+                                            latitude: position.coords.latitude,
+                                            longitude: position.coords.longitude,
+                                        });
+                                    },
+                                    (retryError) => {
+                                        console.error('Retry also failed:', retryError);
+                                        reject(retryError);
+                                    },
+                                    retryOptions
+                                );
+                            }, 1000);
+                        } else {
+                            reject(error);
+                        }
+                    },
+                    options
+                );
+            };
+
+            tryGetLocation();
+        });
+    };
+
+    // Unified function to handle device location: request permission, get location, get address, update all states and AsyncStorage
+    const handleDeviceLocation = async (showAlertOnDenial = true) => {
+        console.log('Starting device location request...');
+
+        try {
+            // Request permission for both Android and iOS
+            setIsLoading(true);
+            setLoadingMessage('Requesting location permission...');
+            const hasPermission = await requestLocationPermission();
+
+            if (!hasPermission) {
+                // User denied permission
+                setIsLoading(false);
+                setLoadingMessage('');
+                console.log('Location permission denied by user');
+                if (showAlertOnDenial) {
+                    Alert.alert(
+                        'Location Permission',
+                        'Location permission was denied. You can still search and select a location manually.',
+                        [
+                            {
+                                text: 'OK',
+                                style: 'default',
+                            },
+                        ],
+                        { cancelable: true }
+                    );
+                }
+                return false;
+            }
+            console.log('Location permission granted');
+
+            // Small delay to ensure permission is fully processed (especially for iOS)
+            setLoadingMessage('Permission granted. Getting your location...');
+            await new Promise(resolve => setTimeout(resolve, Platform.OS === 'ios' ? 1000 : 500));
+
+            // Get current location
+            setLoadingMessage('Finding your current location...');
+            console.log('Fetching current location...');
+
+            const currentLocation = await getCurrentLocation();
+
+            if (!currentLocation || !currentLocation.latitude || !currentLocation.longitude) {
+                throw new Error('Invalid location data received');
+            }
+
+            console.log('Current device location received:', currentLocation);
+
+            // Get address from Google Places API, fallback to Geocoding API
+            setLoadingMessage('Getting address for your location...');
+            console.log('Getting address from Google Places API...');
+            let address = await reverseGeocode(
+                currentLocation.latitude,
+                currentLocation.longitude,
+                false
+            );
+
+            // If address not found, use lat/long as fallback
+            const displayText = address || `${currentLocation.latitude.toFixed(6)}, ${currentLocation.longitude.toFixed(6)}`;
+            console.log('Address/Coordinates:', displayText);
+
+            // Create location object
+            const newLocation = {
+                latitude: currentLocation.latitude,
+                longitude: currentLocation.longitude,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+                addressText: address || displayText,
+            };
+
+            // Update all states
+            setLocation(newLocation);
+            skipNextApiCallRef.current = true; // Skip autocomplete API call
+            isUserTypingRef.current = false; // Not user typing
+            setSearchQuery(displayText);
+            setPredictions([]);
+
+            // Save to AsyncStorage
+            const locationData = {
+                address: address || displayText,
+                latitude: currentLocation.latitude,
+                longitude: currentLocation.longitude
+            };
+
+            await AsyncStorage.setItem('defaultLocation', JSON.stringify(locationData));
+            await AsyncStorage.setItem('defaultAddress', JSON.stringify(newLocation));
+
+            console.log('Location saved to AsyncStorage:', locationData);
+            console.log('All states updated with device location');
+
+            // Animate map to current location
+            setLoadingMessage('Updating map...');
+            if (mapRef.current) {
+                setTimeout(() => {
+                    if (mapRef.current) {
+                        mapRef.current.animateToRegion(newLocation, 1000);
+                        console.log('Map animated to device location');
+                    }
+                }, 500);
+            }
+
+            setIsLoading(false);
+            setLoadingMessage('');
+            return true;
+        } catch (error) {
+            console.error('Error getting device location:', error);
+            setIsLoading(false);
+            setLoadingMessage('');
+
+            // Handle different error types
+            if (error.code === 1) {
+                // Permission denied (iOS)
+                console.log('iOS permission denied');
+                if (showAlertOnDenial) {
+                    Alert.alert(
+                        'Location Permission',
+                        'Location permission was denied. You can still search and select a location manually.',
+                        [
+                            {
+                                text: 'OK',
+                                style: 'default',
+                            },
+                        ],
+                        { cancelable: true }
+                    );
+                }
+            } else if (error.code === 2) {
+                // Position unavailable
+                console.warn('Position unavailable - GPS might be disabled');
+                if (showAlertOnDenial) {
+                    Alert.alert(
+                        'Location Unavailable',
+                        'Unable to get your current location. This might be because:\n\n• GPS is disabled\n• Location services are turned off\n• You are indoors or in an area with poor GPS signal\n\nPlease try again or search for a location manually.',
+                        [
+                            {
+                                text: 'Try Again',
+                                onPress: () => {
+                                    setPermissionRequested(false);
+                                    handleDeviceLocation(true);
+                                },
+                            },
+                            {
+                                text: 'Search Manually',
+                                style: 'cancel',
+                            },
+                        ],
+                        { cancelable: true }
+                    );
+                }
+            } else if (error.code === 3) {
+                // Timeout
+                console.warn('Location request timeout');
+                if (showAlertOnDenial) {
+                    Alert.alert(
+                        'Location Timeout',
+                        'Getting your location is taking longer than expected. This might be because:\n\n• GPS signal is weak\n• You are indoors or in an area with poor signal\n• Location services need more time\n\nWould you like to try again?',
+                        [
+                            {
+                                text: 'Try Again',
+                                onPress: () => {
+                                    setPermissionRequested(false);
+                                    handleDeviceLocation(true);
+                                },
+                            },
+                            {
+                                text: 'Search Manually',
+                                style: 'cancel',
+                            },
+                        ],
+                        { cancelable: true }
+                    );
+                }
+            } else {
+                // Other errors
+                console.warn('Unknown location error:', error);
+                if (showAlertOnDenial) {
+                    Alert.alert(
+                        'Location Error',
+                        'Unable to get your current location. Please try again or search for a location manually.',
+                        [
+                            {
+                                text: 'Try Again',
+                                onPress: () => {
+                                    setPermissionRequested(false);
+                                    handleDeviceLocation(true);
+                                },
+                            },
+                            {
+                                text: 'Search Manually',
+                                style: 'cancel',
+                            },
+                        ],
+                        { cancelable: true }
+                    );
+                }
+            }
+            return false;
+        }
+    };
+
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
+            // Skip API call if it's a programmatic update (not user typing)
             if (skipNextApiCallRef.current) {
                 skipNextApiCallRef.current = false;
                 return;
             }
 
-            if (searchQuery.length >= 3) {
+            // Only fetch predictions if user is actively typing (not when setting from saved/device location)
+            if (isUserTypingRef.current && searchQuery.length >= 3) {
                 fetchPredictions(searchQuery);
             } else {
-                setPredictions([]);
+                // Clear predictions if not user typing or query is too short
+                if (!isUserTypingRef.current || searchQuery.length < 3) {
+                    setPredictions([]);
+                }
             }
         }, DEBOUNCE_TIME);
 
@@ -68,7 +428,8 @@ const LocationPicker = ({ navigation }) => {
     const fetchPredictions = async (text) => {
         setIsLoading(true);
         try {
-            const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(text)}&key=${API_KEY}&components=country:in`;
+            // const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(text)}&key=${API_KEY}&components=country:in`;
+            const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(text)}&key=${API_KEY}`;
             const response = await fetch(url);
             const json = await response.json();
 
@@ -88,6 +449,9 @@ const LocationPicker = ({ navigation }) => {
     };
 
     const handlePlaceSelect = async (placeId) => {
+        // Hide keyboard when user selects an address
+        Keyboard.dismiss();
+
         try {
             setIsLoading(true);
             const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&key=${API_KEY}`;
@@ -98,7 +462,8 @@ const LocationPicker = ({ navigation }) => {
                 const { lat, lng } = json.result.geometry.location;
                 const addressText = json.result.formatted_address || '';
 
-                skipNextApiCallRef.current = true;
+                skipNextApiCallRef.current = true; // Skip autocomplete API call
+                isUserTypingRef.current = false; // Not user typing
                 setSearchQuery(addressText);
 
                 const newLocation = {
@@ -145,22 +510,69 @@ const LocationPicker = ({ navigation }) => {
         }
     };
 
-    const reverseGeocode = async (lat, lng) => {
+    // Get address from Google Places Nearby Search (preferred for better place names)
+    const getAddressFromPlaces = async (lat, lng) => {
         try {
-            const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${API_KEY}`;
-            const response = await fetch(url);
-            const json = await response.json();
+            // First try to find nearby place using Places Nearby Search
+            const nearbyUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=50&key=${API_KEY}`;
+            const nearbyResponse = await fetch(nearbyUrl);
+            const nearbyJson = await nearbyResponse.json();
 
-            if (json.status === 'OK' && json.results.length > 0) {
-                const address = json.results[0].formatted_address;
-                setSearchQuery(address);
-                setLocation(prev => ({
-                    ...prev,
-                    addressText: address
-                }));
+            if (nearbyJson.status === 'OK' && nearbyJson.results.length > 0) {
+                const place = nearbyJson.results[0];
+                // Get place details for formatted address
+                if (place.place_id) {
+                    const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=formatted_address,name&key=${API_KEY}`;
+                    const detailsResponse = await fetch(detailsUrl);
+                    const detailsJson = await detailsResponse.json();
+
+                    if (detailsJson.result?.formatted_address) {
+                        return detailsJson.result.formatted_address;
+                    }
+                }
             }
+            return null;
+        } catch (error) {
+            console.error('Places API error:', error);
+            return null;
+        }
+    };
+
+    const reverseGeocode = async (lat, lng, updateState = true) => {
+        try {
+            // First try to get address from Places API for better place names
+            let address = await getAddressFromPlaces(lat, lng);
+
+            // Fall back to Geocoding API if Places API doesn't return a result
+            if (!address) {
+                const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${API_KEY}`;
+                const response = await fetch(url);
+                const json = await response.json();
+
+                if (json.status === 'OK' && json.results.length > 0) {
+                    address = json.results[0].formatted_address;
+                }
+            }
+
+            // If address found, return it
+            if (address) {
+                if (updateState) {
+                    skipNextApiCallRef.current = true; // Skip autocomplete API call
+                    isUserTypingRef.current = false; // Not user typing
+                    setSearchQuery(address);
+                    setLocation(prev => ({
+                        ...prev,
+                        addressText: address
+                    }));
+                }
+                return address;
+            }
+
+            // If no address found, return null (caller will use lat/long)
+            return null;
         } catch (error) {
             console.error('Reverse geocoding error:', error);
+            return null;
         }
     };
 
@@ -209,6 +621,8 @@ const LocationPicker = ({ navigation }) => {
                     };
 
                     setLocation(savedLocation);
+                    skipNextApiCallRef.current = true; // Skip autocomplete API call
+                    isUserTypingRef.current = false; // Not user typing
                     setSearchQuery(parsed.address || 'Selected Location');
 
                     console.log('Setting location to saved location:', savedLocation);
@@ -229,7 +643,30 @@ const LocationPicker = ({ navigation }) => {
     };
 
     useEffect(() => {
-        loadSavedLocation();
+        // Initialize location when component loads
+        const initializeLocation = async () => {
+            console.log('LocationPicker component mounted, initializing location...');
+
+            // Wait for component to be fully mounted and map ready
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Check if user has saved location
+            const saved = await AsyncStorage.getItem('defaultLocation');
+            console.log('Saved location check:', saved ? 'Found' : 'Not found');
+
+            if (saved) {
+                // User has saved location - load it
+                console.log('Loading saved location...');
+                await loadSavedLocation();
+            } else {
+                // User doesn't have saved location (first time) - automatically ask for device location
+                console.log('No saved location found - requesting device location automatically...');
+                setPermissionRequested(true);
+                await handleDeviceLocation(true);
+            }
+        };
+
+        initializeLocation();
     }, []);
 
     // Center map to location when map is ready
@@ -270,6 +707,7 @@ const LocationPicker = ({ navigation }) => {
                     ref={mapRef}
                     style={styles.map}
                     initialRegion={location}
+                    region={location}
                     customMapStyle={mapStyle}
                     onMapReady={() => {
                         console.log('Map is ready');
@@ -326,14 +764,20 @@ const LocationPicker = ({ navigation }) => {
                             placeholderTextColor="#999"
                             value={searchQuery}
                             onChangeText={(text) => {
+                                // Mark as user typing to enable autocomplete
+                                isUserTypingRef.current = true;
                                 setSearchQuery(text);
-                                if (predictions.length > 0) setPredictions([]);
+                                // Clear predictions if user clears the input
+                                if (text.length === 0) {
+                                    setPredictions([]);
+                                }
                             }}
                             returnKeyType="search"
                         />
                         {searchQuery.length > 0 && (
                             <TouchableOpacity
                                 onPress={() => {
+                                    isUserTypingRef.current = false; // Reset typing flag
                                     setSearchQuery('');
                                     setPredictions([]);
                                 }}
@@ -343,6 +787,25 @@ const LocationPicker = ({ navigation }) => {
                             </TouchableOpacity>
                         )}
                     </View>
+
+                    {/* Use Current Location Button */}
+                    <TouchableOpacity
+                        style={styles.currentLocationButton}
+                        onPress={async () => {
+                            setPermissionRequested(false); // Reset to allow new request
+                            await handleDeviceLocation(true);
+                        }}
+                        disabled={isLoading}
+                    >
+                        <Icon
+                            name="crosshairs-gps"
+                            size={normalize(18)}
+                            color={isLoading ? "#999" : "#007AFF"}
+                        />
+                        <Text style={[styles.currentLocationText, isLoading && styles.currentLocationTextDisabled]}>
+                            {isLoading ? 'Getting Location...' : 'Use Current Location'}
+                        </Text>
+                    </TouchableOpacity>
 
                     {isLoading && (
                         <View style={styles.loaderContainer}>
@@ -400,6 +863,21 @@ const LocationPicker = ({ navigation }) => {
                         <Text style={styles.confirmButtonText}>Confirm Location</Text>
                     </TouchableOpacity>
                 </View>
+
+                {/* Loading Overlay */}
+                {isLoading && (
+                    <View style={styles.loadingOverlay}>
+                        <View style={styles.loadingContainer}>
+                            <ActivityIndicator size="large" color="#007AFF" />
+                            <Text style={styles.loadingText}>
+                                {loadingMessage || 'Getting your location...'}
+                            </Text>
+                            <Text style={styles.loadingSubtext}>
+                                This may take a few seconds
+                            </Text>
+                        </View>
+                    </View>
+                )}
 
                 <ModalScreen
                     visible={showErrorModal}
@@ -484,6 +962,32 @@ const styles = StyleSheet.create({
         padding: normalize(4),
         marginLeft: normalize(8),
     },
+    currentLocationButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#fff',
+        borderRadius: normalize(12),
+        paddingVertical: normalizeVertical(10),
+        paddingHorizontal: normalize(16),
+        marginTop: normalizeVertical(8),
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.06,
+        shadowRadius: 4,
+        elevation: 2,
+        borderWidth: 1,
+        borderColor: '#e8e8e8',
+    },
+    currentLocationText: {
+        fontSize: normalize(14),
+        fontWeight: '500',
+        color: '#007AFF',
+        marginLeft: normalize(8),
+    },
+    currentLocationTextDisabled: {
+        color: '#999',
+    },
     loaderContainer: {
         position: 'absolute',
         right: normalize(16),
@@ -491,7 +995,7 @@ const styles = StyleSheet.create({
     },
     predictionsContainer: {
         position: 'absolute',
-        top: Platform.OS === 'ios' ? normalizeVertical(190) : (StatusBar.currentHeight || 24) + normalizeVertical(156),
+        top: Platform.OS === 'ios' ? normalizeVertical(240) : (StatusBar.currentHeight || 24) + normalizeVertical(206),
         left: normalize(20),
         right: normalize(20),
         backgroundColor: '#fff',
@@ -614,6 +1118,42 @@ const styles = StyleSheet.create({
         elevation: 4,
         borderWidth: 2,
         borderColor: '#fff',
+    },
+    loadingOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000,
+    },
+    loadingContainer: {
+        backgroundColor: '#fff',
+        borderRadius: normalize(20),
+        padding: normalize(30),
+        alignItems: 'center',
+        minWidth: normalize(250),
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 8,
+    },
+    loadingText: {
+        fontSize: normalize(16),
+        fontWeight: '600',
+        color: '#333',
+        marginTop: normalizeVertical(16),
+        textAlign: 'center',
+    },
+    loadingSubtext: {
+        fontSize: normalize(12),
+        color: '#666',
+        marginTop: normalizeVertical(8),
+        textAlign: 'center',
     },
 });
 

@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
     },
     header: {
         position: 'absolute',
-        top: Platform.OS === 'ios' ? 50 : 20,
+        top: Platform.OS === 'ios' ? 70 : 40,
         left: 0,
         right: 0,
         flexDirection: 'row',
@@ -635,12 +635,9 @@ const ImageZoomViewerScreen = ({ route, navigation }) => {
 
 
     const handleClose = () => {
-        // Pause all videos before closing
-        Object.keys(videoRefs.current).forEach((key) => {
-            if (videoRefs.current[key]) {
-                videoRefs.current[key]?.setNativeProps({ paused: true });
-            }
-        });
+        // Pause all videos before closing by setting playingVideoIndex to null
+        // This will pause all videos since paused={playingVideoIndex !== index}
+        setPlayingVideoIndex(null);
         navigation.goBack();
     };
 

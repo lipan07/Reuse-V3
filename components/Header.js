@@ -176,10 +176,12 @@ const Header = () => {
          <View style={[styles.headerContainer, { paddingTop: statusBarHeight }]}>
             <View style={styles.contentContainer}>
                <View style={styles.logoContainer}>
-                  <Image
-                     source={require('../assets/logo.png')}
-                     style={styles.logo}
-                  />
+                  <View style={styles.logoWrapper}>
+                     <Image
+                        source={require('../assets/logo.png')}
+                        style={styles.logo}
+                     />
+                  </View>
                   <View style={styles.titleContainer}>
                      <View style={styles.appNameRow}>
                         <Text style={styles.appNameFirstLetter}>n</Text>
@@ -224,44 +226,50 @@ const Header = () => {
 const styles = StyleSheet.create({
    headerContainer: {
       backgroundColor: 'transparent',
-      height: Platform.select({
-         ios: normalizeVertical(70),
-         android: normalizeVertical(80),
-         default: normalizeVertical(80)
+      minHeight: Platform.select({
+         ios: normalizeVertical(56),
+         android: normalizeVertical(52),
+         default: normalizeVertical(52)
       }),
       paddingHorizontal: normalize(12),
+      justifyContent: 'center',
    },
    contentContainer: {
-      flex: 1,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginTop: Platform.select({
-         ios: normalizeVertical(4),
-         android: normalizeVertical(1),
-         default: normalizeVertical(1)
-      }),
+      paddingVertical: normalizeVertical(4), // Reduced padding top and bottom
    },
    logoContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       flex: 1,
+      minHeight: normalizeVertical(40), // Ensure minimum height for proper alignment
+   },
+   logoWrapper: {
+      width: normalize(36),
+      height: normalize(36),
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: normalize(10),
+      borderColor: '#007BFF',
+      borderWidth: 0.8,
+      borderRadius: normalize(2), // Optional: slight border radius for better appearance
    },
    logo: {
       width: normalize(32),
       height: normalize(32),
       resizeMode: 'contain',
-      borderColor: '#007BFF',
-      borderWidth: 0.8,
-      marginRight: normalize(8),
    },
    titleContainer: {
       flexDirection: 'column',
       justifyContent: 'center',
+      height: normalizeVertical(36), // Match logo height for alignment
    },
    appNameRow: {
       flexDirection: 'row',
       alignItems: 'baseline',
+      height: normalizeVertical(20), // Fixed height for consistent alignment
    },
    appNameFirstLetter: {
       fontSize: normalize(20),
@@ -269,6 +277,7 @@ const styles = StyleSheet.create({
       fontFamily: Platform.OS === 'android' ? 'sans-serif-medium' : 'System',
       color: '#007BFF',
       includeFontPadding: false,
+      lineHeight: normalizeVertical(20),
    },
    appNameRest: {
       fontSize: normalize(14),
@@ -276,12 +285,15 @@ const styles = StyleSheet.create({
       fontFamily: Platform.OS === 'android' ? 'sans-serif-medium' : 'System',
       color: '#007BFF',
       includeFontPadding: false,
+      lineHeight: normalizeVertical(20),
    },
    appSubName: {
-      fontSize: normalize(12),
+      fontSize: normalize(11),
       color: '#007BFF',
       includeFontPadding: false,
-      marginTop: -normalizeVertical(2),
+      marginTop: normalizeVertical(1),
+      lineHeight: normalizeVertical(14),
+      height: normalizeVertical(14), // Fixed height for consistent spacing
    },
    rightIcons: {
       flexDirection: 'row',
@@ -289,22 +301,24 @@ const styles = StyleSheet.create({
       justifyContent: 'flex-end',
       flex: 1,
       maxWidth: width * 0.6,
+      minHeight: normalizeVertical(40), // Match logo container height
    },
    locationContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       marginLeft: normalize(8),
+      paddingVertical: normalizeVertical(4), // Add vertical padding for better touch area
    },
    addressText: {
       color: '#007BFF',
       fontSize: normalize(12),
       maxWidth: width * 0.3,
       includeFontPadding: false,
+      lineHeight: normalizeVertical(16),
    },
    locationIcon: {
       marginLeft: normalize(4),
-      marginTop: normalizeVertical(1),
-      fontSize: normalize(19), // Ionicons will use this if size prop is not set
+      alignSelf: 'center', // Better vertical alignment
    },
 });
 

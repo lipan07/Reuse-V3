@@ -423,14 +423,18 @@ const ProductDetails = () => {
             const productLink = `reuseapp://product/${product.id}`;
 
             // Extract base domain from APP_URL or BASE_URL (remove /api if present)
-            let baseUrl = process.env.APP_URL || process.env.BASE_URL || '';
+            let baseUrl = process.env.APP_URL || process.env.BASE_URL || 'https://nearx.co';
             // Remove /api from the end if present
             baseUrl = baseUrl.replace(/\/api\/?$/, '');
             // Remove trailing slash
             baseUrl = baseUrl.replace(/\/$/, '');
+            // Ensure we have a valid URL, fallback to nearx.co
+            if (!baseUrl || baseUrl === '') {
+                baseUrl = 'https://nearx.co';
+            }
 
-            // Generate web link for sharing (only if baseUrl is available)
-            const webLink = baseUrl ? `${baseUrl}/product/${product.id}` : productLink;
+            // Generate web link for sharing
+            const webLink = `${baseUrl}/product/${product.id}`;
 
             const priceText = product?.type === 'donate'
                 ? 'Free (Donation)'

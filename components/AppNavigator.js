@@ -56,6 +56,7 @@ import SubCategoryScreen from './Screens/SubCategoryScreen';
 import HelpSupport from './HelpSupport';
 import Feedback from './Feedback';
 import ListingTypeSelection from './ListingTypeSelection';
+import InviteTokens from './InviteTokens';
 
 const Stack = createStackNavigator();
 
@@ -132,6 +133,11 @@ const AppNavigator = () => {
         <Stack.Screen
           name="HelpSupport"
           component={HelpSupport}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="InviteTokens"
+          component={InviteTokens}
           options={{ headerShown: false }}
         />
         <Stack.Screen

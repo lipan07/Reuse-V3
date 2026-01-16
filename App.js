@@ -239,7 +239,7 @@ const AppInner = () => {
     };
 
     // Deep linking configuration
-    const appUrl = process.env.APP_URL || 'https://big-brain.co.in';
+    const appUrl = process.env.APP_URL || 'https://nearx.co';
     const linking = {
         prefixes: ['reuseapp://', appUrl],
         config: {
@@ -254,6 +254,12 @@ const AppInner = () => {
                     path: 'chat/:chatId',
                     parse: {
                         chatId: (chatId) => `${chatId}`
+                    }
+                },
+                Login: {
+                    path: 'invite/:inviteToken',
+                    parse: {
+                        inviteToken: (inviteToken) => `${inviteToken}`
                     }
                 },
                 Home: '',

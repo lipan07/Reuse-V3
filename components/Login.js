@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal, FlatList, TouchableWithoutFeedback, StatusBar, Platform, Animated } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { getMessaging, getToken, onMessage } from '@react-native-firebase/messaging';
 import { getApp } from '@react-native-firebase/app';
 
@@ -209,6 +209,7 @@ const Login = () => {
    const [signupEmail, setSignupEmail] = useState('');
    const [signupCountryCode, setSignupCountryCode] = useState('+91');
    const [signupPhoneNumber, setSignupPhoneNumber] = useState('');
+   const [inviteToken, setInviteToken] = useState('');
 
    // Common states
    const [isModalVisible, setIsModalVisible] = useState(false);
@@ -220,6 +221,7 @@ const Login = () => {
    const [isResending, setIsResending] = useState(false);
    const [isSubmitting, setIsSubmitting] = useState(false);
    const navigation = useNavigation();
+   const route = useRoute();
    const otpInputRef = useRef(null);
 
    useEffect(() => {
@@ -238,6 +240,14 @@ const Login = () => {
       };
       checkLoginStatus();
    }, []);
+
+   // Check for invite token in route params
+   useEffect(() => {
+      if (route.params?.inviteToken) {
+         setInviteToken(route.params.inviteToken);
+         setActiveTab('signup'); // Switch to signup tab if invite token is present
+      }
+   }, [route.params]);
 
    useEffect(() => {
       let interval;
@@ -501,6 +511,11 @@ const Login = () => {
          if (signupPhoneNumber.trim()) {
             requestBody.phoneNumber = signupPhoneNumber.trim();
             requestBody.countryCode = signupCountryCode;
+         }
+
+         // Add invite token if present
+         if (inviteToken.trim()) {
+            requestBody.invite_token = inviteToken.trim();
          }
 
          const response = await fetch(`${BASE_URL}/signup`, {

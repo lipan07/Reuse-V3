@@ -436,13 +436,19 @@ const Login = () => {
          const data = await response.json();
 
          if (response.ok) {
+            // Handle joined_via_invite (can be boolean, 1/0, or string)
+            const joinedViaInviteValue = data.user?.joined_via_invite;
+            const joinedViaInvite = joinedViaInviteValue === true || joinedViaInviteValue === 1 || joinedViaInviteValue === '1';
+            console.log('joinedViaInvite', joinedViaInvite);
+
             await AsyncStorage.multiSet([
                ['authToken', data.token],
                ['userId', data.user.id.toString()],
                ['name', data.user.name],
                ['phoneNo', data.user.phone_no || ''],
                ['userName', data.user.name || ''],
-               ['userImage', data.user.images?.url || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png']
+               ['userImage', data.user.images?.url || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'],
+               ['joinedViaInvite', joinedViaInvite ? 'true' : 'false']
             ]);
             setIsLoggedIn(true);
             navigation.navigate('Home');

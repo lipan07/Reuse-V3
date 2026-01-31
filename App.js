@@ -241,7 +241,7 @@ const AppInner = () => {
     // Deep linking configuration
     const appUrl = process.env.APP_URL || 'https://nearx.co';
     const linking = {
-        prefixes: ['reuseapp://', appUrl],
+        prefixes: ['nearx://', appUrl],
         config: {
             screens: {
                 ProductDetails: {

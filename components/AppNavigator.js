@@ -57,6 +57,8 @@ import HelpSupport from './HelpSupport';
 import Feedback from './Feedback';
 import ListingTypeSelection from './ListingTypeSelection';
 import InviteTokens from './InviteTokens';
+import BuyPaymentScreen from './BuyPaymentScreen';
+import UploadScreenshotScreen from './UploadScreenshotScreen';
 
 const Stack = createStackNavigator();
 
@@ -138,6 +140,16 @@ const AppNavigator = () => {
         <Stack.Screen
           name="InviteTokens"
           component={InviteTokens}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="BuyPayment"
+          component={BuyPaymentScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="UploadScreenshot"
+          component={UploadScreenshotScreen}
           options={{ headerShown: false }}
         />
         <Stack.Screen

@@ -381,6 +381,9 @@ const styles = StyleSheet.create({
     soldButton: {
         backgroundColor: '#34C759',
     },
+    buyButton: {
+        backgroundColor: '#FF6B35',
+    },
     statsContainer: {
         position: 'absolute',
         bottom: normalize(30),

@@ -14,13 +14,20 @@ const AccountPage = ({ navigation }) => {
     const [userName, setUserName] = useState('');
     const [userImage, setUserImage] = useState('https://cdn-icons-png.flaticon.com/512/3135/3135715.png');
     const [darkMode, setDarkMode] = useState(false);
+    const [joinedViaInvite, setJoinedViaInvite] = useState(false);
 
     useEffect(() => {
         const fetchProfile = async () => {
             const name = await AsyncStorage.getItem('userName');
             const image = await AsyncStorage.getItem('userImage');
+            const joinedViaInviteValue = await AsyncStorage.getItem('joinedViaInvite');
+            console.log('joinedViaInviteValue df', joinedViaInviteValue)
+
             if (name) setUserName(name);
             if (image) setUserImage(image);
+            if (joinedViaInviteValue) {
+                setJoinedViaInvite(joinedViaInviteValue === 'true');
+            }
         };
         fetchProfile();
         const unsubscribe = navigation.addListener('focus', fetchProfile);
@@ -87,7 +94,7 @@ const AccountPage = ({ navigation }) => {
                 </View>
                 <View style={styles.linksWrapper}>
                     {renderAccountLink('Following', 'users', () => navigation.navigate('FollowingPage'), '#FF9800')}
-                    {renderAccountLink('My Invite Tokens', 'gift', () => navigation.navigate('InviteTokens'), '#9C27B0')}
+                    {joinedViaInvite && renderAccountLink('My Invite Tokens', 'gift', () => navigation.navigate('InviteTokens'), '#9C27B0')}
                     {/* {renderAccountLink('Buy Packages', 'shopping-cart', () => navigation.navigate('PackagePage'), '#FF9800')} */}
                     {renderAccountLink('Settings', 'cog', () => navigation.navigate('Settings'), '#2196F3')}
                     {renderAccountLink('Help and Support', 'question-circle', () => navigation.navigate('HelpSupport'), '#F44336')}

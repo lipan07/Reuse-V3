@@ -23,6 +23,7 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import MapView, { Marker } from 'react-native-maps';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Video from 'react-native-video';
+import { BASE_URL } from '@env';
 // import ImageView from 'react-native-image-viewing'; // Replaced with custom EnhancedImageViewer
 import Others from './ProductDetails/Others';
 import ReportPostModal from './ReportPostModal';
@@ -38,6 +39,7 @@ const normalize = (size) => Math.round(scale * size);
 
 const ProductDetails = () => {
     const [buyerId, setBuyerId] = useState(null);
+    const [joinedViaInvite, setJoinedViaInvite] = useState(false);
     const [product, setProduct] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -207,7 +209,41 @@ const ProductDetails = () => {
             }
         };
 
+        const loadUserProfile = async () => {
+            try {
+                const stored = await AsyncStorage.getItem('joinedViaInvite');
+                if (stored != null) setJoinedViaInvite(stored === 'true');
+
+                const token = await AsyncStorage.getItem('authToken');
+                if (!token) return;
+
+                const response = await fetch(`${BASE_URL}/get-my-profile`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    // Handle both boolean and integer (0/1) values
+                    const joinedViaInviteValue = data.data?.joined_via_invite;
+                    const joinedViaInviteStatus = joinedViaInviteValue === true || joinedViaInviteValue === 1 || joinedViaInviteValue === '1';
+                    console.log('User profile data:', data.data);
+                    console.log('joined_via_invite raw value:', joinedViaInviteValue);
+                    console.log('joined_via_invite status (boolean):', joinedViaInviteStatus);
+                    setJoinedViaInvite(joinedViaInviteStatus);
+                } else {
+                    console.error('Failed to fetch profile:', response.status);
+                }
+            } catch (error) {
+                console.error('Failed to load user profile:', error);
+            }
+        };
+
         loadBuyerId();
+        loadUserProfile();
     }, []);
 
     // Handle device back button - navigate to Home if opened from deep link
@@ -278,6 +314,19 @@ const ProductDetails = () => {
                 chatId: null
             });
         }
+    };
+
+    const handleBuy = () => {
+        if (!product?.id) {
+            Alert.alert('Error', 'Product information not available');
+            return;
+        }
+        const amount = product?.amount ?? product?.post_details?.amount ?? 0;
+        navigation.navigate('BuyPayment', {
+            productId: product.id,
+            postTitle: product.title || 'Product',
+            amount,
+        });
     };
 
     const handleEditPost = () => {
@@ -967,59 +1016,77 @@ const ProductDetails = () => {
             </ScrollView>
 
             {/* Action Buttons - Right Side */}
-            {buyerId !== product.user?.id ? (
-                <View style={styles.floatingButtonContainer}>
-                    {(() => {
-                        const shouldShowCallButton = product?.show_phone &&
-                            product?.user?.phone_no &&
-                            product.user.phone_no.trim() !== '';
+            {(() => {
+                const isNotOwner = buyerId && buyerId !== product.user?.id;
 
-                        return shouldShowCallButton ? (
+                if (isNotOwner) {
+                    return (
+                        <View style={styles.floatingButtonContainer}>
+                            {(() => {
+                                const shouldShowCallButton = product?.show_phone &&
+                                    product?.user?.phone_no &&
+                                    product.user.phone_no.trim() !== '';
+
+                                return shouldShowCallButton ? (
+                                    <TouchableOpacity
+                                        style={[styles.floatingButton, styles.callButton]}
+                                        onPress={() => Linking.openURL(`tel:${product.user.phone_no}`)}
+                                    >
+                                        <Icon name="phone" size={normalize(18)} color="#fff" />
+                                        <Text style={styles.floatingButtonText}>Call</Text>
+                                    </TouchableOpacity>
+                                ) : null;
+                            })()}
                             <TouchableOpacity
-                                style={[styles.floatingButton, styles.callButton]}
-                                onPress={() => Linking.openURL(`tel:${product.user.phone_no}`)}
+                                style={[styles.floatingButton, styles.chatButton]}
+                                onPress={handleChatWithSeller}
                             >
-                                <Icon name="phone" size={normalize(18)} color="#fff" />
-                                <Text style={styles.floatingButtonText}>Call</Text>
+                                <Icon name="message-text" size={normalize(18)} color="#fff" />
+                                <Text style={styles.floatingButtonText}>Chat</Text>
                             </TouchableOpacity>
-                        ) : null;
-                    })()}
-                    <TouchableOpacity
-                        style={[styles.floatingButton, styles.chatButton]}
-                        onPress={handleChatWithSeller}
-                    >
-                        <Icon name="message-text" size={normalize(18)} color="#fff" />
-                        <Text style={styles.floatingButtonText}>Chat</Text>
-                    </TouchableOpacity>
-                </View>
-            ) : (
-                // Post owner buttons
-                <View style={styles.floatingButtonContainer}>
-                    <TouchableOpacity
-                        style={[styles.floatingButton, styles.editButton]}
-                        onPress={handleEditPost}
-                    >
-                        <Icon name="pencil" size={normalize(18)} color="#fff" />
-                        <Text style={styles.floatingButtonText}>Edit</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.floatingButton, styles.soldButton]}
-                        onPress={() => {
-                            Alert.alert(
-                                'Mark as Sold',
-                                'Are you sure you want to mark this item as sold?',
-                                [
-                                    { text: 'Cancel', style: 'cancel' },
-                                    { text: 'Mark as Sold', onPress: () => markAsSold() }
-                                ]
-                            );
-                        }}
-                    >
-                        <Icon name="check-circle" size={normalize(18)} color="#fff" />
-                        <Text style={styles.floatingButtonText}>Sold</Text>
-                    </TouchableOpacity>
-                </View>
-            )}
+                            {joinedViaInvite ? (
+                                <TouchableOpacity
+                                    style={[styles.floatingButton, styles.buyButton]}
+                                    onPress={handleBuy}
+                                >
+                                    <Icon name="cart" size={normalize(18)} color="#fff" />
+                                    <Text style={styles.floatingButtonText}>Buy</Text>
+                                </TouchableOpacity>
+                            ) : null}
+                        </View>
+                    );
+                } else if (buyerId === product.user?.id) {
+                    // Post owner buttons
+                    return (
+                        <View style={styles.floatingButtonContainer}>
+                            <TouchableOpacity
+                                style={[styles.floatingButton, styles.editButton]}
+                                onPress={handleEditPost}
+                            >
+                                <Icon name="pencil" size={normalize(18)} color="#fff" />
+                                <Text style={styles.floatingButtonText}>Edit</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.floatingButton, styles.soldButton]}
+                                onPress={() => {
+                                    Alert.alert(
+                                        'Mark as Sold',
+                                        'Are you sure you want to mark this item as sold?',
+                                        [
+                                            { text: 'Cancel', style: 'cancel' },
+                                            { text: 'Mark as Sold', onPress: () => markAsSold() }
+                                        ]
+                                    );
+                                }}
+                            >
+                                <Icon name="check-circle" size={normalize(18)} color="#fff" />
+                                <Text style={styles.floatingButtonText}>Sold</Text>
+                            </TouchableOpacity>
+                        </View>
+                    );
+                }
+                return null;
+            })()}
 
 
             {/* Image Viewer now uses navigation to EnhancedImageViewer */}

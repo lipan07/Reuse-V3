@@ -16,6 +16,9 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { BASE_URL } from '@env';
 import Header from './Header';
 
+const INVITE_BASE_URL = 'https://nearx.co';
+const getInviteUrl = (inviteToken) => `${INVITE_BASE_URL}/invite/${inviteToken}`;
+
 const InviteTokens = ({ navigation }) => {
   const [tokens, setTokens] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -67,49 +70,18 @@ const InviteTokens = ({ navigation }) => {
   };
 
   const copyInviteUrl = async (token) => {
-    try {
-      const authToken = await AsyncStorage.getItem('authToken');
-      const response = await fetch(`${BASE_URL}/invite-tokens/${token}/url`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        Clipboard.setString(data.url);
-        Alert.alert('Copied!', 'Invite URL copied to clipboard');
-      } else {
-        Alert.alert('Error', 'Failed to get invite URL');
-      }
-    } catch (error) {
-      console.error('Error getting invite URL:', error);
-      Alert.alert('Error', 'Failed to get invite URL');
-    }
+    const url = getInviteUrl(token);
+    Clipboard.setString(url);
+    Alert.alert('Copied!', 'Invite URL copied to clipboard');
   };
 
   const shareInviteUrl = async (token) => {
     try {
-      const authToken = await AsyncStorage.getItem('authToken');
-      const response = await fetch(`${BASE_URL}/invite-tokens/${token}/url`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json',
-        },
+      const url = getInviteUrl(token);
+      await Share.share({
+        message: `Join me on nearX! Use my invite code: ${token}\n\nOr click this link: ${url}`,
+        title: 'Invite to nearX',
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        await Share.share({
-          message: `Join me on nearX! Use my invite code: ${token}\n\nOr click this link: ${data.url}`,
-          title: 'Invite to nearX',
-        });
-      } else {
-        Alert.alert('Error', 'Failed to get invite URL');
-      }
     } catch (error) {
       console.error('Error sharing invite URL:', error);
     }

@@ -91,11 +91,16 @@ const InviteTokens = ({ navigation }) => {
     if (token.is_used) {
       return { text: 'Used', color: '#9E9E9E' };
     }
+    if (!token.is_active) {
+      return { text: 'Inactive', color: '#FF9800' };
+    }
     if (!token.is_valid) {
       return { text: 'Expired', color: '#F44336' };
     }
     return { text: 'Active', color: '#4CAF50' };
   };
+
+  const hasInactiveTokens = tokens.some((t) => !t.is_used && !t.is_active);
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -130,6 +135,15 @@ const InviteTokens = ({ navigation }) => {
             Share your invite tokens with friends! Each token is valid for 24 hours and can be used once.
           </Text>
         </View>
+
+        {hasInactiveTokens ? (
+          <View style={styles.inactiveBanner}>
+            <MaterialIcons name="info" size={20} color="#E65100" />
+            <Text style={styles.inactiveBannerText}>
+              Complete a purchase and get payment confirmed by admin to activate your invite tokens. Until then, others cannot use your tokens for registration.
+            </Text>
+          </View>
+        ) : null}
 
         {tokens.length === 0 ? (
           <View style={styles.emptyContainer}>
@@ -176,7 +190,7 @@ const InviteTokens = ({ navigation }) => {
                   )}
                 </View>
 
-                {token.is_valid && (
+                {token.is_valid ? (
                   <View style={styles.actionButtons}>
                     <TouchableOpacity
                       style={[styles.actionButton, styles.copyButton]}
@@ -200,7 +214,11 @@ const InviteTokens = ({ navigation }) => {
                       <Text style={styles.actionButtonText}>Share</Text>
                     </TouchableOpacity>
                   </View>
-                )}
+                ) : !token.is_used && !token.is_active ? (
+                  <Text style={styles.inactiveHint}>
+                    Activate by completing a purchase and getting it confirmed by admin.
+                  </Text>
+                ) : null}
               </View>
             );
           })
@@ -240,6 +258,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#1976D2',
     lineHeight: 20,
+  },
+  inactiveBanner: {
+    flexDirection: 'row',
+    backgroundColor: '#FFF3E0',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    alignItems: 'flex-start',
+    borderLeftWidth: 4,
+    borderLeftColor: '#FF9800',
+  },
+  inactiveBannerText: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 14,
+    color: '#E65100',
+    lineHeight: 20,
+  },
+  inactiveHint: {
+    marginTop: 12,
+    fontSize: 13,
+    color: '#FF9800',
+    fontStyle: 'italic',
   },
   emptyContainer: {
     alignItems: 'center',

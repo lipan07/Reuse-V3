@@ -222,7 +222,8 @@ const Login = () => {
    const [isSubmitting, setIsSubmitting] = useState(false);
    const navigation = useNavigation();
    const route = useRoute();
-   const otpInputRef = useRef(null);
+   const OTP_LENGTH = 6;
+   const otpInputRefs = useRef([]);
 
    useEffect(() => {
       const checkLoginStatus = async () => {
@@ -328,17 +329,17 @@ const Login = () => {
             setLoginShowOtpField(true);
 
             setAlertType('success');
-            setAlertTitle('OTP Sent');
-            setAlertMessage(`OTP sent successfully! Resend available in ${intervalMinutes} minutes.`);
+            setAlertTitle('Verification code sent');
+            setAlertMessage(`One time verification code sent to your email. Resend available in ${intervalMinutes} minutes.`);
             setShowAlert(true);
 
             setTimeout(() => {
-               otpInputRef.current?.focus();
+               otpInputRefs.current[0]?.focus();
             }, 100);
          } else {
             setAlertType('error');
-            setAlertTitle('Failed to Send OTP');
-            setAlertMessage(data.message || 'Failed to send OTP. Please try again.');
+            setAlertTitle('Failed to send code');
+            setAlertMessage(data.message || 'Failed to send verification code. Please try again.');
             setShowAlert(true);
          }
       } catch (error) {
@@ -377,20 +378,20 @@ const Login = () => {
             setLoginTimer(intervalMinutes * 60);
             setLoginShowTimer(true);
             setLoginShowOtpField(true);
-            setLoginOtp(''); // Clear previous OTP
+            setLoginOtp(''); // Clear previous code
 
             setAlertType('success');
-            setAlertTitle('OTP Resent');
-            setAlertMessage(`OTP resent successfully! Next resend available in ${intervalMinutes} minutes.`);
+            setAlertTitle('Verification code resent');
+            setAlertMessage(`One time verification code resent. Next resend available in ${intervalMinutes} minutes.`);
             setShowAlert(true);
 
             setTimeout(() => {
-               otpInputRef.current?.focus();
+               otpInputRefs.current[0]?.focus();
             }, 100);
          } else {
             setAlertType('error');
-            setAlertTitle('Failed to Resend OTP');
-            setAlertMessage(data.message || 'Failed to resend OTP. Please try again.');
+            setAlertTitle('Failed to resend code');
+            setAlertMessage(data.message || 'Failed to resend verification code. Please try again.');
             setShowAlert(true);
          }
       } catch (error) {
@@ -403,11 +404,42 @@ const Login = () => {
       }
    };
 
+   const handleOtpDigitChange = (index, text) => {
+      const digitsOnly = text.replace(/\D/g, '');
+      if (digitsOnly.length > 1) {
+         // Paste: take first 6 digits
+         const pasted = digitsOnly.slice(0, OTP_LENGTH).split('');
+         let newOtp = '';
+         for (let i = 0; i < OTP_LENGTH; i++) {
+            newOtp += pasted[i] ?? '';
+         }
+         setLoginOtp(newOtp);
+         const nextIndex = Math.min(pasted.length, OTP_LENGTH) - 1;
+         setTimeout(() => otpInputRefs.current[nextIndex]?.focus(), 50);
+         return;
+      }
+      const digit = digitsOnly.slice(-1);
+      const newOtp = loginOtp.split('');
+      newOtp[index] = digit;
+      const nextOtp = newOtp.slice(0, OTP_LENGTH).join('');
+      setLoginOtp(nextOtp);
+      if (digit && index < OTP_LENGTH - 1) {
+         setTimeout(() => otpInputRefs.current[index + 1]?.focus(), 50);
+      }
+   };
+
+   const handleOtpKeyPress = (index, e) => {
+      if (e.nativeEvent.key === 'Backspace' && !loginOtp[index] && index > 0) {
+         otpInputRefs.current[index - 1]?.focus();
+      }
+   };
+
    const handleLoginOtpSubmit = async () => {
-      if (!loginOtp || loginOtp.trim().length < 4) {
+      const code = loginOtp.trim();
+      if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) {
          setAlertType('error');
-         setAlertTitle('Invalid OTP');
-         setAlertMessage('Please enter a valid OTP');
+         setAlertTitle('Invalid verification code');
+         setAlertMessage('Please enter the 6-digit one time verification code from your email.');
          setShowAlert(true);
          return;
       }
@@ -419,7 +451,7 @@ const Login = () => {
 
          const requestBody = {
             email: loginEmail.trim(),
-            otp: loginOtp.trim(),
+            otp: code,
             fcmToken: `${fcmToken}`,
             platform: `${Platform.OS}`
          };
@@ -455,7 +487,7 @@ const Login = () => {
          } else {
             setAlertType('error');
             setAlertTitle('Login Failed');
-            setAlertMessage(data.message || 'Invalid OTP');
+            setAlertMessage(data.message || 'Invalid one time verification code.');
             setShowAlert(true);
          }
       } catch (error) {
@@ -634,19 +666,26 @@ const Login = () => {
                      editable={!loginShowOtpField}
                   />
 
-                  {/* OTP Field - Show only when timer is active */}
+                  {/* One time verification code - 6 digit boxes */}
                   {loginShowOtpField && loginShowTimer && (
                      <>
-                        <TextInput
-                           ref={otpInputRef}
-                           style={styles.input}
-                           placeholder="Enter OTP"
-                           placeholderTextColor="#bbb"
-                           value={loginOtp}
-                           onChangeText={setLoginOtp}
-                           keyboardType="number-pad"
-                           autoFocus
-                        />
+                        <Text style={styles.verificationCodeLabel}>Enter your one time verification code</Text>
+                        <View style={styles.otpBoxContainer}>
+                           {Array.from({ length: OTP_LENGTH }, (_, i) => (
+                              <TextInput
+                                 key={i}
+                                 ref={el => { otpInputRefs.current[i] = el; }}
+                                 style={styles.otpBox}
+                                 value={loginOtp[i] ?? ''}
+                                 onChangeText={text => handleOtpDigitChange(i, text)}
+                                 onKeyPress={e => handleOtpKeyPress(i, e)}
+                                 keyboardType="number-pad"
+                                 maxLength={6}
+                                 selectTextOnFocus
+                                 autoFocus={i === 0}
+                              />
+                           ))}
+                        </View>
                         <Text style={styles.timerText}>
                            Resend available in: {Math.floor(loginTimer / 60)}:{(loginTimer % 60).toString().padStart(2, '0')}
                         </Text>
@@ -658,7 +697,7 @@ const Login = () => {
                      </>
                   )}
 
-                  {/* Send OTP Button - Show when OTP field is not visible */}
+                  {/* Send verification code - Show when code field is not visible */}
                   {!loginShowOtpField && (
                      <TouchableOpacity
                         style={[
@@ -670,12 +709,12 @@ const Login = () => {
                         disabled={isSubmitting}
                      >
                         <Text style={styles.buttonText}>
-                           {isSubmitting ? 'Sending...' : 'Send OTP'}
+                           {isSubmitting ? 'Sending...' : 'Send verification code'}
                         </Text>
                      </TouchableOpacity>
                   )}
 
-                  {/* Login Button - Show when OTP field is visible AND timer is active */}
+                  {/* Login Button - Show when code field is visible AND timer is active */}
                   {loginShowOtpField && loginShowTimer && (
                      <TouchableOpacity
                         style={[
@@ -692,7 +731,7 @@ const Login = () => {
                      </TouchableOpacity>
                   )}
 
-                  {/* Resend OTP Button - Show when OTP field is visible AND timer has expired */}
+                  {/* Resend verification code - Show when code field is visible AND timer has expired */}
                   {loginShowOtpField && !loginShowTimer && (
                      <TouchableOpacity
                         style={[
@@ -707,7 +746,7 @@ const Login = () => {
                            styles.resendButtonText,
                            isResending && styles.disabledText
                         ]}>
-                           {isResending ? 'Resending...' : 'Resend OTP'}
+                           {isResending ? 'Resending...' : 'Resend verification code'}
                         </Text>
                      </TouchableOpacity>
                   )}
@@ -929,6 +968,31 @@ const styles = StyleSheet.create({
       borderWidth: 1,
       borderColor: '#dfe6e9',
       marginBottom: 10,
+   },
+   verificationCodeLabel: {
+      fontSize: 14,
+      color: '#636e72',
+      marginBottom: 10,
+      fontWeight: '500',
+   },
+   otpBoxContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 12,
+      gap: 8,
+   },
+   otpBox: {
+      flex: 1,
+      height: 52,
+      borderRadius: 12,
+      backgroundColor: '#fff',
+      borderWidth: 1,
+      borderColor: '#dfe6e9',
+      fontSize: 22,
+      fontWeight: '700',
+      color: '#2d3436',
+      textAlign: 'center',
+      paddingHorizontal: 4,
    },
    timerText: {
       textAlign: 'center',

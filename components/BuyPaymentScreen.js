@@ -15,8 +15,8 @@ const { width } = Dimensions.get('window');
 const scale = width / 375;
 const normalize = (size) => Math.round(scale * size);
 
-const PAYMENT_UPI_ID = 'nearx@paytm'; // or from env
-const TIMER_SECONDS = 2; // 2 minutes
+const PAYMENT_UPI_ID = process.env.PAYMENT_UPI_ID;
+const TIMER_SECONDS = 60; // 1 minutes
 
 const BuyPaymentScreen = () => {
     const navigation = useNavigation();
@@ -90,7 +90,7 @@ const BuyPaymentScreen = () => {
                         <>
                             <Icon name="timer-outline" size={normalize(24)} color="#666" />
                             <Text style={styles.timerText}>{formatTime(secondsLeft)}</Text>
-                            <Text style={styles.timerHint}>Confirm payment button will enable after 2 minutes</Text>
+                            <Text style={styles.timerHint}>Confirm payment will be enabled after 1 minute</Text>
                         </>
                     ) : (
                         <>

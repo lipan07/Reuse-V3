@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import 'react-native-get-random-values';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getInitialLocationRequestStatus } from '../service/initialLocationService';
 import MapView, { Marker, Circle } from 'react-native-maps';
 import { AlertNotificationRoot } from 'react-native-alert-notification';
 import ModalScreen from '../components/SupportElement/ModalScreen';
@@ -650,16 +651,23 @@ const LocationPicker = ({ navigation }) => {
             // Wait for component to be fully mounted and map ready
             await new Promise(resolve => setTimeout(resolve, 1000));
 
-            // Check if user has saved location
+            // Check if user has saved location (from app first-start or from here previously)
             const saved = await AsyncStorage.getItem('defaultLocation');
             console.log('Saved location check:', saved ? 'Found' : 'Not found');
 
             if (saved) {
-                // User has saved location - load it
+                // User has saved location - load it, no modal or permission ask
                 console.log('Loading saved location...');
                 await loadSavedLocation();
             } else {
-                // User doesn't have saved location (first time) - automatically ask for device location
+                // No saved location: only auto-request if we didn't already ask at app start and user denied
+                const initialStatus = await getInitialLocationRequestStatus();
+                if (initialStatus === 'denied') {
+                    console.log('Location was already denied at app start - showing map with Use current location button');
+                    setPermissionRequested(true);
+                    return;
+                }
+                // First time or not yet asked: automatically ask for device location
                 console.log('No saved location found - requesting device location automatically...');
                 setPermissionRequested(true);
                 await handleDeviceLocation(true);

@@ -1,0 +1,380 @@
+import { StyleSheet, Dimensions, Platform, StatusBar } from 'react-native';
+
+const { width } = Dimensions.get('window');
+const scale = width / 375;
+const normalize = (size) => Math.round(scale * size);
+
+export default StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#F5F5F5',
+    },
+    darkContainer: {
+        backgroundColor: '#121212',
+    },
+    statusBarBackground: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: StatusBar.currentHeight || (Platform.OS === 'ios' ? 44 : 24),
+        backgroundColor: '#007BFF',
+        zIndex: 1,
+    },
+    darkStatusBar: {
+        backgroundColor: '#1A1A1A',
+    },
+    tabContainer: {
+        flexDirection: 'row',
+        marginHorizontal: normalize(16),
+        marginTop: normalize(12),
+        borderRadius: normalize(8),
+        overflow: 'hidden',
+        backgroundColor: '#f5f5f5',
+    },
+    darkTabContainer: {
+        backgroundColor: '#1E1E1E',
+    },
+    tabButton: {
+        flex: 1,
+        paddingVertical: normalize(12),
+        alignItems: 'center',
+    },
+    activeTabButton: {
+        backgroundColor: '#007bff',
+    },
+    tabButtonText: {
+        fontSize: normalize(14),
+        fontWeight: '500',
+        color: '#666',
+    },
+    darkTabButtonText: {
+        color: '#999',
+    },
+    activeTabButtonText: {
+        color: '#fff',
+    },
+    contentContainer: {
+        flex: 1,
+        paddingHorizontal: normalize(16),
+        paddingTop: normalize(12),
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    loadingText: {
+        fontSize: normalize(16),
+        color: '#666',
+        marginTop: normalize(12),
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: normalize(20),
+    },
+    emptyIconContainer: {
+        width: normalize(120),
+        height: normalize(120),
+        borderRadius: normalize(60),
+        backgroundColor: '#f0f0f0',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: normalize(20),
+    },
+    darkEmptyIconContainer: {
+        backgroundColor: '#2A2A2A',
+    },
+    emptyText: {
+        fontSize: normalize(20),
+        fontWeight: '600',
+        color: '#666',
+        marginBottom: normalize(8),
+        textAlign: 'center',
+    },
+    emptySubText: {
+        fontSize: normalize(14),
+        color: '#999',
+        textAlign: 'center',
+        marginBottom: normalize(24),
+        maxWidth: '80%',
+        lineHeight: normalize(20),
+    },
+    exploreButton: {
+        backgroundColor: '#007bff',
+        paddingHorizontal: normalize(24),
+        paddingVertical: normalize(12),
+        borderRadius: normalize(25),
+        shadowColor: '#007bff',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    darkExploreButton: {
+        backgroundColor: '#1A73E8',
+    },
+    exploreButtonText: {
+        color: '#fff',
+        fontSize: normalize(16),
+        fontWeight: '600',
+    },
+    darkExploreButtonText: {
+        color: '#fff',
+    },
+    listContent: {
+        paddingBottom: normalize(20),
+    },
+    listHeader: {
+        paddingVertical: normalize(12),
+        paddingHorizontal: normalize(4),
+        borderBottomWidth: 1,
+        borderBottomColor: '#f0f0f0',
+        marginBottom: normalize(8),
+    },
+    listHeaderText: {
+        fontSize: normalize(14),
+        fontWeight: '600',
+        color: '#666',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    itemContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: normalize(16),
+        backgroundColor: '#fff',
+        borderRadius: normalize(16),
+        paddingHorizontal: normalize(16),
+        marginBottom: normalize(12),
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 6,
+        elevation: 3,
+        borderWidth: 1,
+        borderColor: 'rgba(0, 0, 0, 0.05)',
+    },
+    darkItemContainer: {
+        backgroundColor: '#1E1E1E',
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+    },
+    itemContent: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    imageContainer: {
+        position: 'relative',
+    },
+    itemImage: {
+        width: normalize(60),
+        height: normalize(60),
+        borderRadius: normalize(30),
+        backgroundColor: '#eee',
+    },
+    defaultIconContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#f0f0f0',
+    },
+    statusIndicator: {
+        position: 'absolute',
+        bottom: -2,
+        right: -2,
+        width: normalize(20),
+        height: normalize(20),
+        borderRadius: normalize(10),
+        backgroundColor: '#007bff',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: '#fff',
+    },
+    darkStatusIndicator: {
+        borderColor: '#1E1E1E',
+    },
+    itemInfo: {
+        flex: 1,
+        marginLeft: normalize(16),
+        marginRight: normalize(12),
+    },
+    itemTitle: {
+        fontSize: normalize(16),
+        fontWeight: '600',
+        color: '#333',
+        marginBottom: normalize(6),
+    },
+    itemMeta: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: normalize(4),
+    },
+    itemSubtitle: {
+        fontSize: normalize(13),
+        color: '#666',
+        marginLeft: normalize(6),
+        flex: 1,
+    },
+    itemDistance: {
+        fontSize: normalize(12),
+        color: '#999',
+        marginLeft: normalize(6),
+    },
+    animatedFollowButton: {
+        alignSelf: 'flex-start',
+    },
+    darkText: {
+        color: '#fff',
+    },
+    darkSubtitle: {
+        color: '#aaa',
+    },
+    separator: {
+        height: 1,
+        backgroundColor: '#eee',
+    },
+    darkSeparator: {
+        backgroundColor: '#333',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContainer: {
+        width: '85%',
+        maxWidth: normalize(320),
+        backgroundColor: '#fff',
+        borderRadius: normalize(20),
+        padding: normalize(28),
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.25,
+        shadowRadius: 20,
+        elevation: 10,
+    },
+    darkModalContainer: {
+        backgroundColor: '#1E1E1E',
+    },
+    modalIconContainer: {
+        width: normalize(64),
+        height: normalize(64),
+        borderRadius: normalize(32),
+        backgroundColor: '#FFE6E6',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: normalize(16),
+    },
+    darkModalIconContainer: {
+        backgroundColor: '#2A1A1A',
+    },
+    modalTitle: {
+        fontSize: normalize(22),
+        fontWeight: '700',
+        marginBottom: normalize(12),
+        color: '#222',
+        textAlign: 'center',
+    },
+    darkModalTitle: {
+        color: '#fff',
+    },
+    modalText: {
+        fontSize: normalize(16),
+        color: '#555',
+        textAlign: 'center',
+        marginBottom: normalize(28),
+        lineHeight: normalize(24),
+    },
+    darkModalText: {
+        color: '#ccc',
+    },
+    modalButtonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%',
+    },
+    modalButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: normalize(20),
+        paddingVertical: normalize(12),
+        borderRadius: normalize(12),
+        marginHorizontal: normalize(6),
+    },
+    cancelButton: {
+        backgroundColor: '#f0f0f0',
+    },
+    darkCancelButton: {
+        backgroundColor: '#333',
+    },
+    cancelButtonText: {
+        color: '#333',
+        fontWeight: '600',
+        fontSize: normalize(16),
+    },
+    darkButtonText: {
+        color: '#fff',
+    },
+    confirmButton: {
+        backgroundColor: '#FF4444',
+        shadowColor: '#FF4444',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    confirmButtonText: {
+        color: '#fff',
+        fontWeight: '600',
+        fontSize: normalize(16),
+    },
+    confirmButtonContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    sweetAlertOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000,
+    },
+    sweetAlertContainer: {
+        backgroundColor: '#fff',
+        borderRadius: normalize(16),
+        padding: normalize(24),
+        marginHorizontal: normalize(40),
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 8,
+        maxWidth: normalize(280),
+    },
+    sweetAlertContent: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    sweetAlertIcon: {
+        marginBottom: normalize(12),
+    },
+    sweetAlertText: {
+        fontSize: normalize(16),
+        fontWeight: '600',
+        color: '#333',
+        textAlign: 'center',
+        lineHeight: normalize(22),
+    },
+});

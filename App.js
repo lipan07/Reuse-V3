@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import { Alert, AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer } from '@react-navigation/native';
+import { requestInitialLocationIfNeeded } from './service/initialLocationService';
 import { getMessaging, onMessage, onNotificationOpenedApp, getInitialNotification } from '@react-native-firebase/messaging';
 import { getApp } from '@react-native-firebase/app';
 import AppNavigator from './components/AppNavigator';
@@ -158,6 +159,14 @@ const AppInner = () => {
         }
 
         requestNotificationPermission();
+    }, []);
+
+    // On first install: ask for device location (like notification). If granted, save to AsyncStorage for future use.
+    useEffect(() => {
+        const t = setTimeout(() => {
+            requestInitialLocationIfNeeded();
+        }, 1500);
+        return () => clearTimeout(t);
     }, []);
 
     // Track app state changes

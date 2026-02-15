@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import { Alert, AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer } from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { requestInitialLocationIfNeeded } from './service/initialLocationService';
 import { getMessaging, onMessage, onNotificationOpenedApp, getInitialNotification } from '@react-native-firebase/messaging';
 import { getApp } from '@react-native-firebase/app';
@@ -283,12 +284,14 @@ const AppInner = () => {
     );
 };
 
-// ✅ Wrap AppInner with NotificationProvider
+// ✅ SafeAreaProvider required for BottomNavBar useSafeAreaInsets(); without it the bar crashes and doesn't show
 const App = () => {
     return (
-        <NotificationProvider>
-            <AppInner />
-        </NotificationProvider>
+        <SafeAreaProvider>
+            <NotificationProvider>
+                <AppInner />
+            </NotificationProvider>
+        </SafeAreaProvider>
     );
 };
 

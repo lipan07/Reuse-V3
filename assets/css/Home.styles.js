@@ -8,6 +8,7 @@ const normalizeVertical = (size) => Math.round(verticalScale * size);
 
 export default StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
+  flex1: { flex: 1 },
   bannerAdContainer: {
     marginHorizontal: -normalize(8),
     marginBottom: normalize(8),
@@ -68,7 +69,7 @@ export default StyleSheet.create({
   },
   productList: {
     paddingHorizontal: normalize(4),
-    paddingBottom: normalizeVertical(48),
+    paddingBottom: normalizeVertical(120),
     paddingTop: normalizeVertical(8),
   },
   productImage: { width: '100%', height: '100%', resizeMode: 'cover' },

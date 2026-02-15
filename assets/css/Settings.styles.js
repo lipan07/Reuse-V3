@@ -2,7 +2,7 @@ import { StyleSheet, Dimensions, Platform, StatusBar } from 'react-native';
 
 const { width } = Dimensions.get('window');
 const scale = width / 375;
-const normalize = (size) => Math.round(scale * size);
+export const normalize = (size) => Math.round(scale * size);
 
 export default StyleSheet.create({
     container: {

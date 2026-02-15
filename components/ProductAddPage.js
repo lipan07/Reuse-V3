@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Dimensions } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import ParentCategoryPanel from '../components/ParentCategoryPanel';
 import BottomNavBar from '../components/BottomNavBar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+
+const verticalScale = Dimensions.get('window').height / 812;
+const normalizeVertical = (size) => Math.round(verticalScale * size);
+const BOTTOM_BAR_HEIGHT = normalizeVertical(52);
 
 
 const staticCategories = [
@@ -291,17 +296,21 @@ const ProductAddPage = ({ route }) => {
     }
   };
 
+  const insets = useSafeAreaInsets();
+  const listBottomPadding = (insets?.bottom ?? 0) + BOTTOM_BAR_HEIGHT;
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
       <ParentCategoryPanel
         categories={categories}
         onSelectCategory={handleCategorySelect}
         isLoading={isLoading}
         isError={isError}
         isRefreshing={false}
+        listBottomPadding={listBottomPadding}
       />
       <BottomNavBar />
-    </View>
+    </SafeAreaView>
   );
 };
 

@@ -15,7 +15,7 @@ import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Header from './Screens/Header';
 import CustomStatusBar from './Screens/CustomStatusBar';
-import styles from '../assets/css/Settings.styles';
+import styles, { normalize } from '../assets/css/Settings.styles';
 
 const SettingsPage = ({ navigation }) => {
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);

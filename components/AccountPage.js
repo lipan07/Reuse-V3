@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image, Platform, StatusBar } from 'react-native';
+import { View, Text, TouchableOpacity, Image, Platform, StatusBar, Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import Header from './Screens/Header';
 import styles from '../assets/css/AccountPage.styles';
+
+const { width } = Dimensions.get('window');
+const scale = width / 375;
+const normalize = (size) => Math.round(scale * size);
 
 const AccountPage = ({ navigation }) => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);

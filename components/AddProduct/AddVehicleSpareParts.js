@@ -13,9 +13,11 @@ import {
   SafeAreaView,
   StyleSheet
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { submitForm } from '../../service/apiService';
 import ImagePickerComponent from './SubComponent/ImagePickerComponent';
+import VideoPickerComponent from './SubComponent/VideoPickerComponent';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AddressAutocomplete from '../AddressAutocomplete.js';
 import ModernSelectionModal from './SubComponent/ModernSelectionModal.js';
@@ -29,6 +31,8 @@ const normalize = (size) => Math.round(scale * size);
 const normalizeVertical = (size) => Math.round(verticalScale * size);
 
 const AddVehicleSpareParts = ({ route, navigation }) => {
+  const insets = useSafeAreaInsets();
+  const bottomInset = insets?.bottom ?? 0;
   const { category, subcategory, product } = route.params;
   const [formData, setFormData] = useState({
     type: 'Wheels & Tyres',
@@ -40,9 +44,15 @@ const AddVehicleSpareParts = ({ route, navigation }) => {
     longitude: null,
     images: [],
     deletedImages: [],
+    videoUrl: null,
+    videoId: null,
+    deletedVideoUrl: null,
+    deletedVideoId: null,
     show_phone: false,
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [isVideoUploading, setIsVideoUploading] = useState(false);
+  const [shouldNavigateOnClose, setShouldNavigateOnClose] = useState(false);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalType, setModalType] = useState('info');
@@ -83,6 +93,8 @@ const AddVehicleSpareParts = ({ route, navigation }) => {
               isNew: false,
             })) || [],
             deletedImages: [],
+            videoUrl: productData.videos?.[0] || productData.video_url || productData.videoUrl || null,
+            videoId: productData.video_id || productData.videoId || null,
             show_phone: productData.show_phone === true || productData.show_phone === 1 || productData.show_phone === '1',
           });
         }
@@ -112,6 +124,7 @@ const AddVehicleSpareParts = ({ route, navigation }) => {
       setModalType(response.alert.type);
       setModalTitle(response.alert.title);
       setModalMessage(response.alert.message);
+      setShouldNavigateOnClose(true);
       setIsModalVisible(true);
 
     } catch (error) {
@@ -174,7 +187,7 @@ const AddVehicleSpareParts = ({ route, navigation }) => {
           </View>
 
           <ScrollView
-            contentContainerStyle={modernStyles.scrollContent}
+            contentContainerStyle={[modernStyles.scrollContent, { paddingBottom: normalizeVertical(100) + bottomInset }]}
             keyboardShouldPersistTaps="handled"
             nestedScrollEnabled={true}
             showsVerticalScrollIndicator={false}
@@ -305,15 +318,30 @@ const AddVehicleSpareParts = ({ route, navigation }) => {
                 <Text style={modernStyles.label}>Upload Images (Optional)</Text>
               </View>
               <ImagePickerComponent formData={formData} setFormData={setFormData} />
+
+              <Text style={[modernStyles.sectionTitle, { marginTop: 20 }]}>Upload Video (Optional)</Text>
+              <VideoPickerComponent
+                formData={formData}
+                setFormData={setFormData}
+                propertyTitle={formData.adTitle}
+                onUploadStateChange={setIsVideoUploading}
+                onShowAlert={(type, title, message) => {
+                  setModalType(type);
+                  setModalTitle(title);
+                  setModalMessage(message);
+                  setShouldNavigateOnClose(false);
+                  setIsModalVisible(true);
+                }}
+              />
             </View>
           </ScrollView>
 
           {/* Sticky Submit Button */}
-          <View style={modernStyles.stickyButton}>
+          <View style={[modernStyles.stickyButton, { bottom: bottomInset }]}>
             <TouchableOpacity
               onPress={handleSubmit}
-              style={[modernStyles.submitButton, (isSubmitting || isLoading) && modernStyles.disabledButton]}
-              disabled={isSubmitting || isLoading}
+              style={[modernStyles.submitButton, (isSubmitting || isLoading || isVideoUploading) && modernStyles.disabledButton]}
+              disabled={isSubmitting || isLoading || isVideoUploading}
               activeOpacity={0.8}
             >
               {isSubmitting ? (
@@ -337,7 +365,7 @@ const AddVehicleSpareParts = ({ route, navigation }) => {
         message={modalMessage}
         onClose={() => {
           setIsModalVisible(false);
-          if (modalType === 'success') navigation.goBack();
+          if (modalType === 'success' && shouldNavigateOnClose) navigation.goBack();
         }}
       />
 

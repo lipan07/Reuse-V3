@@ -832,6 +832,7 @@ const Home = () => {
               renderItem={renderProductItem}
               keyExtractor={(item) => `${item.id}_${currentPage}`}
               numColumns={2}
+              style={styles.flex1}
               contentContainerStyle={styles.productList}
               ListHeaderComponent={
                 <>

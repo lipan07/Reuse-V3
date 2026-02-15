@@ -16,7 +16,7 @@ import {
     Animated,
     Easing
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
@@ -38,6 +38,8 @@ const scale = width / 375;
 const normalize = (size) => Math.round(scale * size);
 
 const ProductDetails = () => {
+    const insets = useSafeAreaInsets();
+    const floatingBottom = normalize(30) + (insets?.bottom ?? 0);
     const [buyerId, setBuyerId] = useState(null);
     const [joinedViaInvite, setJoinedViaInvite] = useState(false);
     const [product, setProduct] = useState(null);
@@ -1021,7 +1023,7 @@ const ProductDetails = () => {
 
                 if (isNotOwner) {
                     return (
-                        <View style={styles.floatingButtonContainer}>
+                        <View style={[styles.floatingButtonContainer, { bottom: floatingBottom }]}>
                             {(() => {
                                 const shouldShowCallButton = product?.show_phone &&
                                     product?.user?.phone_no &&
@@ -1058,7 +1060,7 @@ const ProductDetails = () => {
                 } else if (buyerId === product.user?.id) {
                     // Post owner buttons
                     return (
-                        <View style={styles.floatingButtonContainer}>
+                        <View style={[styles.floatingButtonContainer, { bottom: floatingBottom }]}>
                             <TouchableOpacity
                                 style={[styles.floatingButton, styles.editButton]}
                                 onPress={handleEditPost}

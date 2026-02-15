@@ -34,7 +34,7 @@ const iconMapping = {
   properties: { name: 'home', type: 'Ion' },
 };
 
-const ParentCategoryPanel = memo(({ categories, onSelectCategory, isLoading, isError, isRefreshing }) => {
+const ParentCategoryPanel = memo(({ categories, onSelectCategory, isLoading, isError, isRefreshing, listBottomPadding = 0 }) => {
   const getIconComponent = (iconInfo) => {
     switch (iconInfo.type) {
       case 'M':
@@ -87,7 +87,7 @@ const ParentCategoryPanel = memo(({ categories, onSelectCategory, isLoading, isE
       </View>
 
       <ScrollView 
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, listBottomPadding > 0 && { paddingBottom: listBottomPadding }]}
         showsVerticalScrollIndicator={false}
         refreshing={isRefreshing}
         onRefresh={() => { }}

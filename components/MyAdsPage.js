@@ -529,8 +529,8 @@ const MyAdsPage = ({ navigation }) => {
                     <Text style={styles.deleteActionText}>Delete Listing</Text>
                   </TouchableOpacity>
                 </View>
-                {/* Safe area spacer - only for content, not container */}
-                {insets.bottom > 0 && <View style={{ height: insets.bottom }} />}
+                {/* Solid white fill to screen edge so no gap / no see-through; when nav buttons enabled add a little extra margin */}
+                <View style={{ height: (insets?.bottom ?? 0) > 0 ? (insets.bottom + 12) : 16, backgroundColor: '#FFFFFF' }} />
               </View>
             </View>
           </TouchableWithoutFeedback>

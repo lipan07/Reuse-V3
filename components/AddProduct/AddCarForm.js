@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Switch, Dimensions, SafeAreaView, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { submitForm } from '../../service/apiService';
 import ImagePickerComponent from './SubComponent/ImagePickerComponent';
@@ -88,6 +89,8 @@ const BRAND_OPTIONS = [
 ];
 
 const AddCarForm = ({ route, navigation }) => {
+  const insets = useSafeAreaInsets();
+  const bottomInset = insets?.bottom ?? 0;
   const { category, subcategory, product, listingType } = route.params || {};
   const currentYear = new Date().getFullYear();
   const [formData, setFormData] = useState({
@@ -265,7 +268,7 @@ const AddCarForm = ({ route, navigation }) => {
           </View>
 
           <ScrollView
-            contentContainerStyle={modernStyles.scrollContent}
+            contentContainerStyle={[modernStyles.scrollContent, { paddingBottom: normalizeVertical(100) + bottomInset }]}
             keyboardShouldPersistTaps="handled"
             nestedScrollEnabled={true}
             showsVerticalScrollIndicator={false}
@@ -513,7 +516,7 @@ const AddCarForm = ({ route, navigation }) => {
           </ScrollView>
 
           {/* Sticky Submit Button */}
-          <View style={modernStyles.stickyButton}>
+          <View style={[modernStyles.stickyButton, { bottom: bottomInset }]}>
             <TouchableOpacity
               onPress={handleSubmit}
               style={[modernStyles.submitButton, (isSubmitting || isLoading || isVideoUploading) && modernStyles.disabledButton]}

@@ -13,9 +13,11 @@ import {
   Dimensions,
   SafeAreaView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { submitForm } from '../../service/apiService';
 import ImagePickerComponent from './SubComponent/ImagePickerComponent';
+import VideoPickerComponent from './SubComponent/VideoPickerComponent';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AddressAutocomplete from '../AddressAutocomplete.js';
 import ModernSelectionModal from './SubComponent/ModernSelectionModal.js';
@@ -29,6 +31,8 @@ const normalize = (size) => Math.round(scale * size);
 const normalizeVertical = (size) => Math.round(verticalScale * size);
 
 const AddOthers = ({ route, navigation }) => {
+  const insets = useSafeAreaInsets();
+  const bottomInset = insets?.bottom ?? 0;
   const { subcategory, product, listingType } = route.params || {};
   const [formData, setFormData] = useState({
     adTitle: '',
@@ -39,11 +43,17 @@ const AddOthers = ({ route, navigation }) => {
     longitude: null,
     images: [],
     deletedImages: [],
+    videoUrl: null,
+    videoId: null,
+    deletedVideoUrl: null,
+    deletedVideoId: null,
     listingType: listingType || 'sell',
     show_phone: false,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isVideoUploading, setIsVideoUploading] = useState(false);
+  const [shouldNavigateOnClose, setShouldNavigateOnClose] = useState(false);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalType, setModalType] = useState('info');
@@ -81,6 +91,8 @@ const AddOthers = ({ route, navigation }) => {
               isNew: false,
             })) || [],
             deletedImages: [],
+            videoUrl: productData.videos?.[0] || productData.video_url || productData.videoUrl || null,
+            videoId: productData.video_id || productData.videoId || null,
             show_phone: productData.show_phone === true || productData.show_phone === 1 || productData.show_phone === '1',
             listingType: productData.type || 'sell',
           });
@@ -104,6 +116,7 @@ const AddOthers = ({ route, navigation }) => {
       setModalType(response.alert.type);
       setModalTitle(response.alert.title);
       setModalMessage(response.alert.message);
+      setShouldNavigateOnClose(true);
       setIsModalVisible(true);
 
       setIsSubmitting(false);
@@ -170,7 +183,7 @@ const AddOthers = ({ route, navigation }) => {
           </View>
 
           <ScrollView
-            contentContainerStyle={modernStyles.scrollContent}
+            contentContainerStyle={[modernStyles.scrollContent, { paddingBottom: normalizeVertical(100) + bottomInset }]}
             keyboardShouldPersistTaps="handled"
             nestedScrollEnabled={true}
             showsVerticalScrollIndicator={false}
@@ -286,14 +299,35 @@ const AddOthers = ({ route, navigation }) => {
               </View>
               <ImagePickerComponent formData={formData} setFormData={setFormData} />
             </View>
+
+            {/* Video Picker */}
+            <View style={modernStyles.fieldContainer}>
+              <View style={modernStyles.labelContainer}>
+                <Icon name="videocam-outline" size={normalize(18)} color="#666" style={modernStyles.labelIcon} />
+                <Text style={modernStyles.label}>Upload Video (Optional)</Text>
+              </View>
+              <VideoPickerComponent
+                formData={formData}
+                setFormData={setFormData}
+                propertyTitle={formData.adTitle}
+                onUploadStateChange={setIsVideoUploading}
+                onShowAlert={(type, title, message) => {
+                  setModalType(type);
+                  setModalTitle(title);
+                  setModalMessage(message);
+                  setShouldNavigateOnClose(false);
+                  setIsModalVisible(true);
+                }}
+              />
+            </View>
           </ScrollView>
 
           {/* Sticky Submit Button */}
-          <View style={modernStyles.stickyButton}>
+          <View style={[modernStyles.stickyButton, { bottom: bottomInset }]}>
             <TouchableOpacity
               onPress={handleSubmit}
-              style={[modernStyles.submitButton, (isLoading || isSubmitting) && modernStyles.disabledButton]}
-              disabled={isLoading || isSubmitting}
+              style={[modernStyles.submitButton, (isLoading || isSubmitting || isVideoUploading) && modernStyles.disabledButton]}
+              disabled={isLoading || isSubmitting || isVideoUploading}
               activeOpacity={0.8}
             >
               {isLoading || isSubmitting ? (
@@ -318,7 +352,7 @@ const AddOthers = ({ route, navigation }) => {
         message={modalMessage}
         onClose={() => {
           setIsModalVisible(false);
-          if (modalType === 'success') navigation.goBack();
+          if (modalType === 'success' && shouldNavigateOnClose) navigation.goBack();
         }}
       />
     </>

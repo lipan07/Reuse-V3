@@ -166,7 +166,7 @@ const subcategoryColorMapping = {
     other_services: '#2196F3', // Blue
 };
 
-const SubCategoryPanel = memo(({ subcategories, onSelectSubcategory, parentCategoryName, parentCategoryColor }) => {
+const SubCategoryPanel = memo(({ subcategories, onSelectSubcategory, parentCategoryName, parentCategoryColor, listBottomPadding = 0 }) => {
     const getIconName = (guardName) => {
         return iconMapping[guardName] || 'tag';
     };
@@ -190,7 +190,7 @@ const SubCategoryPanel = memo(({ subcategories, onSelectSubcategory, parentCateg
             </View>
 
             <ScrollView 
-                contentContainerStyle={styles.scrollContent}
+                contentContainerStyle={[styles.scrollContent, listBottomPadding > 0 && { paddingBottom: listBottomPadding }]}
                 showsVerticalScrollIndicator={false}
             >
                 <View style={styles.gridContainer}>

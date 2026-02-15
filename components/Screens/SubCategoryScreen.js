@@ -1,14 +1,21 @@
 // screens/SubCategoryScreen.js
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Dimensions } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import SubCategoryPanel from '../SubCategoryPanel';
 import BottomNavBar from '../BottomNavBar';
 import { useNavigation, useRoute } from '@react-navigation/native';
+
+const verticalScale = Dimensions.get('window').height / 812;
+const normalizeVertical = (size) => Math.round(verticalScale * size);
+const BOTTOM_BAR_HEIGHT = normalizeVertical(52);
 
 const SubCategoryScreen = () => {
     const navigation = useNavigation();
     const route = useRoute();
     const { subcategories, parentCategory, listingType } = route.params;
+    const insets = useSafeAreaInsets();
+    const listBottomPadding = (insets?.bottom ?? 0) + BOTTOM_BAR_HEIGHT;
 
     const handleSubcategorySelect = (subcategory) => {
         // Use parentCategory from route params instead of selectedCategory
@@ -136,15 +143,16 @@ const SubCategoryScreen = () => {
     };
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
             <SubCategoryPanel
                 subcategories={subcategories}
                 onSelectSubcategory={handleSubcategorySelect}
                 parentCategoryName={parentCategory.name}
                 parentCategoryColor={parentCategory.color}
+                listBottomPadding={listBottomPadding}
             />
             <BottomNavBar />
-        </View>
+        </SafeAreaView>
     );
 };
 

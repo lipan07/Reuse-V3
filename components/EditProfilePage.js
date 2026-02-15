@@ -17,6 +17,7 @@ import {
   Alert,
   PermissionsAndroid
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { launchImageLibrary } from 'react-native-image-picker';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
@@ -31,6 +32,8 @@ const normalize = (size) => Math.round(scale * size);
 const normalizeVertical = (size) => Math.round(verticalScale * size);
 
 const EditProfilePage = () => {
+  const insets = useSafeAreaInsets();
+  const bottomInset = insets?.bottom ?? 0;
   const [userData, setUserData] = useState({
     firstName: '',
     lastName: '',
@@ -366,7 +369,7 @@ const EditProfilePage = () => {
           style={styles.keyboardView}
         >
           <ScrollView
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 + bottomInset }]}
             showsVerticalScrollIndicator={false}
           >
             {/* Header */}
@@ -576,7 +579,7 @@ const EditProfilePage = () => {
           </ScrollView>
 
           {/* Save Button */}
-          <View style={styles.buttonContainer}>
+          <View style={[styles.buttonContainer, { bottom: bottomInset }]}>
             <TouchableOpacity
               style={[styles.saveButton, isSubmitting && styles.saveButtonDisabled]}
               onPress={handleSave}

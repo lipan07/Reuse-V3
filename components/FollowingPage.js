@@ -8,11 +8,11 @@ import {
     Modal,
     Alert,
     Dimensions,
-    SafeAreaView,
     Platform,
     ActivityIndicator,
     Animated
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Header from './Screens/Header';
@@ -25,6 +25,7 @@ const scale = width / 375;
 const normalize = (size) => Math.round(scale * size);
 
 const FollowingPage = ({ navigation }) => {
+    const insets = useSafeAreaInsets();
     const [followingFilter, setFollowingFilter] = useState('Post');
     const [data, setData] = useState([]);
     const [isUnfollowModalVisible, setIsUnfollowModalVisible] = useState(false);
@@ -361,7 +362,7 @@ const FollowingPage = ({ navigation }) => {
     );
 
     return (
-        <SafeAreaView style={[styles.container, darkMode && styles.darkContainer]}>
+        <SafeAreaView style={[styles.container, darkMode && styles.darkContainer]} edges={['bottom', 'left', 'right']}>
             <CustomStatusBar />
             {/* Header */}
             <Header
@@ -438,7 +439,7 @@ const FollowingPage = ({ navigation }) => {
                         data={data}
                         keyExtractor={(item) => item.id.toString()}
                         renderItem={renderItem}
-                        contentContainerStyle={styles.listContent}
+                        contentContainerStyle={[styles.listContent, { paddingBottom: (insets?.bottom ?? 0) + normalize(20) }]}
                         showsVerticalScrollIndicator={false}
                         ItemSeparatorComponent={() => <View style={[styles.separator, darkMode && styles.darkSeparator]} />}
                                 ListHeaderComponent={() => (

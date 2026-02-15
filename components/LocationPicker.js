@@ -16,6 +16,7 @@ import {
     PermissionsAndroid,
     Keyboard
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import 'react-native-get-random-values';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getInitialLocationRequestStatus } from '../service/initialLocationService';
@@ -33,6 +34,7 @@ const normalize = (size) => Math.round(scale * size);
 const normalizeVertical = (size) => Math.round(verticalScale * size);
 
 const LocationPicker = ({ navigation }) => {
+    const insets = useSafeAreaInsets();
     const defaultLocation = {
         latitude: 28.6139,
         longitude: 77.209,
@@ -698,7 +700,7 @@ const LocationPicker = ({ navigation }) => {
     return (
         <AlertNotificationRoot>
             <CustomStatusBar />
-            <View style={styles.container}>
+            <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
                 {/* Header */}
                 <View style={styles.header}>
                     <TouchableOpacity
@@ -851,10 +853,13 @@ const LocationPicker = ({ navigation }) => {
                     </View>
                 )}
 
-                {/* Selected Address Display */}
-                <View style={styles.addressContainer}>
+                {/* Selected Address Display - positioned above Confirm button */}
+                <View style={[
+                    styles.addressContainer,
+                    { bottom: (insets?.bottom ?? 0) + normalizeVertical(24) + normalizeVertical(52) + normalizeVertical(12) }
+                ]}>
                     <View style={styles.addressHeader}>
-                        <Icon name="check-circle" size={normalize(16)} color="#4CAF50" />
+                        <Icon name="check-circle" size={normalize(18)} color="#4CAF50" />
                         <Text style={styles.addressTitle}>Selected Location</Text>
                     </View>
                     <Text style={styles.addressText} numberOfLines={2}>
@@ -862,8 +867,8 @@ const LocationPicker = ({ navigation }) => {
                     </Text>
                 </View>
 
-                {/* Action Button */}
-                <View style={styles.actionContainer}>
+                {/* Action Button - positioned above safe area so it's always visible */}
+                <View style={[styles.actionContainer, { bottom: (insets?.bottom ?? 0) + normalizeVertical(24) }]}>
                     <TouchableOpacity
                         style={styles.confirmButton}
                         onPress={handleConfirmLocation}
@@ -894,7 +899,7 @@ const LocationPicker = ({ navigation }) => {
                     message={errorMessage}
                     onClose={() => setShowErrorModal(false)}
                 />
-            </View>
+            </SafeAreaView>
         </AlertNotificationRoot>
     );
 };
@@ -1065,20 +1070,19 @@ const styles = StyleSheet.create({
         marginBottom: normalizeVertical(8),
     },
     addressTitle: {
-        fontSize: normalize(12),
+        fontSize: normalize(11),
         fontWeight: '600',
         color: '#4CAF50',
         marginLeft: normalize(6),
         textTransform: 'uppercase',
     },
     addressText: {
-        fontSize: normalize(14),
+        fontSize: normalize(12),
         color: '#333',
-        lineHeight: normalizeVertical(20),
+        lineHeight: normalizeVertical(18),
     },
     actionContainer: {
         position: 'absolute',
-        bottom: normalizeVertical(30),
         left: normalize(20),
         right: normalize(20),
         zIndex: 10,

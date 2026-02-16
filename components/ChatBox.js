@@ -15,6 +15,7 @@ import {
   BackHandler,
   Alert
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import moment from 'moment';
@@ -29,6 +30,7 @@ const normalizeVertical = (size) => Math.round(verticalScale * size);
 
 const ChatBox = ({ route }) => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { sellerId, buyerId, postId, chatId: existingChatId, postTitle, postImage } = route.params;
   const [chatId, setChatId] = useState(existingChatId || null);
   const [allMessages, setAllMessages] = useState([]);
@@ -701,8 +703,12 @@ const ChatBox = ({ route }) => {
           />
       )}
 
-      {/* Replace your footer JSX with this: */}
-      <View style={[styles.footer, Platform.OS === 'ios' && styles.iosFooter]}>
+      {/* Message input - padding bottom for safe area and nav so input is not hidden */}
+      <View style={[
+        styles.footer,
+        Platform.OS === 'ios' && styles.iosFooter,
+        { paddingBottom: (insets?.bottom ?? 0) + normalizeVertical(8) }
+      ]}>
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}

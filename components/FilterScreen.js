@@ -4,6 +4,7 @@ import {
     KeyboardAvoidingView, Platform, ActivityIndicator, StatusBar,
     Dimensions
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute } from '@react-navigation/native';
 import AddressAutocomplete from './AddressAutocomplete';
@@ -324,7 +325,7 @@ const FilterScreen = ({ navigation }) => {
     };
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
             <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
             <KeyboardAvoidingView
@@ -581,7 +582,7 @@ const FilterScreen = ({ navigation }) => {
                     )}
                 </TouchableOpacity>
             </View>
-        </View>
+        </SafeAreaView>
     );
 };
 

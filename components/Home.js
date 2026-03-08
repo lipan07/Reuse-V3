@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Alert, View, Text, StyleSheet, TouchableOpacity, Image, TextInput, FlatList, ActivityIndicator, DeviceEventEmitter, Animated, Easing, RefreshControl, TouchableWithoutFeedback, Keyboard, Dimensions } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { Alert, View, Text, StyleSheet, TouchableOpacity, Image, TextInput, FlatList, ActivityIndicator, DeviceEventEmitter, Animated, Easing, RefreshControl, TouchableWithoutFeedback, Keyboard, useWindowDimensions } from 'react-native';
 import Swiper from 'react-native-swiper';
 import CategoryMenu from './CategoryMenu';
 import BottomNavBar from './BottomNavBar';
 import { useFocusEffect, useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import styles from '../assets/css/Home.styles';
+import { getHomeStyles } from '../assets/css/Home.styles';
+import { getNumColumns, normalize } from '../utils/responsive';
 
 import {
   BannerAd,
@@ -15,12 +16,6 @@ import {
   AppOpenAd,
   AdEventType,
 } from 'react-native-google-mobile-ads';
-
-const { width, height } = Dimensions.get('window');
-const scale = width / 375;
-const verticalScale = height / 812;
-const normalize = (size) => Math.round(scale * size);
-const normalizeVertical = (size) => Math.round(verticalScale * size);
 
 const adUnitIdAppOpen = __DEV__ ? TestIds.APP_OPEN : process.env.G_APP_OPEN_AD_UNIT_ID;
 const adUnitId = __DEV__ ? TestIds.ADAPTIVE_BANNER : process.env.G_BANNER_AD_UNIT_ID;
@@ -39,6 +34,10 @@ const PLACEHOLDER_TEXTS = [
 ];
 
 const Home = () => {
+  const { width, height } = useWindowDimensions();
+  const numColumns = getNumColumns(width);
+  const styles = useMemo(() => StyleSheet.create(getHomeStyles(width, height)), [width, height]);
+
   const navigation = useNavigation();
   const route = useRoute();
   const [filters, setFilters] = useState({});
@@ -455,7 +454,7 @@ const Home = () => {
 
     return (
       <Animated.View style={{ transform: [{ scale }] }}>
-        <Icon name="play-circle-filled" size={size} color={color} style={{ marginBottom: normalize(10) }} />
+        <Icon name="play-circle-filled" size={size} color={color} style={{ marginBottom: normalize(10, width) }} />
       </Animated.View>
     );
   };
@@ -496,7 +495,7 @@ const Home = () => {
             {/* Camera icon below tag if video exists */}
             {hasVideos && !item.images?.length == 0 && (
               <View style={styles.cameraIconBelowTag}>
-                <Icon name="videocam" size={normalize(16)} color="#FF0000" />
+                <Icon name="videocam" size={normalize(16, width)} color="#FF0000" />
               </View>
             )}
           </View>
@@ -504,7 +503,7 @@ const Home = () => {
           {/* Distance badge */}
           {distance && (
             <View style={styles.distanceBadge}>
-              <Icon name="location-on" size={normalize(10)} color="#fff" />
+              <Icon name="location-on" size={normalize(10, width)} color="#fff" />
               <Text style={styles.distanceText}>{distance}</Text>
             </View>
           )}
@@ -522,9 +521,9 @@ const Home = () => {
               <View style={styles.placeholderContainer}>
                   {/* Show play icon if video available, otherwise show image icon */}
                   {hasVideos ? (
-                    <AnimatedPlayIcon size={normalize(35)} color="rgba(76, 175, 79, 0.81)" />
+                    <AnimatedPlayIcon size={normalize(35, width)} color="rgba(76, 175, 79, 0.81)" />
                   ) : (
-                    <Icon name="image" size={normalize(50)} color="#ccc" style={{ marginBottom: normalize(10) }} />
+                    <Icon name="image" size={normalize(50, width)} color="#ccc" style={{ marginBottom: normalize(10, width) }} />
                   )}
                   {/* Category text below icon */}
                 <Text style={styles.placeholderText}>
@@ -545,7 +544,7 @@ const Home = () => {
           {/* Location and Distance Row */}
           <View style={styles.locationDistanceContainer}>
             <View style={styles.locationContainer}>
-              <Icon name="location-on" size={normalize(12)} color="#888" />
+              <Icon name="location-on" size={normalize(12, width)} color="#888" />
               <Text style={styles.address} numberOfLines={1}>
                 {item.address || 'Address not available'}
               </Text>
@@ -699,7 +698,7 @@ const Home = () => {
               onPress={() => handleRemoveFilter('search')}
             >
               <Text style={styles.filterPillText}>Search: {activeFilters.search}</Text>
-              <Icon name="close" size={normalize(10)} color="#fff" />
+              <Icon name="close" size={normalize(10, width)} color="#fff" />
             </TouchableOpacity>
           )}
           {activeFilters.category && (
@@ -710,7 +709,7 @@ const Home = () => {
               <Text style={styles.filterPillText}>
                 Category: {categories.find(c => String(c.id) === String(activeFilters.category))?.name || 'Unknown'}
               </Text>
-              <Icon name="close" size={normalize(10)} color="#fff" />
+              <Icon name="close" size={normalize(10, width)} color="#fff" />
             </TouchableOpacity>
           )}
           {activeFilters.distance !== 5 && (
@@ -719,7 +718,7 @@ const Home = () => {
               onPress={() => handleRemoveFilter('distance')}
             >
               <Text style={styles.filterPillText}>Radius: {activeFilters.distance}km</Text>
-              <Icon name="close" size={normalize(10)} color="#fff" />
+              <Icon name="close" size={normalize(10, width)} color="#fff" />
             </TouchableOpacity>
           )}
           {activeFilters.listingType !== null && (
@@ -732,7 +731,7 @@ const Home = () => {
                   activeFilters.listingType.charAt(0).toUpperCase() + activeFilters.listingType.slice(1) :
                   'All'}
               </Text>
-              <Icon name="close" size={normalize(10)} color="#fff" />
+              <Icon name="close" size={normalize(10, width)} color="#fff" />
             </TouchableOpacity>
           )}
           {(activeFilters.priceRange[0] || activeFilters.priceRange[1]) && (
@@ -744,7 +743,7 @@ const Home = () => {
                 Price: {activeFilters.priceRange[0] ? `₹${activeFilters.priceRange[0]}` : 'Any'} -
                 {activeFilters.priceRange[1] ? `₹${activeFilters.priceRange[1]}` : 'Any'}
               </Text>
-              <Icon name="close" size={normalize(10)} color="#fff" />
+              <Icon name="close" size={normalize(10, width)} color="#fff" />
             </TouchableOpacity>
           )}
           {activeFilters.sortBy !== null && (
@@ -753,7 +752,7 @@ const Home = () => {
               onPress={() => handleRemoveFilter('sortBy')}
             >
               <Text style={styles.filterPillText}>Sort: {activeFilters.sortBy}</Text>
-              <Icon name="close" size={normalize(10)} color="#fff" />
+              <Icon name="close" size={normalize(10, width)} color="#fff" />
             </TouchableOpacity>
           )}
           <TouchableOpacity
@@ -776,7 +775,7 @@ const Home = () => {
               fetchProducts(true, cleanParams(resetFilters));
             }}
           >
-            <Icon name="refresh" size={normalize(16)} color="#007bff" />
+            <Icon name="refresh" size={normalize(16, width)} color="#007bff" />
             <Text style={styles.quickFilterText}>Reset All</Text>
           </TouchableOpacity>
         </View>
@@ -800,43 +799,16 @@ const Home = () => {
             style={styles.bannerAd}
           />
         </View> */}
-            {/* Search Bar - Tap to open Filter Screen */}
-            <TouchableOpacity
-              style={styles.searchContainer}
-              onPress={() => navigation.navigate('FilterScreen', {
-                initialFilters: { ...activeFilters, search, category: selectedCategory }
-              })}
-              activeOpacity={0.7}
-            >
-              <View style={styles.searchInputWrapper}>
-                <Icon name="search" size={normalize(18)} color="#888" style={styles.searchIcon} />
-                {search ? (
-                  <Text style={styles.searchDisplayText}>{search}</Text>
-                ) : (
-                  <Animated.Text style={[styles.searchDisplayText, styles.searchPlaceholder, { opacity: placeholderOpacity }]}>
-                    {PLACEHOLDER_TEXTS[placeholderIndex]}
-                  </Animated.Text>
-                )}
-                {activeFilterCount > 0 && (
-                  <View style={styles.filterBadge}>
-                    <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
-                  </View>
-                )}
-              </View>
-            </TouchableOpacity>
-            {/* {isLoading && products.length === 0 && (
-          <ActivityIndicator size="large" color="#007bff" style={styles.loaderTop} />
-        )} */}
             <FlatList
               data={products}
               renderItem={renderProductItem}
               keyExtractor={(item) => `${item.id}_${currentPage}`}
-              numColumns={2}
+              numColumns={numColumns}
               style={styles.flex1}
               contentContainerStyle={styles.productList}
               ListHeaderComponent={
                 <>
-                  {/* Banner Ad if needed */}
+                  <View style={styles.searchBarSpacer} />
                   <CategoryMenu
                     onCategorySelect={handleCategorySelect}
                     selectedCategory={selectedCategory}
@@ -870,6 +842,30 @@ const Home = () => {
               maxToRenderPerBatch={10}
               windowSize={21}
             />
+            {/* Search Bar - overlays list so content shows through transparent area */}
+            <TouchableOpacity
+              style={styles.searchContainer}
+              onPress={() => navigation.navigate('FilterScreen', {
+                initialFilters: { ...activeFilters, search, category: selectedCategory }
+              })}
+              activeOpacity={0.7}
+            >
+              <View style={styles.searchInputWrapper}>
+                <Icon name="search" size={normalize(18, width)} color="#888" style={styles.searchIcon} />
+                {search ? (
+                  <Text style={styles.searchDisplayText}>{search}</Text>
+                ) : (
+                  <Animated.Text style={[styles.searchDisplayText, styles.searchPlaceholder, { opacity: placeholderOpacity }]}>
+                    {PLACEHOLDER_TEXTS[placeholderIndex]}
+                  </Animated.Text>
+                )}
+                {activeFilterCount > 0 && (
+                  <View style={styles.filterBadge}>
+                    <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
             <BottomNavBar navigation={navigation} />
           </View>
         </TouchableWithoutFeedback>

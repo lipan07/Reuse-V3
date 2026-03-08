@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Dimensions,
   Platform,
+  Keyboard,
   KeyboardAvoidingView,
   Image,
   Animated,
@@ -48,6 +49,7 @@ const ChatBox = ({ route }) => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMorePages, setHasMorePages] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   // Get other user's ID from API response if available, else fallback
   const otherUserId = otherPerson?.id || (loggedInUserId === sellerId?.toString() ? buyerId : sellerId);
@@ -60,6 +62,22 @@ const ChatBox = ({ route }) => {
 
   useEffect(() => {
     AsyncStorage.getItem('userId').then(setLoggedInUserId);
+  }, []);
+
+  // Avoid extra bottom margin when keyboard is open
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setKeyboardVisible(true)
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardVisible(false)
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
   }, []);
 
   // Handle device back button - navigate to Home if opened from notification
@@ -703,11 +721,11 @@ const ChatBox = ({ route }) => {
           />
       )}
 
-      {/* Message input - padding bottom for safe area and nav so input is not hidden */}
+      {/* Message input - only add bottom padding when keyboard is closed to avoid extra margin when focused */}
       <View style={[
         styles.footer,
-        Platform.OS === 'ios' && styles.iosFooter,
-        { paddingBottom: (insets?.bottom ?? 0) + normalizeVertical(8) }
+        !keyboardVisible && Platform.OS === 'ios' && styles.iosFooter,
+        { paddingBottom: keyboardVisible ? normalizeVertical(8) : (insets?.bottom ?? 0) + normalizeVertical(8) }
       ]}>
         <View style={styles.inputContainer}>
           <TextInput

@@ -26,7 +26,7 @@ const iconMapping = {
   mobiles: { name: 'mobile-alt', type: 'Fontisto' },
   services: { name: 'tools', type: 'MC' },
   commercial_vehicle_spare_part: { name: 'tow-truck', type: 'MC' },
-  boks_sports_hobbies: { name: 'menu-book', type: 'M' },
+  books_sports_hobbies: { name: 'menu-book', type: 'M' },
   electronics_appliances: { name: 'electrical-services', type: 'M' },
   commercial_mechinery_spare_parts: { name: 'truck-ramp-box', type: 'FA6' },
   pets: { name: 'cat', type: 'FA6' },

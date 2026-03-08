@@ -11,6 +11,7 @@ import AddressAutocomplete from './AddressAutocomplete';
 import MCIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MIcon from 'react-native-vector-icons/MaterialIcons';
 import FA5Icon from 'react-native-vector-icons/FontAwesome5';
+import FA6Icon from 'react-native-vector-icons/FontAwesome6';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import styles from '../assets/css/FilterScreen.styles.js';
@@ -19,10 +20,10 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Subcategory data for categories with children
 const CATEGORY_SUBCATEGORIES = {
-    '2': [ // Properties
+    '2': [ // Properties – icons match SubCategoryPanel
         { id: '3', name: 'Houses & Apartments', icon: 'home', guard_name: 'houses_apartments' },
         { id: '4', name: 'Land & Plots', icon: 'map', guard_name: 'land_plots' },
-        { id: '5', name: 'PG & Guest Houses', icon: 'hotel', guard_name: 'pg_guest_houses' },
+        { id: '5', name: 'PG & Guest Houses', icon: 'home-group', guard_name: 'pg_guest_houses' },
         { id: '6', name: 'Shop & Offices', icon: 'store', guard_name: 'shop_offices' },
     ],
     '8': [ // Job
@@ -30,13 +31,13 @@ const CATEGORY_SUBCATEGORIES = {
         { id: '10', name: 'Sales & Marketing', icon: 'chart-line', guard_name: 'sales_marketing' },
         { id: '11', name: 'BPO & Telecaller', icon: 'phone', guard_name: 'bpo_telecaller' },
         { id: '12', name: 'Driver', icon: 'car', guard_name: 'driver' },
-        { id: '13', name: 'Office Assistant', icon: 'desktop', guard_name: 'office_assistant' },
+        { id: '13', name: 'Office Assistant', icon: 'monitor', guard_name: 'office_assistant' },
         { id: '14', name: 'Delivery & Collection', icon: 'truck', guard_name: 'delivery_collection' },
         { id: '15', name: 'Teacher', icon: 'school', guard_name: 'teacher' },
         { id: '16', name: 'Cook', icon: 'chef-hat', guard_name: 'cook' },
         { id: '17', name: 'Receptionist', icon: 'deskphone', guard_name: 'receptionist_front_office' },
         { id: '18', name: 'Operator & Technician', icon: 'wrench', guard_name: 'operator_technician' },
-        { id: '19', name: 'IT Engineer & Developer', icon: 'code', guard_name: 'engineer_developer' },
+        { id: '19', name: 'IT Engineer & Developer', icon: 'code-tags', guard_name: 'engineer_developer' },
         { id: '20', name: 'Hotel & Travel', icon: 'airplane', guard_name: 'hotel_travel_executive' },
         { id: '21', name: 'Accountant', icon: 'calculator', guard_name: 'accountant' },
         { id: '22', name: 'Designer', icon: 'palette', guard_name: 'designer' },
@@ -73,9 +74,9 @@ const CATEGORY_SUBCATEGORIES = {
         { id: '49', name: 'Kids Furniture', icon: 'baby-carriage', guard_name: 'kids_furniture' },
         { id: '50', name: 'Other Household', icon: 'home-variant', guard_name: 'other_household_items' },
     ],
-    '51': [ // Fashion
+    '51': [ // Fashion – icons match SubCategoryPanel
         { id: '52', name: 'Men', icon: 'tshirt-crew', guard_name: 'mens_fashion' },
-        { id: '53', name: 'Women', icon: 'dress', guard_name: 'womens_fashion' },
+        { id: '53', name: 'Women', icon: 'human-female', guard_name: 'womens_fashion' },
         { id: '54', name: 'Kids', icon: 'baby-face-outline', guard_name: 'kids_fashion' },
     ],
     '55': [ // Books, Sports & Hobbies
@@ -102,6 +103,71 @@ const CATEGORY_SUBCATEGORIES = {
         { id: '74', name: 'Packers & Movers', icon: 'truck-delivery', guard_name: 'packers_movers' },
         { id: '75', name: 'Other Services', icon: 'tools', guard_name: 'other_services' },
     ],
+};
+
+// Subcategory icon colors – aligned with SubCategoryPanel
+const SUBCATEGORY_COLOR_MAPPING = {
+    houses_apartments: '#4CAF50',
+    land_plots: '#4CAF50',
+    pg_guest_houses: '#2196F3',
+    shop_offices: '#FF9800',
+    data_entry_back_office: '#2196F3',
+    sales_marketing: '#FF9800',
+    bpo_telecaller: '#4CAF50',
+    driver: '#F44336',
+    office_assistant: '#2196F3',
+    delivery_collection: '#FF9800',
+    teacher: '#4CAF50',
+    cook: '#FF9800',
+    receptionist_front_office: '#2196F3',
+    operator_technician: '#F44336',
+    engineer_developer: '#F44336',
+    hotel_travel_executive: '#FF9800',
+    accountant: '#2196F3',
+    designer: '#F44336',
+    other_jobs: '#4CAF50',
+    motorcycles: '#F44336',
+    scooters: '#4CAF50',
+    bycycles: '#2196F3',
+    accessories: '#FF9800',
+    computers_laptops: '#2196F3',
+    tvs_video_audio: '#2196F3',
+    acs: '#2196F3',
+    fridges: '#4CAF50',
+    washing_machines: '#2196F3',
+    cameras_lenses: '#F44336',
+    harddisks_printers_monitors: '#2196F3',
+    kitchen_other_appliances: '#FF9800',
+    commercial_heavy_vehicles: '#FF9800',
+    vehicle_spare_parts: '#F44336',
+    commercial_heavy_machinery: '#F44336',
+    machinery_spare_parts: '#F44336',
+    sofa_dining: '#FF9800',
+    beds_wardrobes: '#4CAF50',
+    home_decor_garden: '#4CAF50',
+    kids_furniture: '#2196F3',
+    other_household_items: '#F44336',
+    mens_fashion: '#2196F3',
+    womens_fashion: '#F44336',
+    kids_fashion: '#2196F3',
+    books: '#2196F3',
+    gym_fitness: '#4CAF50',
+    musical_instruments: '#FF9800',
+    sports_instrument: '#4CAF50',
+    other_hobbies: '#F44336',
+    dogs: '#F44336',
+    fish_aquarium: '#2196F3',
+    pets_food_accessories: '#FF9800',
+    other_pets: '#4CAF50',
+    education_classes: '#2196F3',
+    tours_travels: '#4CAF50',
+    electronics_repair_services: '#F44336',
+    health_beauty: '#F44336',
+    home_renovation_repair: '#FF9800',
+    cleaning_pest_control: '#4CAF50',
+    legal_documentation_services: '#2196F3',
+    packers_movers: '#FF9800',
+    other_services: '#2196F3',
 };
 
 
@@ -147,24 +213,24 @@ const FilterScreen = ({ navigation }) => {
         }));
     }, [minPrice, maxPrice]);
 
-    // Categories data
+    // Categories data – icons aligned with ParentCategoryPanel (Add Product) iconMapping
     const categories = [
         { id: null, name: 'All', icon: 'apps', color: '#2563eb', type: 'Ion' },
         { id: '1', name: 'Cars', icon: 'car', color: '#dc2626', type: 'MC' },
         { id: '2', name: 'Properties', icon: 'home', color: '#16a34a', type: 'Ion' },
         { id: '7', name: 'Mobiles', icon: 'mobile-alt', color: '#f59e0b', type: 'Fontisto' },
-        { id: '8', name: 'Job', icon: 'briefcase', color: '#84cc16', type: 'Ion' },
+        { id: '8', name: 'Job', icon: 'people-carry-box', color: '#84cc16', type: 'FA6' },
         { id: '24', name: 'Bikes', icon: 'motorbike', color: '#8b5cf6', type: 'MC' },
-        { id: '29', name: 'Electronics', icon: 'laptop', color: '#0ea5e9', type: 'FA5' },
-        { id: '39', name: 'Commercial Vehicle', icon: 'truck', color: '#f97316', type: 'FA5' },
-        { id: '42', name: 'Machinery', icon: 'cog', color: '#8b5cf6', type: 'FA5' },
+        { id: '29', name: 'Electronics', icon: 'electrical-services', color: '#0ea5e9', type: 'M' },
+        { id: '39', name: 'Commercial Vehicle', icon: 'tow-truck', color: '#f97316', type: 'MC' },
+        { id: '42', name: 'Machinery', icon: 'truck-ramp-box', color: '#8b5cf6', type: 'FA6' },
         { id: '45', name: 'Furniture', icon: 'sofa', color: '#d97706', type: 'MC' },
         { id: '51', name: 'Fashion', icon: 'tshirt-crew', color: '#ec4899', type: 'MC' },
         { id: '55', name: 'Books & Sports', icon: 'menu-book', color: '#14b8a6', type: 'M' },
-        { id: '61', name: 'Pets', icon: 'paw', color: '#f97316', type: 'FA5' },
-        { id: '66', name: 'Services', icon: 'tools', color: '#06b6d4', type: 'FA5' },
+        { id: '61', name: 'Pets', icon: 'cat', color: '#f97316', type: 'FA6' },
+        { id: '66', name: 'Services', icon: 'tools', color: '#06b6d4', type: 'MC' },
         { id: 'donate', name: 'Donate', icon: 'gift', color: '#e11d48', type: 'MC' },
-        { id: '76', name: 'Others', icon: 'dots-horizontal', color: '#6b7280', type: 'MC' },
+        { id: '76', name: 'Others', icon: 'tag', color: '#6b7280', type: 'MC' },
     ];
 
     // Available options
@@ -182,11 +248,12 @@ const FilterScreen = ({ navigation }) => {
             ? ['Relevance', 'Recently Added']
             : ['Relevance', 'Recently Added', 'Price: Low to High', 'Price: High to Low'];
 
-    // Get icon component by type
+    // Get icon component by type (matches ParentCategoryPanel for consistency)
     const getIconComponent = (type) => {
         switch (type) {
             case 'M': return MIcon;
             case 'FA5': return FA5Icon;
+            case 'FA6': return FA6Icon;
             case 'Fontisto': return Fontisto;
             case 'Ion': return Ionicons;
             case 'MC':
@@ -360,6 +427,7 @@ const FilterScreen = ({ navigation }) => {
                                 <View style={styles.subcategoryList}>
                                     {currentSubcategories.map((sub) => {
                                         const isSelected = filters.subcategory === sub.id;
+                                        const iconColor = SUBCATEGORY_COLOR_MAPPING[sub.guard_name] || '#6B7280';
                                         return (
                                             <TouchableOpacity
                                                 key={sub.id}
@@ -372,24 +440,26 @@ const FilterScreen = ({ navigation }) => {
                                             >
                                                 <View style={[
                                                     styles.subcategoryIconWrapper,
-                                                    isSelected && styles.subcategoryIconWrapperSelected
+                                                    isSelected && styles.subcategoryIconWrapperSelected,
+                                                    !isSelected && { backgroundColor: `${iconColor}15`, borderColor: `${iconColor}30` }
                                                 ]}>
                                                     <MCIcon
                                                         name={sub.icon}
                                                         size={18}
-                                                        color={isSelected ? '#16a34a' : '#6B7280'}
+                                                        color={isSelected ? '#16a34a' : iconColor}
                                                     />
                                                 </View>
                                                 <View style={styles.subcategoryTextContainer}>
                                                     <Text style={[
                                                         styles.subcategoryText,
-                                                        isSelected && styles.subcategoryTextSelected
+                                                        isSelected && styles.subcategoryTextSelected,
+                                                        !isSelected && { color: '#374151' }
                                                     ]} numberOfLines={2}>
                                                         {sub.name}
                                                     </Text>
                                                 </View>
                                                 {isSelected && (
-                                                    <View style={styles.subcategoryCheck}>
+                                                    <View style={[styles.subcategoryCheck, { backgroundColor: iconColor }]}>
                                                         <Ionicons name="checkmark" size={12} color="#FFFFFF" />
                                                     </View>
                                                 )}

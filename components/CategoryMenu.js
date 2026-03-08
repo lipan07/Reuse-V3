@@ -1,18 +1,21 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, useWindowDimensions } from 'react-native';
 import MCIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MIcon from 'react-native-vector-icons/MaterialIcons';
 import FA6Icon from 'react-native-vector-icons/FontAwesome6';
 import FA5Icon from 'react-native-vector-icons/FontAwesome5';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { normalize, isTablet } from '../utils/responsive';
 
-const { width } = Dimensions.get('window');
-const scale = width / 375;
-const normalize = (size) => Math.round(scale * size);
+const ITEMS_PER_ROW_MOBILE = 6;
 
 const CategoryMenu = ({ onCategorySelect, selectedCategory }) => {
+  const { width } = useWindowDimensions();
   const [showAll, setShowAll] = useState(false);
+  const tablet = isTablet(width);
+
+  const n = (size) => normalize(size, width);
 
   const allCategories = [
     { id: null, name: 'All', icon: 'apps', color: '#2563eb', type: 'Ion' },         // Blue
@@ -82,7 +85,7 @@ const CategoryMenu = ({ onCategorySelect, selectedCategory }) => {
         ]}>
           <IconComponent
             name={item.icon}
-            size={normalize(22)}
+            size={n(22)}
             color={isSelected ? '#ffffff' : item.color}
             style={styles.icon}
           />
@@ -107,7 +110,7 @@ const CategoryMenu = ({ onCategorySelect, selectedCategory }) => {
         <View style={styles.showAllIconContainer}>
           <MCIcon
             name={showAll ? 'chevron-up' : 'chevron-down'}
-            size={normalize(22)}
+            size={n(22)}
             color="#007bff"
             style={styles.icon}
           />
@@ -119,19 +122,124 @@ const CategoryMenu = ({ onCategorySelect, selectedCategory }) => {
     );
   };
 
-  // Create grid layout with 6 items per row
+  // Mobile: grid with 6 per row, 2 rows + Show all button
   const createGridRows = (items) => {
     const rows = [];
-    for (let i = 0; i < items.length; i += 6) {
-      rows.push(items.slice(i, i + 6));
+    for (let i = 0; i < items.length; i += ITEMS_PER_ROW_MOBILE) {
+      rows.push(items.slice(i, i + ITEMS_PER_ROW_MOBILE));
     }
     return rows;
   };
-
-  // Create items array with Show All/Show Less button
   const itemsWithButton = [...visibleCategories, { isButton: true }];
-  const gridRows = createGridRows(itemsWithButton);
+  const gridRows = tablet ? [] : createGridRows(itemsWithButton);
 
+  const styles = useMemo(() => ({
+    container: {
+      backgroundColor: '#ffffff',
+      paddingVertical: n(8),
+    },
+    // Tablet: single horizontal row
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: n(8),
+      paddingVertical: n(4),
+    },
+    // Mobile: grid container and row
+    gridContainer: {
+      paddingHorizontal: n(8),
+    },
+    gridRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: n(8),
+    },
+    categoryItem: tablet
+      ? { alignItems: 'center', marginRight: n(6), minWidth: n(56) }
+      : { alignItems: 'center', flex: 1, marginHorizontal: n(1) },
+    emptyItem: {
+      flex: 1,
+      marginHorizontal: n(1),
+    },
+    iconContainer: {
+      backgroundColor: '#f7f7f7ff',
+      padding: n(8),
+      width: n(50),
+      height: n(50),
+      borderRadius: n(12),
+      marginBottom: n(4),
+      elevation: 1,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    selectedIconContainer: {
+      backgroundColor: '#007bff',
+      shadowColor: '#007bff',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    categoryName: {
+      fontSize: n(10),
+      fontWeight: '500',
+      color: '#64748b',
+      textAlign: 'center',
+      maxWidth: n(55),
+    },
+    selectedText: {
+      color: '#007bff',
+      fontWeight: '600',
+    },
+    selectedItem: {},
+    icon: { textAlign: 'center' },
+    showAllIconContainer: {
+      backgroundColor: '#f8f9fa',
+      padding: n(8),
+      width: n(50),
+      height: n(50),
+      borderRadius: n(12),
+      marginBottom: n(4),
+      elevation: 1,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: '#e9ecef',
+    },
+    showAllText: {
+      fontSize: n(10),
+      fontWeight: '600',
+      color: '#007bff',
+      textAlign: 'center',
+      maxWidth: n(55),
+    },
+  }), [width, tablet]);
+
+  // Tablet: single horizontal scrollable row with Show all at end
+  if (tablet) {
+    return (
+      <View style={styles.container}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.row}
+        >
+          {visibleCategories.map((item) => renderCategoryItem(item))}
+          {renderShowAllButton()}
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // Mobile: two rows (6 per row) with Show all button
   return (
     <View style={styles.container}>
       <View style={styles.gridContainer}>
@@ -143,103 +251,15 @@ const CategoryMenu = ({ onCategorySelect, selectedCategory }) => {
               }
               return renderCategoryItem(item);
             })}
-            {/* Fill empty spaces in the last row if needed */}
-            {row.length < 6 && Array.from({ length: 6 - row.length }).map((_, index) => (
-              <View key={`empty-${index}`} style={styles.emptyItem} />
-            ))}
+            {row.length < ITEMS_PER_ROW_MOBILE &&
+              Array.from({ length: ITEMS_PER_ROW_MOBILE - row.length }).map((_, index) => (
+                <View key={`empty-${index}`} style={styles.emptyItem} />
+              ))}
           </View>
         ))}
       </View>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#ffffff',
-    paddingVertical: normalize(8),
-  },
-  gridContainer: {
-    paddingHorizontal: normalize(8),
-  },
-  gridRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: normalize(8),
-  },
-  categoryItem: {
-    alignItems: 'center',
-    flex: 1,
-    marginHorizontal: normalize(1),
-  },
-  emptyItem: {
-    flex: 1,
-    marginHorizontal: normalize(1),
-  },
-  iconContainer: {
-    backgroundColor: '#f7f7f7ff',
-    padding: normalize(8),
-    width: normalize(50),
-    height: normalize(50),
-    borderRadius: normalize(12),
-    marginBottom: normalize(4),
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  selectedIconContainer: {
-    backgroundColor: '#007bff',
-    shadowColor: '#007bff',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  categoryName: {
-    fontSize: normalize(10),
-    fontWeight: '500',
-    color: '#64748b',
-    textAlign: 'center',
-    maxWidth: normalize(55),
-  },
-  selectedText: {
-    color: '#007bff',
-    fontWeight: '600',
-  },
-  selectedItem: {
-    // Future enhancements can go here
-  },
-  icon: {
-    textAlign: 'center',
-  },
-  showAllIconContainer: {
-    backgroundColor: '#f8f9fa',
-    padding: normalize(8),
-    width: normalize(50),
-    height: normalize(50),
-    borderRadius: normalize(12),
-    marginBottom: normalize(4),
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-  },
-  showAllText: {
-    fontSize: normalize(10),
-    fontWeight: '600',
-    color: '#007bff',
-    textAlign: 'center',
-    maxWidth: normalize(55),
-  },
-});
 
 export default CategoryMenu;

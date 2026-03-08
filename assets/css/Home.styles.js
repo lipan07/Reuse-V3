@@ -1,12 +1,29 @@
-import { StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { Dimensions } from 'react-native';
+import {
+  getNumColumns,
+  getResponsiveScale,
+  getVerticalScale,
+} from '../../utils/responsive';
 
-const { width, height } = Dimensions.get('window');
-const scale = width / 375;
-const verticalScale = height / 812;
-const normalize = (size) => Math.round(scale * size);
-const normalizeVertical = (size) => Math.round(verticalScale * size);
+const ITEM_MARGIN = 4;
 
-export default StyleSheet.create({
+/**
+ * Returns responsive styles for Home. Call with current width/height (e.g. useWindowDimensions).
+ * Capped scale keeps tablet UI from being too large; product grid uses 2/4/5 columns by breakpoint.
+ */
+export function getHomeStyles(width, height) {
+  const scale = getResponsiveScale(width);
+  const verticalScale = getVerticalScale(height);
+  const normalize = (size) => Math.round(scale * size);
+  const normalizeVertical = (size) => Math.round(verticalScale * size);
+
+  const numColumns = getNumColumns(width);
+  const listPaddingH = normalize(4) * 2;
+  const itemWidth =
+    (width - listPaddingH - (numColumns - 1) * ITEM_MARGIN * 2) / numColumns;
+
+  return {
   container: { flex: 1, backgroundColor: '#FFFFFF' },
   flex1: { flex: 1 },
   bannerAdContainer: {
@@ -68,7 +85,7 @@ export default StyleSheet.create({
     zIndex: 1,
   },
   productList: {
-    paddingHorizontal: normalize(4),
+    paddingHorizontal: listPaddingH / 2,
     paddingBottom: normalizeVertical(120),
     paddingTop: normalizeVertical(8),
   },
@@ -135,13 +152,13 @@ export default StyleSheet.create({
     padding: normalize(6),
   },
   productItem: {
-    flex: 1,
-    margin: normalize(4),
+    width: itemWidth,
+    margin: ITEM_MARGIN,
     borderRadius: normalize(4),
-    padding: normalize(6), // Reduced padding
+    padding: normalize(6),
     backgroundColor: '#f7f7f7ff',
     shadowColor: '#565656',
-    shadowOffset: { width: 0, height: normalizeVertical(2) }, // Smaller shadow
+    shadowOffset: { width: 0, height: normalizeVertical(2) },
     shadowOpacity: 0.1,
     shadowRadius: normalize(4),
     elevation: 4,
@@ -406,12 +423,20 @@ export default StyleSheet.create({
     marginLeft: normalize(4),
   },
 
+  searchBarSpacer: {
+    height: normalizeVertical(56),
+  },
   searchContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: normalize(12),
     paddingVertical: normalize(8),
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
   },
   searchInputWrapper: {
     flex: 1,
@@ -491,4 +516,8 @@ export default StyleSheet.create({
     fontSize: normalize(10),
     fontWeight: 'bold',
   },
-});
+  };
+}
+
+const { width: w, height: h } = Dimensions.get('window');
+export default StyleSheet.create(getHomeStyles(w, h));

@@ -223,7 +223,7 @@ const CategoryMenu = ({ onCategorySelect, selectedCategory }) => {
     },
   }), [width, tablet]);
 
-  // Tablet: single horizontal scrollable row with Show all at end
+  // Tablet: single horizontal row with all categories (no Show all button)
   if (tablet) {
     return (
       <View style={styles.container}>
@@ -232,8 +232,7 @@ const CategoryMenu = ({ onCategorySelect, selectedCategory }) => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.row}
         >
-          {visibleCategories.map((item) => renderCategoryItem(item))}
-          {renderShowAllButton()}
+          {allCategories.map((item) => renderCategoryItem(item))}
         </ScrollView>
       </View>
     );

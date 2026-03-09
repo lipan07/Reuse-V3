@@ -31,6 +31,10 @@ const BottomNavBar = () => {
   const n = (size) => normalize(size, width);
   const nV = (size) => normalizeVertical(size, height);
 
+  const handleNavigation = (screen) => {
+    navigation.navigate(screen);
+  };
+
   const navItems = useMemo(() => [
     { key: 'Home', route: 'Home', icon: 'home-outline', color: '#4CAF50', size: n(30) },
     { key: 'My Ads', route: 'MyAdsPage', icon: 'briefcase-outline', color: '#FF9800', size: n(30) },

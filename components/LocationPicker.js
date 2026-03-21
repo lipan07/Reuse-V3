@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
     View,
     Text,
@@ -14,7 +14,8 @@ import {
     Alert,
     Linking,
     PermissionsAndroid,
-    Keyboard
+    Keyboard,
+    useWindowDimensions
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import 'react-native-get-random-values';
@@ -27,13 +28,23 @@ import CustomStatusBar from './Screens/CustomStatusBar';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Geolocation from '@react-native-community/geolocation';
 
-const { width, height } = Dimensions.get('window');
-const scale = width / 375;
-const verticalScale = height / 812;
-const normalize = (size) => Math.round(scale * size);
-const normalizeVertical = (size) => Math.round(verticalScale * size);
+const normalize = (size) => {
+    const { width, height } = Dimensions.get('window');
+    const shortSide = Math.min(width, height);
+    const scale = Math.min(Math.max(shortSide / 375, 0.9), 1.08);
+    return Math.round(scale * size);
+};
+const normalizeVertical = (size) => {
+    const { width, height } = Dimensions.get('window');
+    const longSide = Math.max(width, height);
+    const verticalScale = Math.min(Math.max(longSide / 812, 0.9), 1.08);
+    return Math.round(verticalScale * size);
+};
 
 const LocationPicker = ({ navigation }) => {
+    const { width: screenW, height: screenH } = useWindowDimensions();
+    const styles = useMemo(() => createStyles(), [screenW, screenH]);
+    const isWideLayout = screenW >= 900 || screenW > screenH;
     const insets = useSafeAreaInsets();
     const defaultLocation = {
         latitude: 28.6139,
@@ -713,169 +724,275 @@ const LocationPicker = ({ navigation }) => {
                     <View style={styles.headerPlaceholder} />
                 </View>
 
-                <MapView
-                    ref={mapRef}
-                    style={styles.map}
-                    initialRegion={location}
-                    region={location}
-                    customMapStyle={mapStyle}
-                    onMapReady={() => {
-                        console.log('Map is ready');
-                        setMapReady(true);
-                    }}
-                    onError={(error) => {
-                        console.log('Map error:', error);
-                        setErrorMessage('Map loading failed. Please check your connection.');
-                        setShowErrorModal(true);
-                    }}
-                    showsUserLocation={false}
-                    showsMyLocationButton={false}
-                >
-                    {/* 500-meter radius circle */}
-                    <Circle
-                        center={{
-                            latitude: location.latitude,
-                            longitude: location.longitude
-                        }}
-                        radius={500}
-                        fillColor="rgba(0, 122, 255, 0.15)"
-                        strokeColor="rgba(0, 122, 255, 0.5)"
-                        strokeWidth={2}
-                    />
-
-                    {/* Custom Marker */}
-                    {location.latitude && location.longitude && (
-                        <Marker
-                            coordinate={{
-                                latitude: location.latitude,
-                                longitude: location.longitude
-                            }}
-                            draggable
-                            onDragEnd={handleMarkerDragEnd}
-                            anchor={{ x: 0.5, y: 0.5 }}
-                        >
-                            <View style={styles.markerContainer}>
-                                <View style={styles.markerPulse} />
-                                <View style={styles.markerPin}>
-                                    <Icon name="map-marker" size={normalize(20)} color="#fff" />
+                {isWideLayout ? (
+                    <View style={styles.splitBody}>
+                        <View style={styles.leftPanel}>
+                            <View style={styles.searchContainerSplit}>
+                                <View style={styles.searchInputContainer}>
+                                    <Icon name="magnify" size={normalize(20)} color="#666" style={styles.searchIcon} />
+                                    <TextInput
+                                        style={styles.searchInput}
+                                        placeholder="Search for a location..."
+                                        placeholderTextColor="#999"
+                                        value={searchQuery}
+                                        onChangeText={(text) => {
+                                            isUserTypingRef.current = true;
+                                            setSearchQuery(text);
+                                            if (text.length === 0) setPredictions([]);
+                                        }}
+                                        returnKeyType="search"
+                                    />
+                                    {searchQuery.length > 0 && (
+                                        <TouchableOpacity
+                                            onPress={() => {
+                                                isUserTypingRef.current = false;
+                                                setSearchQuery('');
+                                                setPredictions([]);
+                                            }}
+                                            style={styles.clearButton}
+                                        >
+                                            <Icon name="close-circle" size={normalize(18)} color="#999" />
+                                        </TouchableOpacity>
+                                    )}
                                 </View>
-                            </View>
-                        </Marker>
-                    )}
-                </MapView>
-
-                {/* Search Container */}
-                <View style={styles.searchContainer}>
-                    <View style={styles.searchInputContainer}>
-                        <Icon name="magnify" size={normalize(20)} color="#666" style={styles.searchIcon} />
-                        <TextInput
-                            style={styles.searchInput}
-                            placeholder="Search for a location..."
-                            placeholderTextColor="#999"
-                            value={searchQuery}
-                            onChangeText={(text) => {
-                                // Mark as user typing to enable autocomplete
-                                isUserTypingRef.current = true;
-                                setSearchQuery(text);
-                                // Clear predictions if user clears the input
-                                if (text.length === 0) {
-                                    setPredictions([]);
-                                }
-                            }}
-                            returnKeyType="search"
-                        />
-                        {searchQuery.length > 0 && (
-                            <TouchableOpacity
-                                onPress={() => {
-                                    isUserTypingRef.current = false; // Reset typing flag
-                                    setSearchQuery('');
-                                    setPredictions([]);
-                                }}
-                                style={styles.clearButton}
-                            >
-                                <Icon name="close-circle" size={normalize(18)} color="#999" />
-                            </TouchableOpacity>
-                        )}
-                    </View>
-
-                    {/* Use Current Location Button */}
-                    <TouchableOpacity
-                        style={styles.currentLocationButton}
-                        onPress={async () => {
-                            setPermissionRequested(false); // Reset to allow new request
-                            await handleDeviceLocation(true);
-                        }}
-                        disabled={isLoading}
-                    >
-                        <Icon
-                            name="crosshairs-gps"
-                            size={normalize(18)}
-                            color={isLoading ? "#999" : "#007AFF"}
-                        />
-                        <Text style={[styles.currentLocationText, isLoading && styles.currentLocationTextDisabled]}>
-                            {isLoading ? 'Getting Location...' : 'Use Current Location'}
-                        </Text>
-                    </TouchableOpacity>
-
-                    {isLoading && (
-                        <View style={styles.loaderContainer}>
-                            <ActivityIndicator size="small" color="#007AFF" />
-                        </View>
-                    )}
-                </View>
-
-                {/* Predictions List */}
-                {predictions.length > 0 && (
-                    <View style={styles.predictionsContainer}>
-                        <FlatList
-                            data={predictions}
-                            keyExtractor={(item) => item.place_id}
-                            renderItem={({ item }) => (
                                 <TouchableOpacity
-                                    style={styles.predictionItem}
-                                    onPress={() => handlePlaceSelect(item.place_id)}
+                                    style={styles.currentLocationButton}
+                                    onPress={async () => {
+                                        setPermissionRequested(false);
+                                        await handleDeviceLocation(true);
+                                    }}
+                                    disabled={isLoading}
                                 >
-                                    <Icon name="map-marker-outline" size={normalize(18)} color="#007AFF" />
-                                    <View style={styles.predictionTextContainer}>
-                                        <Text style={styles.predictionPrimary} numberOfLines={1}>
-                                            {item.structured_formatting?.main_text || item.description}
-                                        </Text>
-                                        <Text style={styles.predictionSecondary} numberOfLines={1}>
-                                            {item.structured_formatting?.secondary_text}
-                                        </Text>
-                                    </View>
+                                    <Icon name="crosshairs-gps" size={normalize(18)} color={isLoading ? "#999" : "#007AFF"} />
+                                    <Text style={[styles.currentLocationText, isLoading && styles.currentLocationTextDisabled]}>
+                                        {isLoading ? 'Getting Location...' : 'Use Current Location'}
+                                    </Text>
                                 </TouchableOpacity>
+                            </View>
+
+                            {predictions.length > 0 && (
+                                <View style={styles.predictionsContainerSplit}>
+                                    <FlatList
+                                        data={predictions}
+                                        keyExtractor={(item) => item.place_id}
+                                        renderItem={({ item }) => (
+                                            <TouchableOpacity style={styles.predictionItem} onPress={() => handlePlaceSelect(item.place_id)}>
+                                                <Icon name="map-marker-outline" size={normalize(18)} color="#007AFF" />
+                                                <View style={styles.predictionTextContainer}>
+                                                    <Text style={styles.predictionPrimary} numberOfLines={1}>
+                                                        {item.structured_formatting?.main_text || item.description}
+                                                    </Text>
+                                                    <Text style={styles.predictionSecondary} numberOfLines={1}>
+                                                        {item.structured_formatting?.secondary_text}
+                                                    </Text>
+                                                </View>
+                                            </TouchableOpacity>
+                                        )}
+                                        ItemSeparatorComponent={() => <View style={styles.separator} />}
+                                        keyboardShouldPersistTaps="always"
+                                        showsVerticalScrollIndicator={false}
+                                    />
+                                </View>
                             )}
-                            ItemSeparatorComponent={() => <View style={styles.separator} />}
-                            keyboardShouldPersistTaps="always"
-                            showsVerticalScrollIndicator={false}
-                        />
+
+                            <View style={styles.addressContainerSplit}>
+                                <View style={styles.addressHeader}>
+                                    <Icon name="check-circle" size={normalize(18)} color="#4CAF50" />
+                                    <Text style={styles.addressTitle}>Selected Location</Text>
+                                </View>
+                                <Text style={styles.addressText} numberOfLines={3}>
+                                    {searchQuery || location.addressText}
+                                </Text>
+                            </View>
+
+                            <View style={styles.actionContainerSplit}>
+                                <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmLocation}>
+                                    <Text style={styles.confirmButtonText}>Confirm Location</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        <View style={styles.rightMapPanel}>
+                            <MapView
+                                ref={mapRef}
+                                style={styles.map}
+                                initialRegion={location}
+                                region={location}
+                                customMapStyle={mapStyle}
+                                onMapReady={() => {
+                                    console.log('Map is ready');
+                                    setMapReady(true);
+                                }}
+                                onError={(error) => {
+                                    console.log('Map error:', error);
+                                    setErrorMessage('Map loading failed. Please check your connection.');
+                                    setShowErrorModal(true);
+                                }}
+                                showsUserLocation={false}
+                                showsMyLocationButton={false}
+                            >
+                                <Circle
+                                    center={{ latitude: location.latitude, longitude: location.longitude }}
+                                    radius={500}
+                                    fillColor="rgba(0, 122, 255, 0.15)"
+                                    strokeColor="rgba(0, 122, 255, 0.5)"
+                                    strokeWidth={2}
+                                />
+                                {location.latitude && location.longitude && (
+                                    <Marker
+                                        coordinate={{ latitude: location.latitude, longitude: location.longitude }}
+                                        draggable
+                                        onDragEnd={handleMarkerDragEnd}
+                                        anchor={{ x: 0.5, y: 0.5 }}
+                                    >
+                                        <View style={styles.markerContainer}>
+                                            <View style={styles.markerPulse} />
+                                            <View style={styles.markerPin}>
+                                                <Icon name="map-marker" size={normalize(20)} color="#fff" />
+                                            </View>
+                                        </View>
+                                    </Marker>
+                                )}
+                            </MapView>
+                        </View>
                     </View>
+                ) : (
+                    <>
+                        <MapView
+                            ref={mapRef}
+                            style={styles.map}
+                            initialRegion={location}
+                            region={location}
+                            customMapStyle={mapStyle}
+                            onMapReady={() => {
+                                console.log('Map is ready');
+                                setMapReady(true);
+                            }}
+                            onError={(error) => {
+                                console.log('Map error:', error);
+                                setErrorMessage('Map loading failed. Please check your connection.');
+                                setShowErrorModal(true);
+                            }}
+                                showsUserLocation={false}
+                                showsMyLocationButton={false}
+                            >
+                                <Circle
+                                    center={{ latitude: location.latitude, longitude: location.longitude }}
+                                    radius={500}
+                                    fillColor="rgba(0, 122, 255, 0.15)"
+                                    strokeColor="rgba(0, 122, 255, 0.5)"
+                                    strokeWidth={2}
+                                />
+                                {location.latitude && location.longitude && (
+                                    <Marker
+                                        coordinate={{ latitude: location.latitude, longitude: location.longitude }}
+                                        draggable
+                                        onDragEnd={handleMarkerDragEnd}
+                                        anchor={{ x: 0.5, y: 0.5 }}
+                                    >
+                                        <View style={styles.markerContainer}>
+                                            <View style={styles.markerPulse} />
+                                            <View style={styles.markerPin}>
+                                                <Icon name="map-marker" size={normalize(20)} color="#fff" />
+                                            </View>
+                                        </View>
+                                    </Marker>
+                                )}
+                            </MapView>
+
+                            <View style={styles.searchContainer}>
+                                <View style={styles.searchInputContainer}>
+                                    <Icon name="magnify" size={normalize(20)} color="#666" style={styles.searchIcon} />
+                                    <TextInput
+                                        style={styles.searchInput}
+                                        placeholder="Search for a location..."
+                                        placeholderTextColor="#999"
+                                        value={searchQuery}
+                                        onChangeText={(text) => {
+                                            isUserTypingRef.current = true;
+                                            setSearchQuery(text);
+                                            if (text.length === 0) setPredictions([]);
+                                        }}
+                                        returnKeyType="search"
+                                    />
+                                    {searchQuery.length > 0 && (
+                                        <TouchableOpacity
+                                            onPress={() => {
+                                                isUserTypingRef.current = false;
+                                                setSearchQuery('');
+                                                setPredictions([]);
+                                            }}
+                                            style={styles.clearButton}
+                                        >
+                                            <Icon name="close-circle" size={normalize(18)} color="#999" />
+                                        </TouchableOpacity>
+                                    )}
+                                </View>
+                                <TouchableOpacity
+                                    style={styles.currentLocationButton}
+                                    onPress={async () => {
+                                        setPermissionRequested(false);
+                                        await handleDeviceLocation(true);
+                                    }}
+                                    disabled={isLoading}
+                                >
+                                    <Icon name="crosshairs-gps" size={normalize(18)} color={isLoading ? "#999" : "#007AFF"} />
+                                    <Text style={[styles.currentLocationText, isLoading && styles.currentLocationTextDisabled]}>
+                                        {isLoading ? 'Getting Location...' : 'Use Current Location'}
+                                    </Text>
+                                </TouchableOpacity>
+                                {isLoading && (
+                                    <View style={styles.loaderContainer}>
+                                        <ActivityIndicator size="small" color="#007AFF" />
+                                    </View>
+                                )}
+                            </View>
+
+                            {predictions.length > 0 && (
+                                <View style={styles.predictionsContainer}>
+                                    <FlatList
+                                        data={predictions}
+                                        keyExtractor={(item) => item.place_id}
+                                        renderItem={({ item }) => (
+                                            <TouchableOpacity style={styles.predictionItem} onPress={() => handlePlaceSelect(item.place_id)}>
+                                                <Icon name="map-marker-outline" size={normalize(18)} color="#007AFF" />
+                                                <View style={styles.predictionTextContainer}>
+                                                    <Text style={styles.predictionPrimary} numberOfLines={1}>
+                                                        {item.structured_formatting?.main_text || item.description}
+                                                    </Text>
+                                                    <Text style={styles.predictionSecondary} numberOfLines={1}>
+                                                        {item.structured_formatting?.secondary_text}
+                                                    </Text>
+                                                </View>
+                                            </TouchableOpacity>
+                                        )}
+                                        ItemSeparatorComponent={() => <View style={styles.separator} />}
+                                        keyboardShouldPersistTaps="always"
+                                        showsVerticalScrollIndicator={false}
+                                    />
+                                </View>
+                            )}
+
+                            <View style={[
+                                styles.addressContainer,
+                                { bottom: (insets?.bottom ?? 0) + normalizeVertical(24) + normalizeVertical(52) + normalizeVertical(12) }
+                            ]}>
+                                <View style={styles.addressHeader}>
+                                    <Icon name="check-circle" size={normalize(18)} color="#4CAF50" />
+                                    <Text style={styles.addressTitle}>Selected Location</Text>
+                                </View>
+                                <Text style={styles.addressText} numberOfLines={2}>
+                                    {searchQuery || location.addressText}
+                                </Text>
+                            </View>
+
+                            <View style={[styles.actionContainer, { bottom: (insets?.bottom ?? 0) + normalizeVertical(24) }]}>
+                                <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmLocation}>
+                                    <Text style={styles.confirmButtonText}>Confirm Location</Text>
+                                </TouchableOpacity>
+                            </View>
+                    </>
                 )}
-
-                {/* Selected Address Display - positioned above Confirm button */}
-                <View style={[
-                    styles.addressContainer,
-                    { bottom: (insets?.bottom ?? 0) + normalizeVertical(24) + normalizeVertical(52) + normalizeVertical(12) }
-                ]}>
-                    <View style={styles.addressHeader}>
-                        <Icon name="check-circle" size={normalize(18)} color="#4CAF50" />
-                        <Text style={styles.addressTitle}>Selected Location</Text>
-                    </View>
-                    <Text style={styles.addressText} numberOfLines={2}>
-                        {searchQuery || location.addressText}
-                    </Text>
-                </View>
-
-                {/* Action Button - positioned above safe area so it's always visible */}
-                <View style={[styles.actionContainer, { bottom: (insets?.bottom ?? 0) + normalizeVertical(24) }]}>
-                    <TouchableOpacity
-                        style={styles.confirmButton}
-                        onPress={handleConfirmLocation}
-                    >
-                        <Text style={styles.confirmButtonText}>Confirm Location</Text>
-                    </TouchableOpacity>
-                </View>
 
                 {/* Loading Overlay */}
                 {isLoading && (
@@ -904,7 +1021,7 @@ const LocationPicker = ({ navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = () => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
@@ -939,6 +1056,57 @@ const styles = StyleSheet.create({
     },
     map: {
         flex: 1,
+    },
+    splitBody: {
+        flex: 1,
+        flexDirection: 'row',
+        backgroundColor: '#fff',
+    },
+    leftPanel: {
+        width: '40%',
+        minWidth: normalize(320),
+        maxWidth: normalize(430),
+        paddingHorizontal: normalize(14),
+        paddingVertical: normalizeVertical(12),
+        borderRightWidth: 1,
+        borderRightColor: '#E5E7EB',
+        backgroundColor: '#FAFAFA',
+    },
+    rightMapPanel: {
+        flex: 1,
+    },
+    searchContainerSplit: {
+        zIndex: 10,
+    },
+    predictionsContainerSplit: {
+        marginTop: normalizeVertical(10),
+        backgroundColor: '#fff',
+        borderRadius: normalize(16),
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 4,
+        maxHeight: normalizeVertical(220),
+        borderWidth: 0.5,
+        borderColor: '#e8e8e8',
+        zIndex: 15,
+    },
+    addressContainerSplit: {
+        marginTop: normalizeVertical(12),
+        backgroundColor: '#fff',
+        borderRadius: normalize(16),
+        padding: normalizeVertical(14),
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 4,
+        borderWidth: 0.5,
+        borderColor: '#e8e8e8',
+    },
+    actionContainerSplit: {
+        marginTop: normalizeVertical(12),
     },
     searchContainer: {
         position: 'absolute',

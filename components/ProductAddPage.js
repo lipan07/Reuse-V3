@@ -6,7 +6,7 @@ import BottomNavBar from '../components/BottomNavBar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 
-const verticalScale = Dimensions.get('window').height / 812;
+const verticalScale = Math.min(Math.max(Math.max(Dimensions.get('window').width, Dimensions.get('window').height) / 812, 0.9), 1.08);
 const normalizeVertical = (size) => Math.round(verticalScale * size);
 const BOTTOM_BAR_HEIGHT = normalizeVertical(52);
 

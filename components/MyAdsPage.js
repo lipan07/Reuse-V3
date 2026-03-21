@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Modal, TouchableWithoutFeedback, ActivityIndicator, Dimensions, Animated, Platform, ScrollView } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Modal, TouchableWithoutFeedback, ActivityIndicator, Dimensions, Animated, Platform, ScrollView, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BottomNavBar from './BottomNavBar';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -8,16 +8,21 @@ import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
 
 // Responsive scaling functions
 const { width, height } = Dimensions.get('window');
-const scale = width / 375;
-const verticalScale = height / 812;
+const shortSide = Math.min(width, height);
+const longSide = Math.max(width, height);
+const scale = Math.min(Math.max(shortSide / 375, 0.9), 1.08);
+const verticalScale = Math.min(Math.max(longSide / 812, 0.9), 1.08);
 const normalize = (size) => Math.round(scale * size);
 const normalizeVertical = (size) => Math.round(verticalScale * size);
 
 // Get safe area insets for different devices
-const isIphoneX = Platform.OS === 'ios' && (height >= 812 || width >= 812);
+const isIphoneX = Platform.OS === 'ios' && longSide >= 812;
 const bottomSafeArea = isIphoneX ? 34 : 0;
 
 const MyAdsPage = ({ navigation }) => {
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const isCompactModalScreen = windowHeight < 760 || windowWidth > windowHeight;
+  const modalMaxHeight = windowHeight * 0.82;
   const insets = useSafeAreaInsets();
   const [products, setProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -397,7 +402,14 @@ const MyAdsPage = ({ navigation }) => {
           </TouchableWithoutFeedback>
           <TouchableWithoutFeedback onPress={() => { }}>
             <View style={styles.modernBottomSheet} pointerEvents="box-none">
-              <View style={styles.bottomSheetContent}>
+              <ScrollView
+                style={[styles.bottomSheetContent, { maxHeight: modalMaxHeight }]}
+                contentContainerStyle={styles.bottomSheetScrollContent}
+                showsVerticalScrollIndicator={isCompactModalScreen}
+                scrollEnabled={isCompactModalScreen}
+                bounces={isCompactModalScreen}
+                keyboardShouldPersistTaps="handled"
+              >
                 {/* Drag Handle */}
                 <View style={styles.dragHandle} />
 
@@ -531,7 +543,7 @@ const MyAdsPage = ({ navigation }) => {
                 </View>
                 {/* Solid white fill to screen edge so no gap / no see-through; when nav buttons enabled add a little extra margin */}
                 <View style={{ height: (insets?.bottom ?? 0) > 0 ? (insets.bottom + 12) : 16, backgroundColor: '#FFFFFF' }} />
-              </View>
+              </ScrollView>
             </View>
           </TouchableWithoutFeedback>
         </View>
@@ -666,14 +678,14 @@ const styles = StyleSheet.create({
   },
   productName: {
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: normalize(15),
   },
   productDesc: {
-    fontSize: 15,
+    fontSize: normalize(13),
     color: 'grey',
   },
   price: {
-    fontSize: 14,
+    fontSize: normalize(13),
     color: 'green',
   },
   arrowIcon: {
@@ -714,13 +726,15 @@ const styles = StyleSheet.create({
     borderTopRightRadius: normalize(24),
     paddingTop: normalizeVertical(12),
     paddingBottom: 0,
-    maxHeight: height * 0.85,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -8 },
     shadowOpacity: 0.15,
     shadowRadius: 20,
     elevation: 24,
     width: '100%',
+  },
+  bottomSheetScrollContent: {
+    paddingBottom: 0,
   },
   dragHandle: {
     width: normalize(40),
@@ -760,7 +774,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   productTitleLarge: {
-    fontSize: normalize(16),
+    fontSize: normalize(15),
     fontWeight: '700',
     color: '#111827',
     lineHeight: normalize(22),
@@ -781,12 +795,12 @@ const styles = StyleSheet.create({
     marginRight: normalize(4),
   },
   priceTagValue: {
-    fontSize: normalize(16),
+    fontSize: normalize(15),
     fontWeight: '800',
     color: '#047857',
   },
   actionsTitle: {
-    fontSize: normalize(14),
+    fontSize: normalize(13),
     fontWeight: '700',
     color: '#6B7280',
     marginLeft: normalize(20),
@@ -824,13 +838,13 @@ const styles = StyleSheet.create({
     marginLeft: normalize(12),
   },
   actionListTitle: {
-    fontSize: normalize(16),
+    fontSize: normalize(15),
     fontWeight: '600',
     color: '#111827',
     marginBottom: normalizeVertical(2),
   },
   actionListSubtitle: {
-    fontSize: normalize(13),
+    fontSize: normalize(12),
     color: '#6B7280',
     lineHeight: normalize(18),
   },
@@ -871,7 +885,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   deleteActionText: {
-    fontSize: normalize(15),
+    fontSize: normalize(14),
     fontWeight: '600',
     color: '#EF4444',
     marginLeft: normalize(8),
@@ -882,6 +896,7 @@ const styles = StyleSheet.create({
     borderRadius: normalize(18),
     alignItems: 'center',
     width: '82%',
+    maxWidth: normalize(360),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
@@ -898,14 +913,14 @@ const styles = StyleSheet.create({
     marginBottom: normalizeVertical(14),
   },
   confirmTitle: {
-    fontSize: normalize(19),
+    fontSize: normalize(18),
     fontWeight: '700',
     color: '#1A1A1A',
     marginBottom: normalizeVertical(8),
     textAlign: 'center',
   },
   confirmSubtitle: {
-    fontSize: normalize(13),
+    fontSize: normalize(12),
     color: '#666',
     textAlign: 'center',
     marginBottom: normalizeVertical(20),
@@ -928,7 +943,7 @@ const styles = StyleSheet.create({
   },
   confirmCancelButtonText: {
     color: '#666',
-    fontSize: normalize(15),
+    fontSize: normalize(14),
     fontWeight: '600',
   },
   confirmButton: {
@@ -947,7 +962,7 @@ const styles = StyleSheet.create({
   },
   confirmButtonText: {
     color: '#FFFFFF',
-    fontSize: normalize(15),
+    fontSize: normalize(14),
     fontWeight: '600',
   },
   emptyContainer: {
@@ -957,7 +972,7 @@ const styles = StyleSheet.create({
     height: 300,
   },
   emptyText: {
-    fontSize: 20,
+    fontSize: normalize(16),
     color: '#888',
     textAlign: 'center',
     marginTop: 40,
@@ -972,7 +987,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   placeholderText: {
-    fontSize: 12,
+    fontSize: normalize(11),
     color: '#888',
     textAlign: 'center',
     paddingHorizontal: 4,
@@ -1010,7 +1025,7 @@ const styles = StyleSheet.create({
     padding: normalize(24),
     alignItems: 'center',
     width: '85%',
-    maxWidth: normalize(340),
+    maxWidth: normalize(360),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
@@ -1029,14 +1044,14 @@ const styles = StyleSheet.create({
     borderColor: '#FFE082',
   },
   boostSuccessTitle: {
-    fontSize: normalize(22),
+    fontSize: normalize(20),
     fontWeight: '700',
     color: '#1A1A1A',
     marginBottom: normalizeVertical(6),
     textAlign: 'center',
   },
   boostSuccessSubtitle: {
-    fontSize: normalize(13),
+    fontSize: normalize(12),
     color: '#666',
     textAlign: 'center',
     marginBottom: normalizeVertical(16),
@@ -1055,7 +1070,7 @@ const styles = StyleSheet.create({
     borderColor: '#FFE082',
   },
   boostTimeText: {
-    fontSize: normalize(14),
+    fontSize: normalize(13),
     fontWeight: '600',
     color: '#F57C00',
     marginLeft: normalize(6),
@@ -1098,7 +1113,7 @@ const styles = StyleSheet.create({
   },
   boostSuccessButtonText: {
     color: '#FFFFFF',
-    fontSize: normalize(16),
+    fontSize: normalize(15),
     fontWeight: '700',
   },
 });

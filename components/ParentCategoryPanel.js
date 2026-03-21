@@ -8,9 +8,11 @@ import Fontisto from 'react-native-vector-icons/Fontisto';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Icon from 'react-native-vector-icons/Ionicons';
 
-const { width } = Dimensions.get('window');
-const scale = width / 375;
-const verticalScale = (Dimensions.get('window').height) / 812;
+const { width, height } = Dimensions.get('window');
+const shortSide = Math.min(width, height);
+const longSide = Math.max(width, height);
+const scale = Math.min(Math.max(shortSide / 375, 0.9), 1.08);
+const verticalScale = Math.min(Math.max(longSide / 812, 0.9), 1.08);
 const normalize = (size) => Math.round(scale * size);
 const normalizeVertical = (size) => Math.round(verticalScale * size);
 
@@ -189,7 +191,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: normalize(4),
   },
   optionCard: {
-    width: (width - normalize(40)) / 2,
+    width: (shortSide - normalize(40)) / 2,
     backgroundColor: '#FFFFFF',
     borderRadius: normalize(12),
     padding: normalize(14),

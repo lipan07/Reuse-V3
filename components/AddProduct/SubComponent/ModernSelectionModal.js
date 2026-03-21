@@ -16,8 +16,10 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 
 // Responsive scaling functions
 const { width, height } = Dimensions.get('window');
-const scale = width / 375;
-const verticalScale = height / 812;
+const shortSide = Math.min(width, height);
+const longSide = Math.max(width, height);
+const scale = Math.min(Math.max(shortSide / 375, 0.9), 1.08);
+const verticalScale = Math.min(Math.max(longSide / 812, 0.9), 1.08);
 const normalize = (size) => Math.round(scale * size);
 const normalizeVertical = (size) => Math.round(verticalScale * size);
 

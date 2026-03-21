@@ -11,7 +11,8 @@ import { normalize, isTablet } from '../utils/responsive';
 const ITEMS_PER_ROW_MOBILE = 6;
 
 const CategoryMenu = ({ onCategorySelect, selectedCategory }) => {
-  const { width } = useWindowDimensions();
+  const { width: rawWidth } = useWindowDimensions();
+  const width = Math.max(rawWidth || 375, 200);
   const [showAll, setShowAll] = useState(false);
   const tablet = isTablet(width);
 

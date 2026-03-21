@@ -22,7 +22,9 @@ const BAR_BG = 'rgba(255, 255, 255, 0.75)';
 const BUMP_BG = 'rgba(255, 255, 255, 0.82)';
 
 const BottomNavBar = () => {
-  const { width, height } = useWindowDimensions();
+  const { width: rawWidth, height: rawHeight } = useWindowDimensions();
+  const width = Math.max(rawWidth || 375, 200);
+  const height = Math.max(rawHeight || 812, 400);
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const bottomInset = getBottomInset(insets);
@@ -81,8 +83,13 @@ const BottomNavBar = () => {
     bump: {
       marginTop: -nV(18),
       backgroundColor: BUMP_BG,
-      borderRadius: n(50),
-      padding: n(6),
+      borderRadius: n(32),
+      width: n(64),
+      height: n(64),
+      minWidth: 56,
+      minHeight: 56,
+      alignItems: 'center',
+      justifyContent: 'center',
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.15,
@@ -91,6 +98,8 @@ const BottomNavBar = () => {
     },
     iconWrapper: {
       position: 'relative',
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     badge: {
       position: 'absolute',

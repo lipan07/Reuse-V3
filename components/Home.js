@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Alert, View, Text, StyleSheet, TouchableOpacity, Image, TextInput, FlatList, ActivityIndicator, DeviceEventEmitter, Animated, Easing, RefreshControl, TouchableWithoutFeedback, Keyboard, useWindowDimensions } from 'react-native';
+import { Alert, View, Text, StyleSheet, TouchableOpacity, Image, TextInput, FlatList, ActivityIndicator, DeviceEventEmitter, Animated, Easing, RefreshControl, Keyboard, useWindowDimensions } from 'react-native';
 import Swiper from 'react-native-swiper';
 import CategoryMenu from './CategoryMenu';
 import BottomNavBar from './BottomNavBar';
@@ -34,7 +34,9 @@ const PLACEHOLDER_TEXTS = [
 ];
 
 const Home = () => {
-  const { width, height } = useWindowDimensions();
+  const { width: rawWidth, height: rawHeight } = useWindowDimensions();
+  const width = Math.max(rawWidth || 375, 200);
+  const height = Math.max(rawHeight || 812, 400);
   const numColumns = getNumColumns(width);
   const styles = useMemo(() => StyleSheet.create(getHomeStyles(width, height)), [width, height]);
 
@@ -786,11 +788,7 @@ const Home = () => {
 
 
   return (
-
-    <TouchableWithoutFeedback onPress={handleOutsidePress}>
-      <View style={styles.container}>
-        <TouchableWithoutFeedback onPress={handleOutsidePress}>
-          <View style={styles.container}>
+      <View style={styles.container} pointerEvents="box-none">
             {/* Banner Ad */}
             {/* <View style={styles.bannerAdContainer}>
           <BannerAd
@@ -800,6 +798,7 @@ const Home = () => {
           />
         </View> */}
             <FlatList
+              key={numColumns}
               data={products}
               renderItem={renderProductItem}
               keyExtractor={(item) => `${item.id}_${currentPage}`}
@@ -807,7 +806,7 @@ const Home = () => {
               style={styles.flex1}
               contentContainerStyle={styles.productList}
               ListHeaderComponent={
-                <>
+                <View pointerEvents="box-none">
                   <View style={styles.searchBarSpacer} />
                   <CategoryMenu
                     onCategorySelect={handleCategorySelect}
@@ -815,7 +814,7 @@ const Home = () => {
                   />
                   <FilterBar categories={categories} />
                   <Text style={styles.recommendedText}>Recommended</Text>
-                </>
+                </View>
               }
               ListEmptyComponent={() => (
                 !isLoading && <Text style={styles.noProductsText}>No products found</Text>
@@ -833,24 +832,28 @@ const Home = () => {
                 <RefreshControl
                   refreshing={refreshing}
                   onRefresh={handleRefresh}
+                  progressViewOffset={56}
                 />
               }
               onEndReached={handleScrollEndReached}
               onEndReachedThreshold={0.5}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              onScrollBeginDrag={handleOutsidePress}
               removeClippedSubviews={true}
               initialNumToRender={10}
               maxToRenderPerBatch={10}
               windowSize={21}
             />
-            {/* Search Bar - overlays list so content shows through transparent area */}
-            <TouchableOpacity
-              style={styles.searchContainer}
-              onPress={() => navigation.navigate('FilterScreen', {
-                initialFilters: { ...activeFilters, search, category: selectedCategory }
-              })}
-              activeOpacity={0.7}
-            >
-              <View style={styles.searchInputWrapper}>
+            {/* Search Bar - only input is tappable so scroll works on empty space */}
+            <View style={styles.searchContainer} pointerEvents="box-none">
+              <TouchableOpacity
+                style={styles.searchInputWrapper}
+                onPress={() => navigation.navigate('FilterScreen', {
+                  initialFilters: { ...activeFilters, search, category: selectedCategory }
+                })}
+                activeOpacity={0.7}
+              >
                 <Icon name="search" size={normalize(18, width)} color="#888" style={styles.searchIcon} />
                 {search ? (
                   <Text style={styles.searchDisplayText}>{search}</Text>
@@ -864,11 +867,9 @@ const Home = () => {
                     <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
                   </View>
                 )}
-              </View>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            </View>
             <BottomNavBar navigation={navigation} />
-          </View>
-        </TouchableWithoutFeedback>
         {showLocationPopup && (
           <View style={styles.popupOverlay}>
             <View style={styles.popupContainer}>
@@ -886,7 +887,6 @@ const Home = () => {
           </View>
         )}
       </View>
-    </TouchableWithoutFeedback>
   );
 };
 

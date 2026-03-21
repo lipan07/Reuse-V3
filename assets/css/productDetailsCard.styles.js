@@ -1,10 +1,103 @@
 import { StyleSheet, Dimensions } from 'react-native';
+import { getResponsiveScale, getVerticalScale } from '../../utils/responsive';
 
 const { width, height } = Dimensions.get('window');
 const scale = width / 375;
 const verticalScale = height / 812;
 const normalize = (size) => Math.round(scale * size);
 const normalizeVertical = (size) => Math.round(verticalScale * size);
+
+/**
+ * Responsive styles for Product Details card (Others component).
+ * Use with useWindowDimensions so the card matches ProductDetailsPage scale and spacing.
+ */
+export function getProductDetailsCardStyles(w, h) {
+    const safeW = Math.max(w || 375, 200);
+    const safeH = Math.max(h || 812, 400);
+    const scale = getResponsiveScale(safeW);
+    const verticalScale = getVerticalScale(safeH);
+    const n = (size) => Math.round(scale * size);
+    const nV = (size) => Math.round(verticalScale * size);
+    return {
+        errorText: {
+            color: '#d32f2f',
+            textAlign: 'center',
+            padding: 12,
+        },
+        section: {
+            backgroundColor: '#FFFFFF',
+            padding: n(16),
+            marginHorizontal: n(8),
+            marginTop: n(12),
+            borderRadius: n(12),
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.06,
+            shadowRadius: 3,
+            elevation: 2,
+            minHeight: n(60),
+        },
+        sectionTitle: {
+            fontSize: n(15),
+            fontWeight: '600',
+            color: '#1A1A1A',
+            marginBottom: n(10),
+            letterSpacing: 0.2,
+        },
+        othersGrid: {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            justifyContent: 'space-between',
+        },
+        othersItem: {
+            width: '48%',
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingVertical: n(8),
+            paddingHorizontal: n(8),
+            marginBottom: n(8),
+            backgroundColor: '#f8f9fa',
+            borderRadius: n(8),
+            borderWidth: 0.5,
+            borderColor: '#e9ecef',
+            minHeight: n(40),
+        },
+        othersIconContainer: {
+            width: n(24),
+            height: n(24),
+            borderRadius: n(12),
+            backgroundColor: '#fff',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginRight: n(8),
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 0.5 },
+            shadowOpacity: 0.05,
+            shadowRadius: 1,
+            elevation: 1,
+        },
+        othersTextContainer: {
+            flex: 1,
+            minWidth: 0,
+        },
+        othersLabel: {
+            fontSize: n(10),
+            color: '#6c757d',
+            marginBottom: n(1),
+            fontWeight: '500',
+        },
+        othersValue: {
+            fontSize: n(12),
+            fontWeight: '600',
+            color: '#333',
+            flexShrink: 0,
+        },
+        othersHighlightValue: {
+            color: '#28a745',
+            fontWeight: '700',
+        },
+    };
+}
 
 export default StyleSheet.create({
     container: {
@@ -287,24 +380,27 @@ export default StyleSheet.create({
         padding: 12,
         marginBottom: 10,
     },
-    // Others component styles - using existing section styles
+    // Others component styles - Product Details (brand, model, etc.)
+    // Matches ProductDetailsPage section: same padding, margins, shadow, minHeight
     section: {
         backgroundColor: '#FFFFFF',
         padding: normalize(16),
-        marginHorizontal: normalize(16),
-        marginTop: normalize(8),
+        marginHorizontal: normalize(8),
+        marginTop: normalize(12),
         borderRadius: normalize(12),
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.06,
         shadowRadius: 3,
         elevation: 2,
+        minHeight: normalize(60),
     },
     sectionTitle: {
-        fontSize: normalize(16),
+        fontSize: normalize(15),
         fontWeight: '600',
-        color: '#333',
-        marginBottom: normalize(8),
+        color: '#1A1A1A',
+        marginBottom: normalize(10),
+        letterSpacing: 0.2,
     },
     othersGrid: {
         flexDirection: 'row',
@@ -315,13 +411,14 @@ export default StyleSheet.create({
         width: '48%',
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: normalize(6),
-        paddingHorizontal: normalize(6),
-        marginBottom: normalize(6),
+        paddingVertical: normalize(8),
+        paddingHorizontal: normalize(8),
+        marginBottom: normalize(8),
         backgroundColor: '#f8f9fa',
-        borderRadius: normalize(6),
+        borderRadius: normalize(8),
         borderWidth: 0.5,
         borderColor: '#e9ecef',
+        minHeight: normalize(40),
     },
     othersIconContainer: {
         width: normalize(24),
@@ -330,7 +427,7 @@ export default StyleSheet.create({
         backgroundColor: '#fff',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: normalize(6),
+        marginRight: normalize(8),
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 0.5 },
         shadowOpacity: 0.05,
@@ -339,17 +436,19 @@ export default StyleSheet.create({
     },
     othersTextContainer: {
         flex: 1,
+        minWidth: 0,
     },
     othersLabel: {
-        fontSize: normalize(9),
+        fontSize: normalize(10),
         color: '#6c757d',
         marginBottom: normalize(1),
         fontWeight: '500',
     },
     othersValue: {
-        fontSize: normalize(11),
+        fontSize: normalize(12),
         fontWeight: '600',
         color: '#333',
+        flexShrink: 0,
     },
     othersHighlightValue: {
         color: '#28a745',

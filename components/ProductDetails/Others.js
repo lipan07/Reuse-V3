@@ -1,14 +1,16 @@
-import React from 'react';
-import { View, Text, Dimensions } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import styles from '../../assets/css/productDetailsCard.styles';
+import { getProductDetailsCardStyles } from '../../assets/css/productDetailsCard.styles';
+import { normalize } from '../../utils/responsive';
 import useFollowPost from '../../hooks/useFollowPost';
 
-const { width } = Dimensions.get('window');
-const scale = width / 375;
-const normalize = (size) => Math.round(scale * size);
-
 const Others = ({ product, buyerId }) => {
+    const { width, height } = useWindowDimensions();
+    const styles = useMemo(
+        () => StyleSheet.create(getProductDetailsCardStyles(width, height)),
+        [width, height]
+    );
     const { isFollowed, toggleFollow } = useFollowPost(product);
 
     if (!product?.post_details) {
@@ -86,7 +88,7 @@ const Others = ({ product, buyerId }) => {
                         <View style={styles.othersIconContainer}>
                             <Icon
                                 name={detail.icon}
-                                size={normalize(14)}
+                                size={normalize(12, width)}
                                 color={getIconColor(detail.label || '')}
                             />
                         </View>

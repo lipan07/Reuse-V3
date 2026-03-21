@@ -1,29 +1,40 @@
 import { StyleSheet, Dimensions } from 'react-native';
+import { getResponsiveScale, getVerticalScale } from '../../utils/responsive';
 
-const { width, height } = Dimensions.get('window');
-const scale = width / 375;
-const normalize = (size) => Math.round(scale * size);
+/**
+ * Returns responsive styles for ProductDetailsPage. Use with useWindowDimensions for tablet/rotation.
+ * Scale is capped so UI doesn't get too large on tablet.
+ */
+export function getProductDetailsStyles(width, height) {
+    const safeW = Math.max(width || 375, 200);
+    const safeH = Math.max(height || 812, 400);
+    const scale = getResponsiveScale(safeW);
+    const verticalScale = getVerticalScale(safeH);
+    const normalize = (size) => Math.round(scale * size);
+    const normalizeVertical = (size) => Math.round(verticalScale * size);
 
-const styles = StyleSheet.create({
+    return {
     safeArea: {
         flex: 1,
         backgroundColor: '#F5F7FA',
     },
     container: {
+        paddingTop: 0,
         paddingBottom: normalize(80),
+        paddingHorizontal: 0,
     },
     galleryContainer: {
-        height: normalize(280),
+        height: Math.max(220, Math.round(safeH * 0.34)),
         position: 'relative',
         backgroundColor: '#000',
     },
     galleryImage: {
-        width: width,
+        width: safeW,
         height: '100%',
         resizeMode: 'cover',
     },
     videoContainer: {
-        width: width,
+        width: safeW,
         height: '100%',
         backgroundColor: '#000',
         justifyContent: 'center',
@@ -95,7 +106,7 @@ const styles = StyleSheet.create({
     productTag: {
         position: 'absolute',
         top: normalize(20),
-        left: normalize(16),
+        left: normalize(8),
         paddingHorizontal: normalize(12),
         paddingVertical: normalize(6),
         borderRadius: normalize(20),
@@ -120,7 +131,7 @@ const styles = StyleSheet.create({
     distanceBadge: {
         position: 'absolute',
         top: normalize(20),
-        right: normalize(16),
+        right: normalize(8),
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: 'rgba(0, 122, 255, 0.9)',
@@ -153,6 +164,7 @@ const styles = StyleSheet.create({
         color: '#8E8E93',
         marginLeft: normalize(6),
         flex: 1,
+        minWidth: 0,
     },
     followSellerButton: {
         padding: normalize(8),
@@ -171,7 +183,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#f0f0f0',
         marginLeft: normalize(8),
     },
-    callIcon: {
+        callIconLegacy: {
         padding: normalize(8),
         borderRadius: normalize(20),
         backgroundColor: '#f0f0f0',
@@ -179,7 +191,7 @@ const styles = StyleSheet.create({
     headerContainer: {
         padding: normalize(16),
         backgroundColor: '#FFFFFF',
-        marginHorizontal: normalize(16),
+        marginHorizontal: normalize(8),
         marginTop: normalize(12),
         borderRadius: normalize(12),
         shadowColor: '#000',
@@ -187,6 +199,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.08,
         shadowRadius: 4,
         elevation: 3,
+        minHeight: normalize(80),
     },
     headerTopRow: {
         flexDirection: 'row',
@@ -199,7 +212,8 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#1A1A1A',
         marginBottom: normalize(8),
-        lineHeight: normalize(20),
+        lineHeight: normalize(22),
+        flexShrink: 0,
     },
     metaRow: {
         flexDirection: 'row',
@@ -209,14 +223,19 @@ const styles = StyleSheet.create({
     metaItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginRight: normalize(16),
+        marginRight: normalize(12),
         marginBottom: normalize(4),
+        flex: 1,
+        minWidth: '40%',
+        maxWidth: '100%',
     },
     metaText: {
         marginLeft: normalize(6),
         fontSize: normalize(12),
         color: '#6B7280',
         fontWeight: '500',
+        flex: 1,
+        minWidth: 0,
     },
     distanceText: {
         color: '#007AFF',
@@ -225,17 +244,18 @@ const styles = StyleSheet.create({
     section: {
         backgroundColor: '#FFFFFF',
         padding: normalize(16),
-        marginHorizontal: normalize(16),
-        marginTop: normalize(8),
+        marginHorizontal: normalize(8),
+        marginTop: normalize(12),
         borderRadius: normalize(12),
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.06,
         shadowRadius: 3,
         elevation: 2,
+        minHeight: normalize(60),
     },
     sectionTitle: {
-        fontSize: normalize(14),
+        fontSize: normalize(15),
         fontWeight: '600',
         color: '#1A1A1A',
         marginBottom: normalize(10),
@@ -243,8 +263,9 @@ const styles = StyleSheet.create({
     },
     descriptionText: {
         fontSize: normalize(13),
-        lineHeight: normalize(18),
+        lineHeight: normalize(20),
         color: '#4A4A4A',
+        flexShrink: 0,
     },
     sellerImage: {
         width: normalize(45),
@@ -275,7 +296,7 @@ const styles = StyleSheet.create({
         marginLeft: normalize(4),
     },
     mapContainer: {
-        height: normalize(160),
+        height: Math.max(220, Math.round(safeH * 0.3)),
         borderRadius: normalize(10),
         overflow: 'hidden',
         marginTop: normalize(8),
@@ -291,8 +312,8 @@ const styles = StyleSheet.create({
     addressOverlay: {
         position: 'absolute',
         bottom: normalize(12),
-        left: normalize(12),
-        right: normalize(12),
+        left: normalize(8),
+        right: normalize(8),
         backgroundColor: 'rgba(255,255,255,0.95)',
         padding: normalize(12),
         borderRadius: normalize(8),
@@ -323,7 +344,7 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 4,
     },
-    actionButton: {
+        actionBarButton: {
         flex: 1,
         flexDirection: 'row',
         justifyContent: 'center',
@@ -352,7 +373,7 @@ const styles = StyleSheet.create({
     floatingButtonContainer: {
         position: 'absolute',
         bottom: normalize(30),
-        right: normalize(16),
+        right: normalize(8),
         flexDirection: 'row',
         gap: normalize(12),
     },
@@ -387,7 +408,7 @@ const styles = StyleSheet.create({
     statsContainer: {
         position: 'absolute',
         bottom: normalize(30),
-        left: normalize(16),
+        left: normalize(8),
         flexDirection: 'row',
         gap: normalize(20),
         backgroundColor: 'rgba(255, 255, 255, 0.9)',
@@ -399,12 +420,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.25,
         shadowRadius: 4,
         elevation: 5,
-    },
-    statItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: normalize(4),
-    },
+        },
     statText: {
         fontSize: normalize(12),
         color: '#666',
@@ -416,8 +432,8 @@ const styles = StyleSheet.create({
     },
     statsCard: {
         backgroundColor: '#FFFFFF',
-        marginHorizontal: normalize(16),
-        marginTop: normalize(16),
+        marginHorizontal: normalize(8),
+        marginTop: normalize(12),
         borderRadius: normalize(12),
         paddingVertical: normalize(16),
         paddingHorizontal: normalize(20),
@@ -438,7 +454,7 @@ const styles = StyleSheet.create({
         fontSize: normalize(16),
         fontWeight: '600',
         color: '#1C1C1E',
-        marginRight: normalize(20),
+        marginRight: normalize(8),
     },
     statsContent: {
         flexDirection: 'row',
@@ -465,23 +481,24 @@ const styles = StyleSheet.create({
         width: 1,
         height: normalize(24),
         backgroundColor: '#E5E5EA',
-        marginHorizontal: normalize(16),
+        marginHorizontal: normalize(8),
     },
     likeButtonContainer: {
-        marginLeft: normalize(16),
+        marginLeft: normalize(8),
         alignItems: 'center',
         justifyContent: 'center',
+        backgroundColor: 'transparent',
     },
     likeButtonTopRight: {
         position: 'absolute',
         top: normalize(20),
-        right: normalize(20),
+        right: normalize(8),
         zIndex: 10,
     },
     topRightActions: {
         position: 'absolute',
         top: normalize(20),
-        right: normalize(16),
+        right: normalize(8),
         flexDirection: 'column',
         alignItems: 'center',
         gap: normalize(8),
@@ -499,17 +516,15 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.3,
         shadowRadius: 4,
         elevation: 5,
-    },
-    likeButtonContainer: {
-        backgroundColor: 'transparent',
-    },
+        },
     reportButton: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         padding: normalize(12),
-        marginHorizontal: normalize(16),
-        marginTop: normalize(8),
+        marginHorizontal: normalize(8),
+        marginTop: normalize(12),
+        marginBottom: normalize(8),
         backgroundColor: '#FFF5F5',
         borderRadius: normalize(10),
         borderWidth: 1,
@@ -537,17 +552,10 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#E9ECEF',
     },
-    followSellerButton: {
+        followSellerButtonCard: {
         padding: normalize(8),
         marginRight: normalize(8),
-    },
-
-
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+        },
     priceContainer: {
         marginTop: 12,
         padding: 10,
@@ -576,6 +584,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#E3F2FD',
         borderRadius: normalize(6),
     },
-});
+    };
+}
 
-export default styles;
+const { width: w, height: h } = Dimensions.get('window');
+export default StyleSheet.create(getProductDetailsStyles(w, h));

@@ -13,15 +13,19 @@ const ITEM_MARGIN = 4;
  * Capped scale keeps tablet UI from being too large; product grid uses 2/4/5 columns by breakpoint.
  */
 export function getHomeStyles(width, height) {
-  const scale = getResponsiveScale(width);
-  const verticalScale = getVerticalScale(height);
+  const safeW = Math.max(width || 375, 200);
+  const safeH = Math.max(height || 812, 400);
+  const scale = getResponsiveScale(safeW);
+  const verticalScale = getVerticalScale(safeH);
   const normalize = (size) => Math.round(scale * size);
   const normalizeVertical = (size) => Math.round(verticalScale * size);
 
-  const numColumns = getNumColumns(width);
+  const numColumns = getNumColumns(safeW);
   const listPaddingH = normalize(4) * 2;
-  const itemWidth =
-    (width - listPaddingH - (numColumns - 1) * ITEM_MARGIN * 2) / numColumns;
+  const itemWidth = Math.max(
+    40,
+    (safeW - listPaddingH - (numColumns - 1) * ITEM_MARGIN * 2) / numColumns
+  );
 
   return {
   container: { flex: 1, backgroundColor: '#FFFFFF' },
@@ -85,9 +89,10 @@ export function getHomeStyles(width, height) {
     zIndex: 1,
   },
   productList: {
+    flexGrow: 1,
     paddingHorizontal: listPaddingH / 2,
     paddingBottom: normalizeVertical(120),
-    paddingTop: normalizeVertical(8),
+    paddingTop: normalizeVertical(4),
   },
   productImage: { width: '100%', height: '100%', resizeMode: 'cover' },
   slideContainer: { flex: 1, width: '100%', height: '100%' },
@@ -125,7 +130,7 @@ export function getHomeStyles(width, height) {
     fontSize: normalize(14),
     fontWeight: '600',
     color: '#666',
-    marginVertical: normalizeVertical(12),
+    marginVertical: normalizeVertical(8),
     marginHorizontal: normalize(12),
   },
   noImageContainer: {
@@ -424,7 +429,7 @@ export function getHomeStyles(width, height) {
   },
 
   searchBarSpacer: {
-    height: normalizeVertical(56),
+    height: Math.max(56, normalizeVertical(54)),
   },
   searchContainer: {
     position: 'absolute',

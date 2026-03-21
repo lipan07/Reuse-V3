@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
    View,
    Text,
@@ -7,25 +7,129 @@ import {
    Platform,
    StatusBar,
    TouchableOpacity,
-   Dimensions,
    Alert,
    Linking,
-   PermissionsAndroid
+   PermissionsAndroid,
+   useWindowDimensions,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Geolocation from '@react-native-community/geolocation';
+import { normalize, normalizeVertical } from '../utils/responsive';
 
-const { width, height } = Dimensions.get('window');
-const scale = width / 375;
-const verticalScale = height / 812;
-const normalize = (size) => Math.round(scale * size);
-const normalizeVertical = (size) => Math.round(verticalScale * size);
-
-
+const createHeaderStyles = (n, nV, safeWidth, safeHeight) =>
+   StyleSheet.create({
+      headerContainer: {
+         backgroundColor: 'transparent',
+         minHeight: Math.max(
+            Platform.select({ ios: nV(56), android: nV(52), default: nV(52) }),
+            n(50)
+         ),
+         paddingHorizontal: n(12),
+         paddingVertical: n(4),
+         justifyContent: 'center',
+      },
+      contentContainer: {
+         flexDirection: 'row',
+         justifyContent: 'space-between',
+         alignItems: 'center',
+         paddingVertical: n(2),
+      },
+      logoContainer: {
+         flexDirection: 'row',
+         alignItems: 'center',
+         flex: 1,
+         minHeight: n(46),
+      },
+      logoWrapper: {
+         width: n(36),
+         height: n(36),
+         justifyContent: 'center',
+         alignItems: 'center',
+         marginRight: n(10),
+         borderColor: '#007BFF',
+         borderWidth: 0.8,
+         borderRadius: n(2),
+      },
+      logo: {
+         width: n(32),
+         height: n(32),
+         resizeMode: 'contain',
+      },
+      titleContainer: {
+         flexDirection: 'column',
+         justifyContent: 'center',
+         minHeight: n(42),
+      },
+      appNameRow: {
+         flexDirection: 'row',
+         alignItems: 'baseline',
+         minHeight: n(26),
+      },
+      appNameFirstLetter: {
+         fontSize: n(20),
+         fontWeight: 'bold',
+         fontFamily: Platform.OS === 'android' ? 'sans-serif-medium' : 'System',
+         color: '#007BFF',
+         includeFontPadding: false,
+         lineHeight: n(26),
+      },
+      appNameRest: {
+         fontSize: n(14),
+         fontWeight: 'bold',
+         fontFamily: Platform.OS === 'android' ? 'sans-serif-medium' : 'System',
+         color: '#007BFF',
+         includeFontPadding: false,
+         lineHeight: n(22),
+      },
+      appSubName: {
+         fontSize: n(11),
+         color: '#007BFF',
+         includeFontPadding: false,
+         marginTop: n(2),
+         lineHeight: n(16),
+         minHeight: n(16),
+      },
+      rightIcons: {
+         flexDirection: 'row',
+         alignItems: 'center',
+         justifyContent: 'flex-end',
+         flex: 1,
+         maxWidth: safeWidth * 0.6,
+         minHeight: n(46),
+      },
+      locationContainer: {
+         flexDirection: 'row',
+         alignItems: 'center',
+         marginLeft: n(8),
+         paddingVertical: n(4),
+         minHeight: n(32),
+      },
+      addressText: {
+         color: '#007BFF',
+         fontSize: n(12),
+         maxWidth: safeWidth * 0.3,
+         includeFontPadding: false,
+         lineHeight: n(18),
+      },
+      locationIcon: {
+         marginLeft: n(4),
+         alignSelf: 'center',
+      },
+   });
 
 const Header = () => {
+   const { width, height } = useWindowDimensions();
+   const safeWidth = Math.max(width || 375, 200);
+   const safeHeight = Math.max(height || 812, 400);
+   const n = (size) => normalize(size, safeWidth);
+   const nV = (size) => normalizeVertical(size, safeHeight);
+   const styles = useMemo(
+      () => createHeaderStyles(n, nV, safeWidth, safeHeight),
+      [safeWidth, safeHeight]
+   );
+
    const navigation = useNavigation();
    const [address, setAddress] = useState("Set Location");
    const statusBarHeight = StatusBar.currentHeight || (Platform.OS === 'ios' ? 20 : 24);
@@ -198,9 +302,9 @@ const Header = () => {
                      {/* Down arrow icon before address */}
                      <Ionicons
                         name="chevron-down-outline"
-                        size={14}
+                        size={n(14)}
                         color="#007BFF"
-                        style={{ marginRight: 4, alignSelf: 'center' }}
+                        style={{ marginRight: n(4), alignSelf: 'center' }}
                      />
                      <Text
                         style={styles.addressText}
@@ -211,7 +315,7 @@ const Header = () => {
                      </Text>
                      <Ionicons
                         name="location-outline"
-                        size={20}
+                        size={n(20)}
                         color="#007BFF"
                         style={styles.locationIcon}
                      />
@@ -222,104 +326,5 @@ const Header = () => {
       </>
    );
 };
-
-const styles = StyleSheet.create({
-   headerContainer: {
-      backgroundColor: 'transparent',
-      minHeight: Platform.select({
-         ios: normalizeVertical(56),
-         android: normalizeVertical(52),
-         default: normalizeVertical(52)
-      }),
-      paddingHorizontal: normalize(12),
-      justifyContent: 'center',
-   },
-   contentContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: normalizeVertical(4), // Reduced padding top and bottom
-   },
-   logoContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      flex: 1,
-      minHeight: normalizeVertical(40), // Ensure minimum height for proper alignment
-   },
-   logoWrapper: {
-      width: normalize(36),
-      height: normalize(36),
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginRight: normalize(10),
-      borderColor: '#007BFF',
-      borderWidth: 0.8,
-      borderRadius: normalize(2), // Optional: slight border radius for better appearance
-   },
-   logo: {
-      width: normalize(32),
-      height: normalize(32),
-      resizeMode: 'contain',
-   },
-   titleContainer: {
-      flexDirection: 'column',
-      justifyContent: 'center',
-      height: normalizeVertical(36), // Match logo height for alignment
-   },
-   appNameRow: {
-      flexDirection: 'row',
-      alignItems: 'baseline',
-      height: normalizeVertical(20), // Fixed height for consistent alignment
-   },
-   appNameFirstLetter: {
-      fontSize: normalize(20),
-      fontWeight: 'bold',
-      fontFamily: Platform.OS === 'android' ? 'sans-serif-medium' : 'System',
-      color: '#007BFF',
-      includeFontPadding: false,
-      lineHeight: normalizeVertical(20),
-   },
-   appNameRest: {
-      fontSize: normalize(14),
-      fontWeight: 'bold',
-      fontFamily: Platform.OS === 'android' ? 'sans-serif-medium' : 'System',
-      color: '#007BFF',
-      includeFontPadding: false,
-      lineHeight: normalizeVertical(20),
-   },
-   appSubName: {
-      fontSize: normalize(11),
-      color: '#007BFF',
-      includeFontPadding: false,
-      marginTop: normalizeVertical(1),
-      lineHeight: normalizeVertical(14),
-      height: normalizeVertical(14), // Fixed height for consistent spacing
-   },
-   rightIcons: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'flex-end',
-      flex: 1,
-      maxWidth: width * 0.6,
-      minHeight: normalizeVertical(40), // Match logo container height
-   },
-   locationContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginLeft: normalize(8),
-      paddingVertical: normalizeVertical(4), // Add vertical padding for better touch area
-   },
-   addressText: {
-      color: '#007BFF',
-      fontSize: normalize(12),
-      maxWidth: width * 0.3,
-      includeFontPadding: false,
-      lineHeight: normalizeVertical(16),
-   },
-   locationIcon: {
-      marginLeft: normalize(4),
-      alignSelf: 'center', // Better vertical alignment
-   },
-});
 
 export default Header;

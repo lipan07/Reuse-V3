@@ -9,12 +9,12 @@ import {
     ActivityIndicator,
     Linking,
     Alert,
-    Dimensions,
     FlatList,
     Share,
     BackHandler,
     Animated,
-    Easing
+    Easing,
+    useWindowDimensions
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -29,17 +29,19 @@ import Others from './ProductDetails/Others';
 import ReportPostModal from './ReportPostModal';
 import ModalScreen from './SupportElement/ModalScreen';
 import CustomStatusBar from './Screens/CustomStatusBar';
-import styles from '../assets/css/ProductDetailsPage.styles';
+import { getProductDetailsStyles } from '../assets/css/ProductDetailsPage.styles';
+import { normalize } from '../utils/responsive';
 import useFollowPost from '../hooks/useFollowPost'; // Import the hook
 import AnimatedFollowButton from './AnimatedFollowButton';
 
-const { width, height } = Dimensions.get('window');
-const scale = width / 375;
-const normalize = (size) => Math.round(scale * size);
-
 const ProductDetails = () => {
+    const { width: rawWidth, height: rawHeight } = useWindowDimensions();
+    const width = Math.max(rawWidth || 375, 200);
+    const height = Math.max(rawHeight || 812, 400);
+    const styles = useMemo(() => StyleSheet.create(getProductDetailsStyles(width, height)), [width, height]);
+
     const insets = useSafeAreaInsets();
-    const floatingBottom = normalize(30) + (insets?.bottom ?? 0);
+    const floatingBottom = normalize(30, width) + (insets?.bottom ?? 0);
     const [buyerId, setBuyerId] = useState(null);
     const [joinedViaInvite, setJoinedViaInvite] = useState(false);
     const [product, setProduct] = useState(null);
@@ -696,7 +698,7 @@ const ProductDetails = () => {
     );
 
     return (
-        <SafeAreaView style={styles.safeArea}>
+        <SafeAreaView style={styles.safeArea} edges={['bottom']}>
             <CustomStatusBar />
             <ScrollView
                 contentContainerStyle={styles.container}
@@ -760,7 +762,7 @@ const ProductDetails = () => {
                         </View>
                     ) : (
                         <View style={styles.noImageContainer}>
-                                    <Icon name="image-outline" size={normalize(24)} color="#ccc" />
+                                    <Icon name="image-outline" size={normalize(24, width)} color="#ccc" />
                                     <Text style={styles.noImageText}>No media available</Text>
                         </View>
                     )}
@@ -783,7 +785,7 @@ const ProductDetails = () => {
                                         {isVideo ? (
                                             <Icon
                                                 name="play"
-                                                size={isActive ? normalize(10) : normalize(8)}
+                                                size={isActive ? normalize(10, width) : normalize(8, width)}
                                                 color={isActive ? "#000000" : "#000000"}
                                             />
                                         ) : null}
@@ -795,15 +797,19 @@ const ProductDetails = () => {
 
                     <View style={[
                         styles.productTag,
-                        product.type === 'rent' ? styles.rentTag : styles.sellTag
+                        product.type === 'rent' ? styles.rentTag : styles.sellTag,
+                        { top: (insets?.top ?? 0) + normalize(12, width) }
                     ]}>
                         <Text style={styles.tagText}>
                             {product.type === 'rent' ? 'RENT' : 'SELL'}
                         </Text>
                     </View>
 
-                    {/* Action Buttons - Top Right Corner */}
-                    <View style={styles.topRightActions}>
+                    {/* Action Buttons - Top Right Corner (below status bar / safe area) */}
+                    <View style={[
+                        styles.topRightActions,
+                        { top: (insets?.top ?? 0) + normalize(12, width) }
+                    ]}>
                         {/* Like Button */}
                         {buyerId !== product.user?.id && (
                             <View style={styles.likeButtonContainer}>
@@ -834,7 +840,7 @@ const ProductDetails = () => {
                             style={styles.actionButton}
                             onPress={handleShare}
                         >
-                            <Icon name="share-variant" size={normalize(20)} color="#fff" />
+                            <Icon name="share-variant" size={normalize(20, width)} color="#fff" />
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -845,13 +851,13 @@ const ProductDetails = () => {
                         <Text style={styles.statsTitle}>Engagement</Text>
                         <View style={styles.statsContent}>
                             <View style={styles.statItem}>
-                                <Icon name="eye" size={normalize(16)} color="#34C759" />
+                                <Icon name="eye" size={normalize(16, width)} color="#34C759" />
                                 <Text style={styles.statNumber}>{product?.view_count || 0}</Text>
                                 <Text style={styles.statLabel}>Views</Text>
                             </View>
                             <View style={styles.statDivider} />
                             <View style={styles.statItem}>
-                                <Icon name="heart" size={normalize(16)} color="#FF3B30" />
+                                <Icon name="heart" size={normalize(16, width)} color="#FF3B30" />
                                 <Text style={styles.statNumber}>{likeCount}</Text>
                                 <Text style={styles.statLabel}>Likes</Text>
                             </View>
@@ -873,27 +879,27 @@ const ProductDetails = () => {
 
                     <View style={styles.metaRow}>
                         <View style={styles.metaItem}>
-                            <Icon name="tag-outline" size={normalize(14)} color="#8E8E93" />
+                            <Icon name="tag-outline" size={normalize(14, width)} color="#8E8E93" />
                             <Text style={styles.metaText}>
                                 {product.category?.name || 'Uncategorized'}
                             </Text>
                         </View>
                         <View style={styles.metaItem}>
-                            <Icon name="map-marker-outline" size={normalize(14)} color="#8E8E93" />
+                            <Icon name="map-marker-outline" size={normalize(14, width)} color="#8E8E93" />
                             <Text style={styles.metaText}>
                                 {product.address || 'Location not specified'}
                             </Text>
                         </View>
                         {productDistance && (
                             <View style={styles.metaItem}>
-                                <Icon name="map-marker-distance" size={normalize(14)} color="#007AFF" />
+                                <Icon name="map-marker-distance" size={normalize(14, width)} color="#007AFF" />
                                 <Text style={[styles.metaText, styles.distanceText]}>
                                     {productDistance} away
                                 </Text>
                             </View>
                         )}
                         <View style={styles.metaItem}>
-                            <Icon name="clock-outline" size={normalize(14)} color="#8E8E93" />
+                            <Icon name="clock-outline" size={normalize(14, width)} color="#8E8E93" />
                             <Text style={styles.metaText}>
                                 {getTimeSincePosting(product.created_at)}
                             </Text>
@@ -935,7 +941,7 @@ const ProductDetails = () => {
                                     {/* User follow removed from Product Details */}
                                 </View>
                                 <View style={styles.sellerMeta}>
-                                    <Icon name="star" size={normalize(12)} color="#FFCC00" />
+                                    <Icon name="star" size={normalize(12, width)} color="#FFCC00" />
                                     <Text style={styles.sellerMetaText}>
                                         4.8 (24) • {getMemberSince(product.user?.created_at)}
                                     </Text>
@@ -945,20 +951,20 @@ const ProductDetails = () => {
                                 <View style={styles.sellerDetails}>
                                     {product.user?.phone && (
                                         <View style={styles.sellerDetailItem}>
-                                            <Icon name="phone" size={normalize(12)} color="#8E8E93" />
+                                            <Icon name="phone" size={normalize(12, width)} color="#8E8E93" />
                                             <Text style={styles.sellerDetailText}>
                                                 {product.user?.phone || 'Phone not available'}
                                             </Text>
                                         </View>
                                     )}
                                     <View style={styles.sellerDetailItem}>
-                                        <Icon name="clock" size={normalize(12)} color="#8E8E93" />
+                                        <Icon name="clock" size={normalize(12, width)} color="#8E8E93" />
                                         <Text style={styles.sellerDetailText}>
                                             Usually responds within 2 hours
                                         </Text>
                                     </View>
                                     <View style={styles.sellerDetailItem}>
-                                        <Icon name="check-circle" size={normalize(12)} color="#4CAF50" />
+                                        <Icon name="check-circle" size={normalize(12, width)} color="#4CAF50" />
                                         <Text style={styles.sellerDetailText}>
                                             Verified seller
                                         </Text>
@@ -971,7 +977,7 @@ const ProductDetails = () => {
                                         style={styles.callIcon}
                                         onPress={() => Linking.openURL(`tel:${product.user.phone}`)}
                                     >
-                                        <Icon name="phone-outline" size={normalize(18)} color="#007AFF" />
+                                        <Icon name="phone-outline" size={normalize(18, width)} color="#007AFF" />
                                     </TouchableOpacity>
                                 </View>
                             )}
@@ -1011,7 +1017,7 @@ const ProductDetails = () => {
                         style={styles.reportButton}
                         onPress={() => setShowReportModal(true)}
                     >
-                        <Icon name="alert-circle-outline" size={normalize(16)} color="#FF3B30" />
+                        <Icon name="alert-circle-outline" size={normalize(16, width)} color="#FF3B30" />
                         <Text style={styles.reportButtonText}>Report this post</Text>
                     </TouchableOpacity>
                 )}
@@ -1034,7 +1040,7 @@ const ProductDetails = () => {
                                         style={[styles.floatingButton, styles.callButton]}
                                         onPress={() => Linking.openURL(`tel:${product.user.phone_no}`)}
                                     >
-                                        <Icon name="phone" size={normalize(18)} color="#fff" />
+                                        <Icon name="phone" size={normalize(18, width)} color="#fff" />
                                         <Text style={styles.floatingButtonText}>Call</Text>
                                     </TouchableOpacity>
                                 ) : null;
@@ -1043,7 +1049,7 @@ const ProductDetails = () => {
                                 style={[styles.floatingButton, styles.chatButton]}
                                 onPress={handleChatWithSeller}
                             >
-                                <Icon name="message-text" size={normalize(18)} color="#fff" />
+                                <Icon name="message-text" size={normalize(18, width)} color="#fff" />
                                 <Text style={styles.floatingButtonText}>Chat</Text>
                             </TouchableOpacity>
                             {joinedViaInvite ? (
@@ -1051,7 +1057,7 @@ const ProductDetails = () => {
                                     style={[styles.floatingButton, styles.buyButton]}
                                     onPress={handleBuy}
                                 >
-                                    <Icon name="cart" size={normalize(18)} color="#fff" />
+                                    <Icon name="cart" size={normalize(18, width)} color="#fff" />
                                     <Text style={styles.floatingButtonText}>Buy</Text>
                                 </TouchableOpacity>
                             ) : null}
@@ -1065,7 +1071,7 @@ const ProductDetails = () => {
                                 style={[styles.floatingButton, styles.editButton]}
                                 onPress={handleEditPost}
                             >
-                                <Icon name="pencil" size={normalize(18)} color="#fff" />
+                                <Icon name="pencil" size={normalize(18, width)} color="#fff" />
                                 <Text style={styles.floatingButtonText}>Edit</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
@@ -1081,7 +1087,7 @@ const ProductDetails = () => {
                                     );
                                 }}
                             >
-                                <Icon name="check-circle" size={normalize(18)} color="#fff" />
+                                <Icon name="check-circle" size={normalize(18, width)} color="#fff" />
                                 <Text style={styles.floatingButtonText}>Sold</Text>
                             </TouchableOpacity>
                         </View>

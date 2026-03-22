@@ -1,94 +1,125 @@
-import { StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet, Dimensions, Platform, PixelRatio } from 'react-native';
 
-const { width } = Dimensions.get('window');
-const scale = width / 375;
-const normalize = (size) => Math.round(scale * size);
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const scale = SCREEN_WIDTH / 375;
+
+export function normalize(size) {
+    const newSize = size * scale;
+    // Cap size for tablets - modern approach uses a max-scale
+    const cappedSize = SCREEN_WIDTH > 600 ? size * 1.05 : newSize;
+    return Math.round(PixelRatio.roundToNearestPixel(cappedSize));
+}
 
 export default StyleSheet.create({
-    container: {
+    safeArea: {
         flex: 1,
-        paddingTop: normalize(50),
-        paddingHorizontal: normalize(18),
-        backgroundColor: '#F5F5F5',
-    },
-    profileSection: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: normalize(28),
-        backgroundColor: '#fff',
-        borderRadius: normalize(16),
-        padding: normalize(16),
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 6,
-        elevation: 2,
-    },
-    profileImage: {
-        width: normalize(80),
-        height: normalize(80),
-        borderRadius: normalize(40),
-        marginRight: normalize(18),
-        borderWidth: 2,
-        borderColor: '#2196F3',
-        backgroundColor: '#eaf1fa',
-    },
-    profileInfo: {
-        flex: 1,
-        justifyContent: 'center',
-    },
-    userName: {
-        fontWeight: 'bold',
-        fontSize: normalize(18),
-        marginBottom: normalize(6),
-        color: '#222',
-    },
-    editButton: {
-        backgroundColor: '#2196F3',
-        paddingHorizontal: normalize(16),
-        paddingVertical: normalize(7),
-        borderRadius: normalize(8),
-        alignSelf: 'flex-start',
-        marginTop: normalize(2),
-    },
-    editButtonText: {
-        color: '#FFFFFF',
-        fontWeight: 'bold',
-        fontSize: normalize(14),
-        letterSpacing: 0.2,
-    },
-    linksWrapper: {
-        width: '100%',
-        marginTop: normalize(10),
-    },
-    linkItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: normalize(14),
         backgroundColor: '#FFFFFF',
-        paddingVertical: normalize(14),
-        paddingHorizontal: normalize(16),
-        borderRadius: normalize(12),
-        width: '100%',
+    },
+    scrollContent: {
+        // Use padding instead of margin to keep the scrollable area full-screen
+        paddingTop: Platform.OS === 'ios' ? 0 : normalize(40),
+        paddingBottom: normalize(60), // Extra padding at bottom for logout visibility
+        flexGrow: 1,
+    },
+    mainContainer: {
+        paddingHorizontal: 24,
+        // This ensures the container stays centered on Tablets/Web
+        alignSelf: 'center',
+    },
+    header: {
+        alignItems: 'center',
+        marginTop: normalize(20),
+        marginBottom: normalize(35),
+    },
+    imageContainer: {
+        position: 'relative',
+        marginBottom: 15,
+    },
+    avatar: {
+        width: normalize(86),
+        height: normalize(86),
+        borderRadius: normalize(43),
+        backgroundColor: '#f1f5f9',
+    },
+    badgeEdit: {
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        backgroundColor: '#1e293b',
+        width: normalize(26),
+        height: normalize(26),
+        borderRadius: 13,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: '#FFF',
+        // Subtle shadow for the badge
+        elevation: 2,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.04,
+        shadowOpacity: 0.2,
         shadowRadius: 2,
-        elevation: 1,
     },
-    iconCircle: {
-        width: normalize(38),
-        height: normalize(38),
-        borderRadius: normalize(19),
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: normalize(14),
+    greeting: {
+        fontSize: normalize(20),
+        fontWeight: '800',
+        color: '#1e293b',
+        letterSpacing: -0.5,
     },
-    linkText: {
-        flex: 1,
-        fontSize: normalize(16),
-        color: '#222',
-        fontWeight: '500',
+    subGreeting: {
+        fontSize: normalize(13),
+        color: '#64748b',
+        marginTop: 4,
+    },
+    section: {
+        marginBottom: 25,
+    },
+    sectionLabel: {
+        fontSize: normalize(11),
+        fontWeight: '700',
+        color: '#94a3b8',
+        textTransform: 'uppercase',
+        letterSpacing: 1.2,
+        marginBottom: 12,
         marginLeft: 2,
     },
+    menuItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: 14,
+        borderBottomWidth: 1,
+        borderBottomColor: '#f8fafc', 
+    },
+    menuLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    iconWrapper: {
+        width: normalize(34),
+        height: normalize(34),
+        borderRadius: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    menuText: {
+        fontSize: normalize(15),
+        fontWeight: '500',
+        color: '#334155',
+    },
+    logoutBtn: {
+        marginTop: normalize(20),
+        paddingVertical: 16,
+        alignItems: 'center',
+        borderRadius: 14,
+        backgroundColor: '#fff1f2', // Modern soft-red
+        borderWidth: 1,
+        borderColor: '#ffe4e6',
+    },
+    logoutText: {
+        color: '#e11d48',
+        fontWeight: '700',
+        fontSize: normalize(14),
+    }
 });

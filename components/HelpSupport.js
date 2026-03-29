@@ -28,6 +28,9 @@ const HelpSupport = () => {
         () => buildHelpSupportStyles(width, height),
         [width, height]
     );
+    const accent = darkMode ? '#60a5fa' : '#007BFF';
+    const placeholderColor = darkMode ? '#64748b' : '#999999';
+    const mutedIcon = darkMode ? '#94a3b8' : '#999';
     const [issue, setIssue] = useState('');
     const [message, setMessage] = useState('');
     const [modalVisible, setModalVisible] = useState(false);
@@ -123,7 +126,7 @@ const HelpSupport = () => {
     return (
         <>
             <CustomStatusBar darkMode={darkMode} />
-            <View style={styles.container}>
+            <View style={[styles.container, darkMode && styles.darkContainer]}>
                 {/* Header with proper status bar spacing */}
                 <Header
                     title="Help & Support"
@@ -136,67 +139,67 @@ const HelpSupport = () => {
                     showsVerticalScrollIndicator={false}
                 >
                     {/* Welcome Section */}
-                    <View style={styles.welcomeCard}>
-                        <Icon name="help-outline" size={nf(30)} color="#007BFF" />
-                        <Text style={styles.welcomeTitle}>How can we help you?</Text>
-                        <Text style={styles.welcomeText}>
+                    <View style={[styles.welcomeCard, darkMode && styles.darkWelcomeCard]}>
+                        <Icon name="help-outline" size={nf(30)} color={accent} />
+                        <Text style={[styles.welcomeTitle, darkMode && styles.darkWelcomeTitle]}>How can we help you?</Text>
+                        <Text style={[styles.welcomeText, darkMode && styles.darkWelcomeText]}>
                             Whether you're buying or selling items on Reuse, our support team is here to assist you.
                         </Text>
                     </View>
 
                     {/* Common Questions */}
-                    <Text style={styles.sectionHeaderText}>Common Questions</Text>
-                    <View style={styles.card}>
+                    <Text style={[styles.sectionHeaderText, darkMode && styles.darkSectionHeader]}>Common Questions</Text>
+                    <View style={[styles.card, darkMode && styles.darkCard]}>
                         {commonQuestions.map((item, index) => (
                             <View key={index} style={[
                                 styles.questionContainer,
-                                index < commonQuestions.length - 1 && styles.questionBorder
+                                index < commonQuestions.length - 1 && [styles.questionBorder, darkMode && styles.darkQuestionBorder],
                             ]}>
                                 <Icon
                                     name={item.warning ? 'error-outline' : 'help-outline'}
                                     size={nf(20)}
-                                    color={item.warning ? '#FF3B30' : '#007BFF'}
+                                    color={item.warning ? (darkMode ? '#f87171' : '#FF3B30') : accent}
                                     style={styles.questionIcon}
                                 />
                                 <View style={styles.questionTextContainer}>
-                                    <Text style={[styles.questionText, item.warning && styles.warningText]}>
+                                    <Text style={[styles.questionText, item.warning && styles.warningText, darkMode && !item.warning && styles.darkQuestionText]}>
                                         {item.q}
                                     </Text>
-                                    <Text style={styles.answerText}>{item.a}</Text>
+                                    <Text style={[styles.answerText, darkMode && styles.darkAnswerText]}>{item.a}</Text>
                                 </View>
                             </View>
                         ))}
                     </View>
 
                     {/* Contact Form */}
-                    <Text style={styles.sectionHeaderText}>Contact Support</Text>
-                    <View style={styles.card}>
+                    <Text style={[styles.sectionHeaderText, darkMode && styles.darkSectionHeader]}>Contact Support</Text>
+                    <View style={[styles.card, darkMode && styles.darkCard]}>
                         <View style={styles.inputContainer}>
-                            <Text style={styles.inputLabel}>Issue Type (optional)</Text>
+                            <Text style={[styles.inputLabel, darkMode && styles.darkInputLabel]}>Issue Type (optional)</Text>
                             <TextInput
                                 placeholder="E.g. Account issue, Payment problem..."
-                                placeholderTextColor="#999"
+                                placeholderTextColor={placeholderColor}
                                 value={issue}
                                 onChangeText={setIssue}
-                                style={styles.input}
+                                style={[styles.input, darkMode && styles.darkInput]}
                                 maxLength={50}
                             />
-                            <Text style={styles.charCounter}>{issue.length}/50</Text>
+                            <Text style={[styles.charCounter, darkMode && styles.darkCharCounter]}>{issue.length}/50</Text>
                         </View>
 
                         <View style={styles.inputContainer}>
-                            <Text style={styles.inputLabel}>Describe your issue *</Text>
+                            <Text style={[styles.inputLabel, darkMode && styles.darkInputLabel]}>Describe your issue *</Text>
                             <TextInput
                                 placeholder="Please provide details about your problem..."
-                                placeholderTextColor="#999"
+                                placeholderTextColor={placeholderColor}
                                 value={message}
                                 onChangeText={setMessage}
-                                style={[styles.input, styles.messageInput]}
+                                style={[styles.input, styles.messageInput, darkMode && styles.darkInput]}
                                 multiline
                                 textAlignVertical="top"
                                 maxLength={200}
                             />
-                            <Text style={styles.charCounter}>{message.length}/200</Text>
+                            <Text style={[styles.charCounter, darkMode && styles.darkCharCounter]}>{message.length}/200</Text>
                         </View>
 
                         <TouchableOpacity
@@ -217,8 +220,8 @@ const HelpSupport = () => {
                     </View>
 
                     {/* Contact Options */}
-                    <Text style={styles.sectionHeaderText}>Other Ways to Reach Us</Text>
-                    <View style={styles.card}>
+                    <Text style={[styles.sectionHeaderText, darkMode && styles.darkSectionHeader]}>Other Ways to Reach Us</Text>
+                    <View style={[styles.card, darkMode && styles.darkCard]}>
                         {[
                             { icon: 'email', text: 'Email Support', type: 'email' },
                             { icon: 'phone', text: 'Call Support', type: 'phone' },
@@ -233,14 +236,14 @@ const HelpSupport = () => {
                                 <Icon
                                     name={item.icon}
                                     size={nf(20)}
-                                    color="#007BFF"
+                                    color={accent}
                                     style={styles.contactIcon}
                                 />
-                                <Text style={styles.contactText}>{item.text}</Text>
+                                <Text style={[styles.contactText, darkMode && styles.darkContactText]}>{item.text}</Text>
                                 <Icon
                                     name="chevron-right"
                                     size={nf(20)}
-                                    color="#999"
+                                    color={mutedIcon}
                                     style={styles.contactArrow}
                                 />
                             </TouchableOpacity>

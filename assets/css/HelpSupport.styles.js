@@ -145,6 +145,48 @@ export function buildHelpSupportStyles(width, height) {
     contactArrow: {
       marginLeft: 'auto',
     },
+
+    darkContainer: {
+      backgroundColor: '#121212',
+    },
+    darkWelcomeCard: {
+      backgroundColor: '#1e293b',
+    },
+    darkWelcomeTitle: {
+      color: '#f1f5f9',
+    },
+    darkWelcomeText: {
+      color: '#94a3b8',
+    },
+    darkSectionHeader: {
+      color: '#f1f5f9',
+    },
+    darkCard: {
+      backgroundColor: '#1e293b',
+    },
+    darkQuestionBorder: {
+      borderBottomColor: '#334155',
+    },
+    darkQuestionText: {
+      color: '#e2e8f0',
+    },
+    darkAnswerText: {
+      color: '#94a3b8',
+    },
+    darkInputLabel: {
+      color: '#cbd5e1',
+    },
+    darkInput: {
+      backgroundColor: '#0f172a',
+      borderColor: '#475569',
+      color: '#f1f5f9',
+    },
+    darkCharCounter: {
+      color: '#64748b',
+    },
+    darkContactText: {
+      color: '#e2e8f0',
+    },
   });
 
   return { styles, n, nf, nv, contentMaxWidth };

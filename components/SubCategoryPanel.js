@@ -1,5 +1,6 @@
 // components/SubCategoryPanel.js
 import React, { memo } from 'react';
+import { useTheme } from '../context/ThemeContext';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import MCIcon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -169,6 +170,8 @@ const subcategoryColorMapping = {
 };
 
 const SubCategoryPanel = memo(({ subcategories, onSelectSubcategory, parentCategoryName, parentCategoryColor, listBottomPadding = 0 }) => {
+    const { isDarkMode } = useTheme();
+
     const getIconName = (guardName) => {
         return iconMapping[guardName] || 'tag';
     };
@@ -185,10 +188,10 @@ const SubCategoryPanel = memo(({ subcategories, onSelectSubcategory, parentCateg
     };
 
     return (
-        <View style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.headerText}>{parentCategoryName}</Text>
-                <Text style={styles.headerSubtext}>Choose a subcategory</Text>
+        <View style={[styles.container, isDarkMode && darkStyles.container]}>
+            <View style={[styles.header, isDarkMode && darkStyles.header]}>
+                <Text style={[styles.headerText, isDarkMode && darkStyles.headerText]}>{parentCategoryName}</Text>
+                <Text style={[styles.headerSubtext, isDarkMode && darkStyles.headerSubtext]}>Choose a subcategory</Text>
             </View>
 
             <ScrollView 
@@ -203,7 +206,11 @@ const SubCategoryPanel = memo(({ subcategories, onSelectSubcategory, parentCateg
                         return (
                             <TouchableOpacity
                                 key={item.id.toString()}
-                                style={[styles.optionCard, { borderColor: `${categoryColor}20` }]}
+                                style={[
+                                    styles.optionCard,
+                                    { borderColor: `${categoryColor}20` },
+                                    isDarkMode && darkStyles.optionCard,
+                                ]}
                                 onPress={() => onSelectSubcategory(item)}
                                 activeOpacity={0.8}
                             >
@@ -320,6 +327,24 @@ const styles = StyleSheet.create({
         borderRadius: normalize(10),
         justifyContent: 'center',
         alignItems: 'center',
+    },
+});
+
+const darkStyles = StyleSheet.create({
+    container: {
+        backgroundColor: '#121212',
+    },
+    header: {
+        backgroundColor: '#0f172a',
+    },
+    headerText: {
+        color: '#f1f5f9',
+    },
+    headerSubtext: {
+        color: '#94a3b8',
+    },
+    optionCard: {
+        backgroundColor: '#1e293b',
     },
 });
 

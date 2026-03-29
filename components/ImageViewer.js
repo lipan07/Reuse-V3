@@ -4,7 +4,9 @@ import {
     StyleSheet,
     Dimensions,
     Animated,
-    FlatList, StatusBar
+    FlatList,
+    StatusBar,
+    Platform,
 } from 'react-native';
 import {
     GestureHandlerRootView,
@@ -24,7 +26,7 @@ const ImageViewer = ({ route }) => {
         <>
             <StatusBar
                 backgroundColor="#000000"
-                barStyle="dark-content"
+                barStyle="light-content"
                 translucent={Platform.OS === 'android'}
             />
             <GestureHandlerRootView style={styles.container}>

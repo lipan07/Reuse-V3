@@ -4,12 +4,14 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { getProductDetailsCardStyles } from '../../assets/css/productDetailsCard.styles';
 import { normalize } from '../../utils/responsive';
 import useFollowPost from '../../hooks/useFollowPost';
+import { useTheme } from '../../context/ThemeContext';
 
 const Others = ({ product, buyerId }) => {
     const { width, height } = useWindowDimensions();
+    const { isDarkMode } = useTheme();
     const styles = useMemo(
-        () => StyleSheet.create(getProductDetailsCardStyles(width, height)),
-        [width, height]
+        () => StyleSheet.create(getProductDetailsCardStyles(width, height, isDarkMode)),
+        [width, height, isDarkMode]
     );
     const { isFollowed, toggleFollow } = useFollowPost(product);
 

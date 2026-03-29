@@ -10,7 +10,8 @@ import {
   RefreshControl,
   TouchableWithoutFeedback,
   Keyboard,
-  Dimensions
+  StyleSheet,
+  useWindowDimensions,
 } from 'react-native';
 import CategoryMenu from './CategoryMenu';
 import BottomNavBar from './BottomNavBar';
@@ -18,17 +19,22 @@ import OptimizedProduct from './OptimizedProduct';
 import { useFocusEffect, useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import styles from '../assets/css/Home.styles';
+import { getHomeStyles } from '../assets/css/Home.styles';
+import { useTheme } from '../context/ThemeContext';
 import OptimizedApiService from '../service/optimizedApiService';
 import CacheService from '../service/cacheService';
-
-const { width, height } = Dimensions.get('window');
-const scale = width / 375;
-const normalize = (size) => Math.round(scale * size);
 
 const PAGE_SIZE = 15;
 
 const OptimizedHome = () => {
+  const { isDarkMode } = useTheme();
+  const { width: rawW, height: rawH } = useWindowDimensions();
+  const width = Math.max(rawW || 375, 200);
+  const height = Math.max(rawH || 812, 400);
+  const styles = useMemo(() => StyleSheet.create(getHomeStyles(width, height)), [width, height]);
+  const scale = width / 375;
+  const normalize = (size) => Math.round(scale * size);
+
   const navigation = useNavigation();
   const route = useRoute();
   const isFocused = useIsFocused();
@@ -413,12 +419,14 @@ const OptimizedHome = () => {
     fetchProducts(true, cleanParams(newFilters));
   }, [activeFilters, cleanParams, fetchProducts]);
 
-  // Memoized Filter Bar Component
-  const FilterBar = useMemo(() => ({ categories }) => (
-    <View style={styles.filterBarContainer}>
-      {activeFilterCount > 0 && (
+  const FilterBar = ({ categories }) => {
+    if (activeFilterCount === 0) {
+      return null;
+    }
+    return (
+    <View style={[styles.filterBarContainer, isDarkMode && styles.darkFilterBarContainer]}>
         <View style={styles.activeFiltersContainer}>
-          <Text style={styles.activeFiltersText}>Filters:</Text>
+          <Text style={[styles.activeFiltersText, isDarkMode && styles.darkActiveFiltersText]}>Filters:</Text>
           {activeFilters.search && (
             <TouchableOpacity
               style={styles.filterPill}
@@ -501,13 +509,13 @@ const OptimizedHome = () => {
               fetchProducts(true, cleanParams(resetFilters));
             }}
           >
-            <Icon name="refresh" size={normalize(16)} color="#007bff" />
-            <Text style={styles.quickFilterText}>Reset All</Text>
+            <Icon name="refresh" size={normalize(16)} color={isDarkMode ? '#60a5fa' : '#007bff'} />
+            <Text style={[styles.quickFilterText, isDarkMode && styles.darkQuickFilterText]}>Reset All</Text>
           </TouchableOpacity>
         </View>
-      )}
     </View>
-  ), [activeFilterCount, activeFilters, handleRemoveFilter, cleanParams, fetchProducts]);
+    );
+  };
 
   // Memoized list header component
   const ListHeaderComponent = useMemo(() => (
@@ -517,25 +525,33 @@ const OptimizedHome = () => {
         selectedCategory={selectedCategory}
       />
       <FilterBar categories={categories} />
-      <Text style={styles.recommendedText}>Recommended</Text>
+      <Text style={[styles.recommendedText, isDarkMode && styles.darkRecommendedText]}>Recommended</Text>
     </>
-  ), [selectedCategory, categories, handleCategorySelect]);
+  ), [
+    selectedCategory,
+    categories,
+    handleCategorySelect,
+    isDarkMode,
+    styles,
+    activeFilterCount,
+    activeFilters,
+  ]);
 
   // Memoized empty component
   const ListEmptyComponent = useMemo(() => () => (
-    !isLoading && <Text style={styles.noProductsText}>No products found</Text>
-  ), [isLoading]);
+    !isLoading && <Text style={[styles.noProductsText, isDarkMode && styles.darkNoProductsText]}>No products found</Text>
+  ), [isLoading, isDarkMode, styles]);
 
   // Memoized footer component
   const ListFooterComponent = useMemo(() => (
     hasMore && (
       <ActivityIndicator
         size="large"
-        color="#007bff"
+        color={isDarkMode ? '#60a5fa' : '#007bff'}
         style={styles.loaderBottom}
       />
     )
-  ), [hasMore]);
+  ), [hasMore, isDarkMode, styles]);
 
   const handleOutsidePress = useCallback(() => {
     Keyboard.dismiss();
@@ -572,16 +588,16 @@ const OptimizedHome = () => {
 
   return (
     <TouchableWithoutFeedback onPress={handleOutsidePress}>
-      <View style={styles.container}>
+      <View style={[styles.container, isDarkMode && styles.darkContainer]}>
         {/* Search Container */}
-        <View style={styles.searchContainer}>
-          <View style={styles.searchInputWrapper}>
+        <View style={[styles.searchContainer, isDarkMode && styles.darkSearchContainer]}>
+          <View style={[styles.searchInputWrapper, isDarkMode && styles.darkSearchInputWrapper]}>
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, isDarkMode && styles.darkSearchInput]}
               onChangeText={handleInputChange}
               value={search}
               placeholder="Search products..."
-              placeholderTextColor="#888"
+              placeholderTextColor={isDarkMode ? '#94a3b8' : '#888'}
               onSubmitEditing={handleSearchPress}
               returnKeyType="search"
             />
@@ -591,7 +607,7 @@ const OptimizedHome = () => {
                 style={styles.clearButton}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Icon name="close" size={normalize(16)} color="#888" />
+                <Icon name="close" size={normalize(16)} color={isDarkMode ? '#94a3b8' : '#888'} />
               </TouchableOpacity>
             )}
           </View>
@@ -635,7 +651,8 @@ const OptimizedHome = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              colors={['#007bff']}
+              colors={isDarkMode ? ['#60a5fa'] : ['#007bff']}
+              tintColor={isDarkMode ? '#60a5fa' : '#007bff'}
             />
           }
           onEndReached={handleScrollEndReached}
@@ -658,9 +675,9 @@ const OptimizedHome = () => {
         {/* Location Popup */}
         {showLocationPopup && (
           <View style={styles.popupOverlay}>
-            <View style={styles.popupContainer}>
-              <Text style={styles.popupTitle}>Location Required</Text>
-              <Text style={styles.popupMessage}>
+            <View style={[styles.popupContainer, isDarkMode && styles.darkPopupContainer]}>
+              <Text style={[styles.popupTitle, isDarkMode && styles.darkPopupTitle]}>Location Required</Text>
+              <Text style={[styles.popupMessage, isDarkMode && styles.darkPopupMessage]}>
                 Please set your location to find products near you
               </Text>
               <TouchableOpacity

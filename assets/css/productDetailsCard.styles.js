@@ -11,7 +11,8 @@ const normalizeVertical = (size) => Math.round(verticalScale * size);
  * Responsive styles for Product Details card (Others component).
  * Use with useWindowDimensions so the card matches ProductDetailsPage scale and spacing.
  */
-export function getProductDetailsCardStyles(w, h) {
+export function getProductDetailsCardStyles(w, h, isDarkMode = false) {
+    const d = isDarkMode;
     const safeW = Math.max(w || 375, 200);
     const safeH = Math.max(h || 812, 400);
     const scale = getResponsiveScale(safeW);
@@ -20,27 +21,29 @@ export function getProductDetailsCardStyles(w, h) {
     const nV = (size) => Math.round(verticalScale * size);
     return {
         errorText: {
-            color: '#d32f2f',
+            color: d ? '#f87171' : '#d32f2f',
             textAlign: 'center',
             padding: 12,
         },
         section: {
-            backgroundColor: '#FFFFFF',
+            backgroundColor: d ? '#1e293b' : '#FFFFFF',
             padding: n(16),
             marginHorizontal: n(8),
             marginTop: n(12),
             borderRadius: n(12),
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.06,
+            shadowOpacity: d ? 0.2 : 0.06,
             shadowRadius: 3,
             elevation: 2,
             minHeight: n(60),
+            borderWidth: d ? 1 : 0,
+            borderColor: d ? '#334155' : 'transparent',
         },
         sectionTitle: {
             fontSize: n(15),
             fontWeight: '600',
-            color: '#1A1A1A',
+            color: d ? '#f1f5f9' : '#1A1A1A',
             marginBottom: n(10),
             letterSpacing: 0.2,
         },
@@ -56,17 +59,17 @@ export function getProductDetailsCardStyles(w, h) {
             paddingVertical: n(8),
             paddingHorizontal: n(8),
             marginBottom: n(8),
-            backgroundColor: '#f8f9fa',
+            backgroundColor: d ? '#0f172a' : '#f8f9fa',
             borderRadius: n(8),
             borderWidth: 0.5,
-            borderColor: '#e9ecef',
+            borderColor: d ? '#334155' : '#e9ecef',
             minHeight: n(40),
         },
         othersIconContainer: {
             width: n(24),
             height: n(24),
             borderRadius: n(12),
-            backgroundColor: '#fff',
+            backgroundColor: d ? '#1e293b' : '#fff',
             justifyContent: 'center',
             alignItems: 'center',
             marginRight: n(8),
@@ -82,18 +85,18 @@ export function getProductDetailsCardStyles(w, h) {
         },
         othersLabel: {
             fontSize: n(10),
-            color: '#6c757d',
+            color: d ? '#94a3b8' : '#6c757d',
             marginBottom: n(1),
             fontWeight: '500',
         },
         othersValue: {
             fontSize: n(12),
             fontWeight: '600',
-            color: '#333',
+            color: d ? '#e2e8f0' : '#333',
             flexShrink: 0,
         },
         othersHighlightValue: {
-            color: '#28a745',
+            color: d ? '#4ade80' : '#28a745',
             fontWeight: '700',
         },
     };

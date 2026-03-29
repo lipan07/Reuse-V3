@@ -1,12 +1,94 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import useFollowPost from '../hooks/useFollowPost';
+import { useTheme } from '../context/ThemeContext';
+
+function createProductStyles(isDarkMode) {
+  const d = isDarkMode;
+  return StyleSheet.create({
+    card: {
+      borderWidth: 1,
+      borderColor: d ? '#334155' : '#ddd',
+      borderRadius: 10,
+      padding: 10,
+      margin: 10,
+      backgroundColor: d ? '#1e293b' : '#fff',
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: d ? 0.35 : 0.3,
+      shadowRadius: 2,
+      elevation: 3,
+    },
+    imageContainer: {
+      height: 120,
+      width: 120,
+      marginRight: 10,
+      borderRadius: 10,
+      overflow: 'hidden',
+    },
+    imageList: {
+      marginBottom: 10,
+    },
+    detailsContainer: {
+      flex: 1,
+    },
+    title: {
+      fontWeight: 'bold',
+      fontSize: 18,
+      marginTop: 5,
+      color: d ? '#f1f5f9' : '#000',
+    },
+    details: {
+      fontSize: 16,
+      marginTop: 5,
+      marginBottom: 10,
+      color: d ? '#94a3b8' : '#000',
+    },
+    price: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: d ? '#4ade80' : 'green',
+    },
+    image: {
+      width: '100%',
+      height: '100%',
+      resizeMode: 'cover',
+    },
+    statsContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 8,
+      paddingTop: 8,
+      borderTopWidth: 1,
+      borderTopColor: d ? '#334155' : '#f0f0f0',
+    },
+    statItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    statText: {
+      fontSize: 14,
+      color: d ? '#94a3b8' : '#666',
+    },
+    likedText: {
+      color: '#e74c3c',
+      fontWeight: 'bold',
+    },
+  });
+}
 
 const Product = ({ product }) => {
   const navigation = useNavigation();
   const { isLiked, likeCount, toggleFollow } = useFollowPost(product);
+  const { isDarkMode } = useTheme();
+  const styles = useMemo(() => createProductStyles(isDarkMode), [isDarkMode]);
+  const statIcon = isDarkMode ? '#94a3b8' : '#666';
 
   const handleProductPress = () => {
     navigation.navigate('ProductDetails', { product });
@@ -44,14 +126,14 @@ const Product = ({ product }) => {
 
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
-            <Icon name="eye" size={16} color="#666" />
+            <Icon name="eye" size={16} color={statIcon} />
             <Text style={styles.statText}>{product.view_count || 0}</Text>
           </View>
           <TouchableOpacity style={styles.statItem} onPress={toggleFollow}>
             <Icon
               name={isLiked ? "heart" : "heart-outline"}
               size={16}
-              color={isLiked ? "#e74c3c" : "#666"}
+              color={isLiked ? "#e74c3c" : statIcon}
             />
             <Text style={[styles.statText, isLiked && styles.likedText]}>{likeCount}</Text>
           </TouchableOpacity>
@@ -60,78 +142,5 @@ const Product = ({ product }) => {
     </TouchableOpacity>
   );
 };
-
-const styles = StyleSheet.create({
-  card: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 10,
-    padding: 10,
-    margin: 10,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 3,
-  },
-  imageContainer: {
-    height: 120,
-    width: 120,
-    marginRight: 10,
-    borderRadius: 10,
-    overflow: 'hidden',
-  },
-  imageList: {
-    marginBottom: 10,
-  },
-  detailsContainer: {
-    flex: 1,
-  },
-  title: {
-    fontWeight: 'bold',
-    fontSize: 18,
-    marginTop: 5,
-  },
-  details: {
-    fontSize: 16,
-    marginTop: 5,
-    marginBottom: 10,
-  },
-  price: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: 'green',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  statText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  likedText: {
-    color: '#e74c3c',
-    fontWeight: 'bold',
-  },
-});
 
 export default Product;

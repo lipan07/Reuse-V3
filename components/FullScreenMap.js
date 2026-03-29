@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import MapView, { Circle } from 'react-native-maps'; // Import Circle for radius
 import { useNavigation } from '@react-navigation/native';
+import { useTheme } from '../context/ThemeContext';
 
 const FullScreenMap = ({ route }) => {
+    const { isDarkMode } = useTheme();
     const { latitude, longitude } = route.params;
     const navigation = useNavigation();
 
@@ -11,6 +13,38 @@ const FullScreenMap = ({ route }) => {
     const handleClose = () => {
         navigation.goBack();
     };
+
+    const styles = useMemo(
+        () =>
+            StyleSheet.create({
+                container: {
+                    flex: 1,
+                },
+                map: {
+                    ...StyleSheet.absoluteFillObject,
+                },
+                buttonWrapper: {
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                },
+                closeButton: {
+                    width: '100%',
+                    backgroundColor: isDarkMode ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.7)',
+                    paddingVertical: 15,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                },
+                closeButtonText: {
+                    color: isDarkMode ? '#f1f5f9' : '#000',
+                    fontSize: 18,
+                    fontWeight: 'bold',
+                    textAlign: 'center',
+                },
+            }),
+        [isDarkMode]
+    );
 
     return (
         <View style={styles.container}>
@@ -43,33 +77,5 @@ const FullScreenMap = ({ route }) => {
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    map: {
-        ...StyleSheet.absoluteFillObject,
-    },
-    buttonWrapper: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-    },
-    closeButton: {
-        width: '100%',
-        backgroundColor: 'rgba(255, 255, 255, 0.7)',
-        paddingVertical: 15,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    closeButtonText: {
-        color: '#000',
-        fontSize: 18,
-        fontWeight: 'bold',
-        textAlign: 'center',
-    },
-});
 
 export default FullScreenMap;

@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTheme } from '../context/ThemeContext';
 
 const ChangePassword = () => {
+    const { isDarkMode } = useTheme();
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -85,29 +87,34 @@ const ChangePassword = () => {
         }
     };
 
+    const ph = isDarkMode ? '#64748b' : undefined;
+
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Change Password</Text>
+        <View style={[styles.container, isDarkMode && styles.darkContainer]}>
+            <Text style={[styles.title, isDarkMode && styles.darkTitle]}>Change Password</Text>
 
             <TextInput
-                style={styles.input}
+                style={[styles.input, isDarkMode && styles.darkInput]}
                 placeholder="Current Password"
+                placeholderTextColor={ph}
                 secureTextEntry
                 value={currentPassword}
                 onChangeText={setCurrentPassword}
             />
 
             <TextInput
-                style={styles.input}
+                style={[styles.input, isDarkMode && styles.darkInput]}
                 placeholder="New Password"
+                placeholderTextColor={ph}
                 secureTextEntry
                 value={newPassword}
                 onChangeText={setNewPassword}
             />
 
             <TextInput
-                style={styles.input}
+                style={[styles.input, isDarkMode && styles.darkInput]}
                 placeholder="Confirm New Password"
+                placeholderTextColor={ph}
                 secureTextEntry
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
@@ -151,6 +158,17 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    darkContainer: {
+        backgroundColor: '#121212',
+    },
+    darkTitle: {
+        color: '#f1f5f9',
+    },
+    darkInput: {
+        backgroundColor: '#1e293b',
+        borderColor: '#475569',
+        color: '#f1f5f9',
     },
 });
 

@@ -12,10 +12,12 @@ import moment from 'moment';
 import { createEcho } from '../service/echo';
 import { isMessageSeen, sameMessageId } from '../utils/chatUtils';
 import { useNotification } from '../context/NotificationContext';
+import { useTheme } from '../context/ThemeContext';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import ModalScreen from './SupportElement/ModalScreen.js';
 
 const ChatList = ({ navigation }) => {
+  const { isDarkMode } = useTheme();
   const { width, height } = useWindowDimensions();
   const [chats, setChats] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -222,7 +224,7 @@ const ChatList = ({ navigation }) => {
         enabled={!isDeleted}
       >
         <TouchableOpacity
-          style={[styles.chatCard, isDeleted && styles.deletedCard]}
+          style={[styles.chatCard, isDeleted && styles.deletedCard, isDarkMode && styles.darkChatCard]}
           onPress={() => !isDeleted && navigation.navigate('ChatBox', {
             chatId: chat.id,
             postId: chat.post_id,
@@ -233,16 +235,36 @@ const ChatList = ({ navigation }) => {
           })}
         >
           <View style={styles.avatarWrapper}>
-            <Image source={{ uri: postImage }} style={styles.avatar} />
+            <Image source={{ uri: postImage }} style={[styles.avatar, isDarkMode && styles.darkAvatar]} />
             <View style={[styles.statusDot, { backgroundColor: otherPersonStatus === 'online' ? '#22c55e' : '#cbd5e1' }]} />
           </View>
           <View style={styles.chatContent}>
             <View style={styles.chatHeader}>
-              <Text style={[styles.chatTitle, !isSeen ? styles.boldTxt : styles.dimTxt]} numberOfLines={1}>{chat.post?.title || 'No Title'}</Text>
-              <Text style={styles.timeText}>{chat.last_message ? moment(chat.last_message.created_at).fromNow(true) : ''}</Text>
+              <Text
+                style={[
+                  styles.chatTitle,
+                  !isSeen ? styles.boldTxt : styles.dimTxt,
+                  isDarkMode && (!isSeen ? styles.darkBoldTxt : styles.darkDimTxt),
+                ]}
+                numberOfLines={1}
+              >
+                {chat.post?.title || 'No Title'}
+              </Text>
+              <Text style={[styles.timeText, isDarkMode && styles.darkTimeText]}>
+                {chat.last_message ? moment(chat.last_message.created_at).fromNow(true) : ''}
+              </Text>
             </View>
             <View style={styles.msgRow}>
-              <Text style={[styles.msgText, !isSeen ? styles.boldTxt : styles.dimTxt]} numberOfLines={1}>{chat.last_message?.message || 'New inquiry'}</Text>
+              <Text
+                style={[
+                  styles.msgText,
+                  !isSeen ? styles.boldTxt : styles.dimTxt,
+                  isDarkMode && (!isSeen ? styles.darkBoldTxt : styles.darkDimTxt),
+                ]}
+                numberOfLines={1}
+              >
+                {chat.last_message?.message || 'New inquiry'}
+              </Text>
               {chat.last_message && (
                 <MaterialIcons
                   name={isMessageSeen(chat.last_message.is_seen) ? 'done-all' : 'done'}
@@ -253,10 +275,10 @@ const ChatList = ({ navigation }) => {
               )}
             </View>
             <View style={styles.footerRow}>
-              <Text style={styles.userName}>{chat.other_person?.name}</Text>
+              <Text style={[styles.userName, isDarkMode && styles.darkUserName]}>{chat.other_person?.name}</Text>
               <View style={styles.statusRow}>
                 <View style={[styles.miniDot, { backgroundColor: otherPersonStatus === 'online' ? '#22c55e' : '#cbd5e1' }]} />
-                {otherPersonStatus === 'online' ? <BlinkText>Online</BlinkText> : <Text style={styles.offlineText}>Offline</Text>}
+                {otherPersonStatus === 'online' ? <BlinkText>Online</BlinkText> : <Text style={[styles.offlineText, isDarkMode && styles.darkOfflineText]}>Offline</Text>}
               </View>
             </View>
           </View>
@@ -266,10 +288,13 @@ const ChatList = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+    <SafeAreaView style={[styles.container, isDarkMode && styles.darkContainer]}>
+      <StatusBar
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+        backgroundColor={isDarkMode ? '#121212' : '#FFFFFF'}
+      />
       <View style={[styles.header, { width: contentWidth, alignSelf: 'center' }]}>
-        <Text style={styles.headerTitle}>Messages</Text>
+        <Text style={[styles.headerTitle, isDarkMode && styles.darkHeaderTitle]}>Messages</Text>
       </View>
       <FlatList
         data={chats}
@@ -283,10 +308,10 @@ const ChatList = ({ navigation }) => {
       <Modal visible={deleteModalVisible} transparent animationType="fade">
         <TouchableWithoutFeedback onPress={() => setDeleteModalVisible(false)}>
           <View style={styles.modalOverlay}>
-            <View style={styles.confirmBox}>
-              <Text style={styles.confirmTitle}>Delete this chat?</Text>
+            <View style={[styles.confirmBox, isDarkMode && styles.darkConfirmBox]}>
+              <Text style={[styles.confirmTitle, isDarkMode && styles.darkConfirmTitle]}>Delete this chat?</Text>
               <View style={styles.modalActions}>
-                <TouchableOpacity style={styles.cBtn} onPress={() => setDeleteModalVisible(false)}><Text style={styles.cBtnTxt}>Cancel</Text></TouchableOpacity>
+                <TouchableOpacity style={[styles.cBtn, isDarkMode && styles.darkCBtn]} onPress={() => setDeleteModalVisible(false)}><Text style={[styles.cBtnTxt, isDarkMode && styles.darkCBtnTxt]}>Cancel</Text></TouchableOpacity>
                 <TouchableOpacity style={styles.dBtn} onPress={deleteChat}><Text style={styles.dBtnTxt}>Delete</Text></TouchableOpacity>
               </View>
             </View>
@@ -332,6 +357,19 @@ const styles = StyleSheet.create({
   dBtn: { flex: 1, paddingVertical: 14, backgroundColor: '#ef4444', borderRadius: 12, alignItems: 'center' },
   cBtnTxt: { color: '#475569', fontWeight: '700' },
   dBtnTxt: { color: '#FFF', fontWeight: '700' },
+  darkContainer: { backgroundColor: '#121212' },
+  darkHeaderTitle: { color: '#f1f5f9' },
+  darkChatCard: { borderBottomColor: '#334155' },
+  darkAvatar: { backgroundColor: '#334155' },
+  darkBoldTxt: { color: '#f1f5f9' },
+  darkDimTxt: { color: '#94a3b8' },
+  darkTimeText: { color: '#64748b' },
+  darkUserName: { color: '#a5b4fc' },
+  darkOfflineText: { color: '#64748b' },
+  darkConfirmBox: { backgroundColor: '#1e293b' },
+  darkConfirmTitle: { color: '#f1f5f9' },
+  darkCBtn: { backgroundColor: '#334155' },
+  darkCBtnTxt: { color: '#e2e8f0' },
 });
 
 export default ChatList;

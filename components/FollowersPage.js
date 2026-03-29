@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     View,
     Text,
@@ -10,8 +10,10 @@ import {
     Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTheme } from '../context/ThemeContext';
 
 const FollowersPage = () => {
+    const { isDarkMode } = useTheme();
     const [followersFilter, setFollowersFilter] = useState('Post');
     const [data, setData] = useState([]);
     const [isUnfollowModalVisible, setIsUnfollowModalVisible] = useState(false);
@@ -79,6 +81,97 @@ const FollowersPage = () => {
             Alert.alert('Error', 'Failed to unfollow. Please try again.');
         }
     };
+
+    const styles = useMemo(
+        () =>
+            StyleSheet.create({
+                container: { flex: 1, backgroundColor: isDarkMode ? '#121212' : '#f8f9fa' },
+                subTabContainer: {
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    paddingHorizontal: 10,
+                    paddingVertical: 8,
+                    backgroundColor: isDarkMode ? '#0f172a' : 'transparent',
+                },
+                subTabButton: {
+                    flex: 1,
+                    paddingVertical: 10,
+                    paddingHorizontal: 5,
+                    alignItems: 'center',
+                    borderRadius: 8,
+                    marginHorizontal: 5,
+                },
+                activeSubTabButton: { backgroundColor: '#007bff' },
+                subTabButtonText: { fontSize: 16, color: isDarkMode ? '#cbd5e1' : '#555' },
+                activeSubTabButtonText: { color: '#fff', fontWeight: 'bold' },
+                listContent: { padding: 10 },
+                userItem: {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginVertical: 8,
+                    paddingHorizontal: 10,
+                },
+                userImage: { width: 50, height: 50, borderRadius: 25 },
+                userInfo: { flex: 1, marginLeft: 10 },
+                userName: { fontSize: 16, fontWeight: 'bold', color: isDarkMode ? '#f1f5f9' : '#000' },
+                userAddress: { fontSize: 14, color: isDarkMode ? '#94a3b8' : '#666' },
+                userDistance: { fontSize: 12, color: isDarkMode ? '#64748b' : '#999' },
+                unfollowButton: { backgroundColor: '#e63946', padding: 8, borderRadius: 8 },
+                unfollowButtonText: { color: '#fff', fontSize: 14, fontWeight: 'bold' },
+                noDataContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+                noDataText: { fontSize: 18, color: isDarkMode ? '#94a3b8' : '#999' },
+                separator: {
+                    height: 1,
+                    backgroundColor: isDarkMode ? '#334155' : '#b7c4ba',
+                    marginVertical: 10,
+                },
+                modalOverlay: {
+                    flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                },
+                modalContainer: {
+                    width: '80%',
+                    backgroundColor: isDarkMode ? '#1e293b' : '#fff',
+                    padding: 20,
+                    borderRadius: 12,
+                    alignItems: 'center',
+                    borderWidth: isDarkMode ? 1 : 0,
+                    borderColor: isDarkMode ? '#334155' : 'transparent',
+                },
+                modalTitle: {
+                    fontSize: 18,
+                    fontWeight: 'bold',
+                    marginBottom: 10,
+                    color: isDarkMode ? '#f1f5f9' : '#000',
+                },
+                modalMessage: {
+                    fontSize: 16,
+                    color: isDarkMode ? '#cbd5e1' : '#333',
+                    marginBottom: 20,
+                },
+                modalActions: { flexDirection: 'row', width: '100%', justifyContent: 'space-between' },
+                modalButtonCancel: {
+                    flex: 1,
+                    padding: 10,
+                    backgroundColor: isDarkMode ? '#334155' : '#ccc',
+                    borderRadius: 8,
+                    alignItems: 'center',
+                    marginHorizontal: 5,
+                },
+                modalButtonConfirm: {
+                    flex: 1,
+                    padding: 10,
+                    backgroundColor: '#007bff',
+                    borderRadius: 8,
+                    alignItems: 'center',
+                    marginHorizontal: 5,
+                },
+                modalButtonText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+            }),
+        [isDarkMode]
+    );
 
     const renderUserItem = ({ item }) => (
         <>
@@ -189,80 +282,5 @@ const FollowersPage = () => {
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f8f9fa' },
-    subTabContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingHorizontal: 10,
-        paddingVertical: 8,
-    },
-    subTabButton: {
-        flex: 1,
-        paddingVertical: 10,
-        paddingHorizontal: 5,
-        alignItems: 'center',
-        borderRadius: 8,
-        marginHorizontal: 5,
-    },
-    activeSubTabButton: { backgroundColor: '#007bff' },
-    subTabButtonText: { fontSize: 16, color: '#555' },
-    activeSubTabButtonText: { color: '#fff', fontWeight: 'bold' },
-    listContent: { padding: 10 },
-    userItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginVertical: 8,
-        paddingHorizontal: 10,
-    },
-    userImage: { width: 50, height: 50, borderRadius: 25 },
-    userInfo: { flex: 1, marginLeft: 10 },
-    userName: { fontSize: 16, fontWeight: 'bold' },
-    userAddress: { fontSize: 14, color: '#666' },
-    userDistance: { fontSize: 12, color: '#999' },
-    unfollowButton: { backgroundColor: '#e63946', padding: 8, borderRadius: 8 },
-    unfollowButtonText: { color: '#fff', fontSize: 14, fontWeight: 'bold' },
-    noDataContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    noDataText: { fontSize: 18, color: '#999' },
-    separator: {
-        height: 1,
-        backgroundColor: '#b7c4ba',
-        marginVertical: 10,
-    },
-    modalOverlay: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    },
-    modalContainer: {
-        width: '80%',
-        backgroundColor: '#fff',
-        padding: 20,
-        borderRadius: 12,
-        alignItems: 'center',
-    },
-    modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
-    modalMessage: { fontSize: 16, color: '#333', marginBottom: 20 },
-    modalActions: { flexDirection: 'row', width: '100%', justifyContent: 'space-between' },
-    modalButtonCancel: {
-        flex: 1,
-        padding: 10,
-        backgroundColor: '#ccc',
-        borderRadius: 8,
-        alignItems: 'center',
-        marginHorizontal: 5,
-    },
-    modalButtonConfirm: {
-        flex: 1,
-        padding: 10,
-        backgroundColor: '#007bff',
-        borderRadius: 8,
-        alignItems: 'center',
-        marginHorizontal: 5,
-    },
-    modalButtonText: { color: '#fff', fontSize: 14, fontWeight: '600' },
-});
 
 export default FollowersPage;

@@ -8,6 +8,7 @@ import { getMessaging, onMessage, onNotificationOpenedApp, getInitialNotificatio
 import { getApp } from '@react-native-firebase/app';
 import AppNavigator from './components/AppNavigator';
 import { NotificationProvider, useNotification } from './context/NotificationContext';
+import { ThemeProvider } from './context/ThemeContext';
 import notifee, { AndroidImportance, EventType } from '@notifee/react-native';
 
 // Create a navigation reference
@@ -289,7 +290,9 @@ const App = () => {
     return (
         <SafeAreaProvider>
             <NotificationProvider>
-                <AppInner />
+                <ThemeProvider>
+                    <AppInner />
+                </ThemeProvider>
             </NotificationProvider>
         </SafeAreaProvider>
     );

@@ -18,9 +18,11 @@ import { useNavigation } from '@react-navigation/native';
 import Header from './Screens/Header';
 import CustomStatusBar from './Screens/CustomStatusBar';
 import { buildHelpSupportStyles } from '../assets/css/HelpSupport.styles';
+import { useTheme } from '../context/ThemeContext';
 
 const HelpSupport = () => {
     const navigation = useNavigation();
+    const { isDarkMode: darkMode } = useTheme();
     const { width, height } = useWindowDimensions();
     const { styles, nf } = useMemo(
         () => buildHelpSupportStyles(width, height),
@@ -33,7 +35,6 @@ const HelpSupport = () => {
     const [modalTitle, setModalTitle] = useState('');
     const [modalMessage, setModalMessage] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [darkMode, setDarkMode] = useState(false);
 
     const handleSubmit = async () => {
         setIsSubmitting(true);
@@ -121,7 +122,7 @@ const HelpSupport = () => {
 
     return (
         <>
-            <CustomStatusBar />
+            <CustomStatusBar darkMode={darkMode} />
             <View style={styles.container}>
                 {/* Header with proper status bar spacing */}
                 <Header

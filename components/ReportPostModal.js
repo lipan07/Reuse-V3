@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     View,
     Text,
@@ -11,10 +11,12 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import ModalScreen from './SupportElement/ModalScreen';
+import { useTheme } from '../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
 const ReportPostModal = ({ visible, onClose, onSubmit, postId }) => {
+    const { isDarkMode } = useTheme();
     const [reason, setReason] = useState('spam');
     const [description, setDescription] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -53,6 +55,133 @@ const ReportPostModal = ({ visible, onClose, onSubmit, postId }) => {
 
     };
 
+    const styles = useMemo(
+        () =>
+            StyleSheet.create({
+                modalContainer: {
+                    flex: 1,
+                    justifyContent: 'center',
+                    backgroundColor: 'rgba(0,0,0,0.4)',
+                    padding: 20,
+                },
+                modalContent: {
+                    backgroundColor: isDarkMode ? '#1e293b' : '#fff',
+                    borderRadius: 20,
+                    padding: 25,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 10 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 20,
+                    elevation: 5,
+                    borderWidth: isDarkMode ? 1 : 0,
+                    borderColor: isDarkMode ? '#334155' : 'transparent',
+                },
+                closeButton: {
+                    position: 'absolute',
+                    top: 15,
+                    right: 15,
+                    zIndex: 1,
+                    padding: 5,
+                },
+                modalTitle: {
+                    fontSize: 22,
+                    fontWeight: '700',
+                    color: isDarkMode ? '#f1f5f9' : '#1a1a1a',
+                    textAlign: 'center',
+                    marginBottom: 8,
+                },
+                subTitle: {
+                    fontSize: 16,
+                    color: isDarkMode ? '#94a3b8' : '#666',
+                    textAlign: 'center',
+                    marginBottom: 20,
+                },
+                reasonContainer: {
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    gap: 10,
+                    marginBottom: 25,
+                },
+                reasonButton: {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingVertical: 12,
+                    paddingHorizontal: 18,
+                    borderRadius: 12,
+                    backgroundColor: isDarkMode ? '#334155' : '#f8f9fa',
+                    borderWidth: 1.5,
+                    borderColor: isDarkMode ? '#475569' : '#e9ecef',
+                },
+                selectedReason: {
+                    backgroundColor: '#007bff',
+                    borderColor: '#007bff',
+                },
+                reasonText: {
+                    marginLeft: 8,
+                    fontSize: 14,
+                    fontWeight: '500',
+                    color: isDarkMode ? '#e2e8f0' : '#495057',
+                },
+                selectedReasonText: {
+                    color: '#fff',
+                },
+                inputContainer: {
+                    marginBottom: 25,
+                    position: 'relative',
+                },
+                input: {
+                    minHeight: 120,
+                    maxHeight: 200,
+                    width: '100%',
+                    padding: 15,
+                    borderRadius: 12,
+                    backgroundColor: isDarkMode ? '#0f172a' : '#f8f9fa',
+                    borderWidth: 1.5,
+                    borderColor: isDarkMode ? '#475569' : '#e9ecef',
+                    fontSize: 16,
+                    color: isDarkMode ? '#f1f5f9' : '#1a1a1a',
+                    textAlignVertical: 'top',
+                },
+                charCount: {
+                    position: 'absolute',
+                    bottom: 10,
+                    right: 15,
+                    color: isDarkMode ? '#64748b' : '#6c757d',
+                    fontSize: 12,
+                },
+                buttonContainer: {
+                    flexDirection: 'row',
+                    gap: 12,
+                },
+                cancelButton: {
+                    flex: 1,
+                    padding: 16,
+                    borderRadius: 12,
+                    backgroundColor: isDarkMode ? '#334155' : '#f8f9fa',
+                    alignItems: 'center',
+                },
+                cancelButtonText: {
+                    color: isDarkMode ? '#e2e8f0' : '#6c757d',
+                    fontSize: 16,
+                    fontWeight: '600',
+                },
+                submitButton: {
+                    flex: 2,
+                    borderRadius: 12,
+                    backgroundColor: '#007bff',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: 16,
+                },
+                submitButtonText: {
+                    color: '#fff',
+                    fontSize: 16,
+                    fontWeight: '600',
+                },
+            }),
+        [isDarkMode]
+    );
+
     return (
         <>
             <ModalScreen
@@ -71,7 +200,7 @@ const ReportPostModal = ({ visible, onClose, onSubmit, postId }) => {
                 <View style={styles.modalContainer}>
                     <View style={styles.modalContent}>
                         <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                            <Icon name="close" size={24} color="#666" />
+                            <Icon name="close" size={24} color={isDarkMode ? '#94a3b8' : '#666'} />
                         </TouchableOpacity>
 
                         <Text style={styles.modalTitle}>Report This Post</Text>
@@ -91,7 +220,7 @@ const ReportPostModal = ({ visible, onClose, onSubmit, postId }) => {
                                     <Icon
                                         name={icon}
                                         size={20}
-                                        color={reason === value ? '#fff' : '#007bff'}
+                                        color={reason === value ? '#fff' : isDarkMode ? '#60a5fa' : '#007bff'}
                                     />
                                     <Text style={[
                                         styles.reasonText,
@@ -106,7 +235,7 @@ const ReportPostModal = ({ visible, onClose, onSubmit, postId }) => {
                         <View style={styles.inputContainer}>
                             <TextInput
                                 placeholder="Please describe the issue..."
-                                placeholderTextColor="#999"
+                                placeholderTextColor={isDarkMode ? '#64748b' : '#999'}
                                 value={description}
                                 onChangeText={setDescription}
                                 multiline
@@ -149,126 +278,5 @@ const ReportPostModal = ({ visible, onClose, onSubmit, postId }) => {
         </>
     );
 };
-
-const styles = StyleSheet.create({
-    modalContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        backgroundColor: 'rgba(0,0,0,0.4)',
-        padding: 20,
-    },
-    modalContent: {
-        backgroundColor: '#fff',
-        borderRadius: 20,
-        padding: 25,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.1,
-        shadowRadius: 20,
-        elevation: 5,
-    },
-    closeButton: {
-        position: 'absolute',
-        top: 15,
-        right: 15,
-        zIndex: 1,
-        padding: 5,
-    },
-    modalTitle: {
-        fontSize: 22,
-        fontWeight: '700',
-        color: '#1a1a1a',
-        textAlign: 'center',
-        marginBottom: 8,
-    },
-    subTitle: {
-        fontSize: 16,
-        color: '#666',
-        textAlign: 'center',
-        marginBottom: 20,
-    },
-    reasonContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 10,
-        marginBottom: 25,
-    },
-    reasonButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 18,
-        borderRadius: 12,
-        backgroundColor: '#f8f9fa',
-        borderWidth: 1.5,
-        borderColor: '#e9ecef',
-    },
-    selectedReason: {
-        backgroundColor: '#007bff',
-        borderColor: '#007bff',
-    },
-    reasonText: {
-        marginLeft: 8,
-        fontSize: 14,
-        fontWeight: '500',
-        color: '#495057',
-    },
-    selectedReasonText: {
-        color: '#fff',
-    },
-    inputContainer: {
-        marginBottom: 25,
-        position: 'relative',
-    },
-    input: {
-        minHeight: 120,
-        maxHeight: 200,
-        width: '100%',
-        padding: 15,
-        borderRadius: 12,
-        backgroundColor: '#f8f9fa',
-        borderWidth: 1.5,
-        borderColor: '#e9ecef',
-        fontSize: 16,
-        color: '#1a1a1a',
-        textAlignVertical: 'top',
-    },
-    charCount: {
-        position: 'absolute',
-        bottom: 10,
-        right: 15,
-        color: '#6c757d',
-        fontSize: 12,
-    },
-    buttonContainer: {
-        flexDirection: 'row',
-        gap: 12,
-    },
-    cancelButton: {
-        flex: 1,
-        padding: 16,
-        borderRadius: 12,
-        backgroundColor: '#f8f9fa',
-        alignItems: 'center',
-    },
-    cancelButtonText: {
-        color: '#6c757d',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    submitButton: {
-        flex: 2,
-        borderRadius: 12,
-        backgroundColor: '#007bff',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 16,
-    },
-    submitButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-});
 
 export default ReportPostModal;

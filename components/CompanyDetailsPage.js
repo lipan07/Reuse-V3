@@ -18,6 +18,7 @@ import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import CustomStatusBar from "./Screens/CustomStatusBar";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AnimatedFollowButton from './AnimatedFollowButton';
+import { useTheme } from '../context/ThemeContext';
 
 const { width, height } = Dimensions.get("window");
 const scale = width / 375; // Base width for scaling (iPhone 6/7/8)
@@ -127,6 +128,7 @@ const getActivityColor = (timestamp) => {
 };
 
 const CompanyDetailsPage = ({ route }) => {
+    const { isDarkMode } = useTheme();
     const navigation = useNavigation();
     const [buyerId, setBuyerId] = useState(null);
     const [isFollowing, setIsFollowing] = useState(false);
@@ -373,7 +375,7 @@ const CompanyDetailsPage = ({ route }) => {
     if (loading) {
         return (
             <>
-                <CustomStatusBar />
+                <CustomStatusBar darkMode={isDarkMode} />
                 <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
                     <ActivityIndicator size="large" color="#007BFF" />
                     <Text style={{ marginTop: 16, fontSize: normalize(16), color: '#666' }}>
@@ -388,7 +390,7 @@ const CompanyDetailsPage = ({ route }) => {
     if (error) {
         return (
             <>
-                <CustomStatusBar />
+                <CustomStatusBar darkMode={isDarkMode} />
                 <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 20 }]}>
                     <Icon name="alert-circle" size={normalize(48)} color="#FF6B6B" />
                     <Text style={{ marginTop: 16, fontSize: normalize(16), color: '#666', textAlign: 'center' }}>
@@ -409,7 +411,7 @@ const CompanyDetailsPage = ({ route }) => {
     if (!company) {
         return (
             <>
-                <CustomStatusBar />
+                <CustomStatusBar darkMode={isDarkMode} />
                 <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
                     <Text style={{ fontSize: normalize(16), color: '#666' }}>
                         No company data available
@@ -474,7 +476,7 @@ const CompanyDetailsPage = ({ route }) => {
 
     return (
         <>
-            <CustomStatusBar />
+            <CustomStatusBar darkMode={isDarkMode} />
             <View style={styles.container}>
                 <ScrollView
                     style={styles.scrollView}

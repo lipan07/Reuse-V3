@@ -19,6 +19,7 @@ import Header from './Screens/Header';
 import CustomStatusBar from './Screens/CustomStatusBar';
 import AnimatedFollowButton from './AnimatedFollowButton';
 import { buildFollowingPageStyles } from '../assets/css/FollowingPage.styles';
+import { useTheme } from '../context/ThemeContext';
 
 const FollowingPage = ({ navigation }) => {
     const { width: winW, height: winH } = useWindowDimensions();
@@ -32,7 +33,7 @@ const FollowingPage = ({ navigation }) => {
     const [isUnfollowModalVisible, setIsUnfollowModalVisible] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [darkMode, setDarkMode] = useState(false);
+    const { isDarkMode: darkMode } = useTheme();
     const [showSweetAlert, setShowSweetAlert] = useState(false);
     const [sweetAlertMessage, setSweetAlertMessage] = useState('');
     const [sweetAlertOpacity] = useState(new Animated.Value(0));
@@ -364,7 +365,7 @@ const FollowingPage = ({ navigation }) => {
 
     return (
         <SafeAreaView style={[styles.container, darkMode && styles.darkContainer]} edges={['bottom', 'left', 'right']}>
-            <CustomStatusBar />
+            <CustomStatusBar darkMode={darkMode} />
             {/* Header */}
             <Header
                 title="Following"

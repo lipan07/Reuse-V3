@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, FlatList, 
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Header from './Screens/Header';
 import CustomStatusBar from './Screens/CustomStatusBar';
+import { useTheme } from '../context/ThemeContext';
 
 const { width, height } = Dimensions.get('window');
 const scale = width / 375;
@@ -13,7 +14,7 @@ const normalizeVertical = (size) => Math.round(verticalScale * size);
 
 const PackagePage = ({ navigation }) => {
   const [expandedId, setExpandedId] = useState(null);
-  const [darkMode, setDarkMode] = useState(false);
+  const { isDarkMode: darkMode } = useTheme();
   const packageData = [
     {
       id: '1',
@@ -129,7 +130,7 @@ const PackagePage = ({ navigation }) => {
   return (
 
     <>
-      <CustomStatusBar />
+      <CustomStatusBar darkMode={darkMode} />
       {/* Header with proper spacing */}
       <View>
         <Header

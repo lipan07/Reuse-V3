@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import * as Animatable from 'react-native-animatable';
+import { useTheme } from '../context/ThemeContext';
 
 // Optional haptic feedback - will work if available
 let ReactNativeHapticFeedback = null;
@@ -30,6 +31,9 @@ const AnimatedFollowButton = ({
     style = {},
     iconType = 'heart' // 'heart' for posts, 'plus' for users
 }) => {
+    const { isDarkMode } = useTheme();
+    const outlineIconColor = isDarkMode ? '#94a3b8' : '#8E8E93';
+    const particleOutlineColor = isDarkMode ? '#fb7185' : '#FF6B6B';
 
     const [isAnimating, setIsAnimating] = useState(false);
     const [particles, setParticles] = useState([]);
@@ -178,7 +182,7 @@ const AnimatedFollowButton = ({
                     <Icon
                         name={iconType === 'heart' ? 'heart' : 'account-plus'}
                         size={particle.size}
-                        color={isLiked ? "#FF3B30" : "#FF6B6B"}
+                        color={isLiked ? '#FF3B30' : particleOutlineColor}
                     />
                 </Animatable.View>
             ))}

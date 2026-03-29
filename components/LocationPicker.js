@@ -27,6 +27,7 @@ import ModalScreen from '../components/SupportElement/ModalScreen';
 import CustomStatusBar from './Screens/CustomStatusBar';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Geolocation from '@react-native-community/geolocation';
+import { useTheme } from '../context/ThemeContext';
 
 const normalize = (size) => {
     const { width, height } = Dimensions.get('window');
@@ -42,8 +43,9 @@ const normalizeVertical = (size) => {
 };
 
 const LocationPicker = ({ navigation }) => {
+    const { isDarkMode } = useTheme();
     const { width: screenW, height: screenH } = useWindowDimensions();
-    const styles = useMemo(() => createStyles(), [screenW, screenH]);
+    const styles = useMemo(() => createStyles(isDarkMode), [isDarkMode]);
     const isWideLayout = screenW >= 900 || screenW > screenH;
     const insets = useSafeAreaInsets();
     const defaultLocation = {
@@ -710,7 +712,7 @@ const LocationPicker = ({ navigation }) => {
 
     return (
         <AlertNotificationRoot>
-            <CustomStatusBar />
+            <CustomStatusBar darkMode={isDarkMode} />
             <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
                 {/* Header */}
                 <View style={styles.header}>
@@ -718,7 +720,7 @@ const LocationPicker = ({ navigation }) => {
                         style={styles.backButton}
                         onPress={handleCancel}
                     >
-                        <Icon name="arrow-left" size={normalize(24)} color="#333" />
+                        <Icon name="arrow-left" size={normalize(24)} color={isDarkMode ? '#e2e8f0' : '#333'} />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Select Location</Text>
                     <View style={styles.headerPlaceholder} />
@@ -729,11 +731,11 @@ const LocationPicker = ({ navigation }) => {
                         <View style={styles.leftPanel}>
                             <View style={styles.searchContainerSplit}>
                                 <View style={styles.searchInputContainer}>
-                                    <Icon name="magnify" size={normalize(20)} color="#666" style={styles.searchIcon} />
+                                    <Icon name="magnify" size={normalize(20)} color={isDarkMode ? '#94a3b8' : '#666'} style={styles.searchIcon} />
                                     <TextInput
                                         style={styles.searchInput}
                                         placeholder="Search for a location..."
-                                        placeholderTextColor="#999"
+                                        placeholderTextColor={isDarkMode ? '#64748b' : '#999'}
                                         value={searchQuery}
                                         onChangeText={(text) => {
                                             isUserTypingRef.current = true;
@@ -751,7 +753,7 @@ const LocationPicker = ({ navigation }) => {
                                             }}
                                             style={styles.clearButton}
                                         >
-                                            <Icon name="close-circle" size={normalize(18)} color="#999" />
+                                            <Icon name="close-circle" size={normalize(18)} color={isDarkMode ? '#64748b' : '#999'} />
                                         </TouchableOpacity>
                                     )}
                                 </View>
@@ -902,11 +904,11 @@ const LocationPicker = ({ navigation }) => {
 
                             <View style={styles.searchContainer}>
                                 <View style={styles.searchInputContainer}>
-                                    <Icon name="magnify" size={normalize(20)} color="#666" style={styles.searchIcon} />
+                                    <Icon name="magnify" size={normalize(20)} color={isDarkMode ? '#94a3b8' : '#666'} style={styles.searchIcon} />
                                     <TextInput
                                         style={styles.searchInput}
                                         placeholder="Search for a location..."
-                                        placeholderTextColor="#999"
+                                        placeholderTextColor={isDarkMode ? '#64748b' : '#999'}
                                         value={searchQuery}
                                         onChangeText={(text) => {
                                             isUserTypingRef.current = true;
@@ -924,7 +926,7 @@ const LocationPicker = ({ navigation }) => {
                                             }}
                                             style={styles.clearButton}
                                         >
-                                            <Icon name="close-circle" size={normalize(18)} color="#999" />
+                                            <Icon name="close-circle" size={normalize(18)} color={isDarkMode ? '#64748b' : '#999'} />
                                         </TouchableOpacity>
                                     )}
                                 </View>
@@ -1021,10 +1023,10 @@ const LocationPicker = ({ navigation }) => {
     );
 };
 
-const createStyles = () => StyleSheet.create({
+const createStyles = (isDark) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: isDark ? '#121212' : '#fff',
     },
     header: {
         flexDirection: 'row',
@@ -1033,9 +1035,9 @@ const createStyles = () => StyleSheet.create({
         paddingHorizontal: normalize(20),
         paddingTop: Platform.OS === 'ios' ? normalizeVertical(50) : (StatusBar.currentHeight || 24) + normalizeVertical(16),
         paddingBottom: normalizeVertical(16),
-        backgroundColor: '#fff',
+        backgroundColor: isDark ? '#0f172a' : '#fff',
         borderBottomWidth: 0.5,
-        borderBottomColor: '#e0e0e0',
+        borderBottomColor: isDark ? '#334155' : '#e0e0e0',
         zIndex: 20,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
@@ -1049,7 +1051,7 @@ const createStyles = () => StyleSheet.create({
     headerTitle: {
         fontSize: normalize(18),
         fontWeight: '600',
-        color: '#333',
+        color: isDark ? '#f1f5f9' : '#333',
     },
     headerPlaceholder: {
         width: normalize(32),
@@ -1060,7 +1062,7 @@ const createStyles = () => StyleSheet.create({
     splitBody: {
         flex: 1,
         flexDirection: 'row',
-        backgroundColor: '#fff',
+        backgroundColor: isDark ? '#121212' : '#fff',
     },
     leftPanel: {
         width: '40%',
@@ -1069,8 +1071,8 @@ const createStyles = () => StyleSheet.create({
         paddingHorizontal: normalize(14),
         paddingVertical: normalizeVertical(12),
         borderRightWidth: 1,
-        borderRightColor: '#E5E7EB',
-        backgroundColor: '#FAFAFA',
+        borderRightColor: isDark ? '#334155' : '#E5E7EB',
+        backgroundColor: isDark ? '#0f172a' : '#FAFAFA',
     },
     rightMapPanel: {
         flex: 1,
@@ -1080,7 +1082,7 @@ const createStyles = () => StyleSheet.create({
     },
     predictionsContainerSplit: {
         marginTop: normalizeVertical(10),
-        backgroundColor: '#fff',
+        backgroundColor: isDark ? '#1e293b' : '#fff',
         borderRadius: normalize(16),
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
@@ -1089,12 +1091,12 @@ const createStyles = () => StyleSheet.create({
         elevation: 4,
         maxHeight: normalizeVertical(220),
         borderWidth: 0.5,
-        borderColor: '#e8e8e8',
+        borderColor: isDark ? '#475569' : '#e8e8e8',
         zIndex: 15,
     },
     addressContainerSplit: {
         marginTop: normalizeVertical(12),
-        backgroundColor: '#fff',
+        backgroundColor: isDark ? '#1e293b' : '#fff',
         borderRadius: normalize(16),
         padding: normalizeVertical(14),
         shadowColor: '#000',
@@ -1103,7 +1105,7 @@ const createStyles = () => StyleSheet.create({
         shadowRadius: 8,
         elevation: 4,
         borderWidth: 0.5,
-        borderColor: '#e8e8e8',
+        borderColor: isDark ? '#475569' : '#e8e8e8',
     },
     actionContainerSplit: {
         marginTop: normalizeVertical(12),
@@ -1118,7 +1120,7 @@ const createStyles = () => StyleSheet.create({
     searchInputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#fff',
+        backgroundColor: isDark ? '#334155' : '#fff',
         borderRadius: normalize(16),
         paddingHorizontal: normalize(16),
         paddingVertical: normalizeVertical(14),
@@ -1128,7 +1130,7 @@ const createStyles = () => StyleSheet.create({
         shadowRadius: 8,
         elevation: 4,
         borderWidth: 0.5,
-        borderColor: '#e8e8e8',
+        borderColor: isDark ? '#475569' : '#e8e8e8',
     },
     searchIcon: {
         marginRight: normalize(12),
@@ -1136,7 +1138,7 @@ const createStyles = () => StyleSheet.create({
     searchInput: {
         flex: 1,
         fontSize: normalize(16),
-        color: '#333',
+        color: isDark ? '#f1f5f9' : '#333',
         padding: 0,
     },
     clearButton: {
@@ -1147,7 +1149,7 @@ const createStyles = () => StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#fff',
+        backgroundColor: isDark ? '#1e293b' : '#fff',
         borderRadius: normalize(12),
         paddingVertical: normalizeVertical(10),
         paddingHorizontal: normalize(16),
@@ -1158,12 +1160,12 @@ const createStyles = () => StyleSheet.create({
         shadowRadius: 4,
         elevation: 2,
         borderWidth: 1,
-        borderColor: '#e8e8e8',
+        borderColor: isDark ? '#475569' : '#e8e8e8',
     },
     currentLocationText: {
         fontSize: normalize(14),
         fontWeight: '500',
-        color: '#007AFF',
+        color: isDark ? '#60a5fa' : '#007AFF',
         marginLeft: normalize(8),
     },
     currentLocationTextDisabled: {
@@ -1179,7 +1181,7 @@ const createStyles = () => StyleSheet.create({
         top: Platform.OS === 'ios' ? normalizeVertical(240) : (StatusBar.currentHeight || 24) + normalizeVertical(206),
         left: normalize(20),
         right: normalize(20),
-        backgroundColor: '#fff',
+        backgroundColor: isDark ? '#1e293b' : '#fff',
         borderRadius: normalize(16),
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
@@ -1188,7 +1190,7 @@ const createStyles = () => StyleSheet.create({
         elevation: 4,
         maxHeight: normalizeVertical(200),
         borderWidth: 0.5,
-        borderColor: '#e8e8e8',
+        borderColor: isDark ? '#475569' : '#e8e8e8',
         zIndex: 15,
     },
     predictionItem: {
@@ -1203,16 +1205,16 @@ const createStyles = () => StyleSheet.create({
     predictionPrimary: {
         fontSize: normalize(14),
         fontWeight: '500',
-        color: '#333',
+        color: isDark ? '#e2e8f0' : '#333',
         marginBottom: normalizeVertical(2),
     },
     predictionSecondary: {
         fontSize: normalize(12),
-        color: '#666',
+        color: isDark ? '#94a3b8' : '#666',
     },
     separator: {
         height: 1,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: isDark ? '#334155' : '#f5f5f5',
         marginLeft: normalize(46),
     },
     addressContainer: {
@@ -1220,7 +1222,7 @@ const createStyles = () => StyleSheet.create({
         bottom: normalizeVertical(90),
         left: normalize(20),
         right: normalize(20),
-        backgroundColor: '#fff',
+        backgroundColor: isDark ? '#1e293b' : '#fff',
         borderRadius: normalize(20),
         padding: normalizeVertical(16),
         shadowColor: '#000',
@@ -1229,7 +1231,7 @@ const createStyles = () => StyleSheet.create({
         shadowRadius: 8,
         elevation: 4,
         borderWidth: 0.5,
-        borderColor: '#e8e8e8',
+        borderColor: isDark ? '#475569' : '#e8e8e8',
         zIndex: 10,
     },
     addressHeader: {
@@ -1246,7 +1248,7 @@ const createStyles = () => StyleSheet.create({
     },
     addressText: {
         fontSize: normalize(12),
-        color: '#333',
+        color: isDark ? '#e2e8f0' : '#333',
         lineHeight: normalizeVertical(18),
     },
     actionContainer: {
@@ -1311,7 +1313,7 @@ const createStyles = () => StyleSheet.create({
         zIndex: 1000,
     },
     loadingContainer: {
-        backgroundColor: '#fff',
+        backgroundColor: isDark ? '#1e293b' : '#fff',
         borderRadius: normalize(20),
         padding: normalize(30),
         alignItems: 'center',
@@ -1325,13 +1327,13 @@ const createStyles = () => StyleSheet.create({
     loadingText: {
         fontSize: normalize(16),
         fontWeight: '600',
-        color: '#333',
+        color: isDark ? '#f1f5f9' : '#333',
         marginTop: normalizeVertical(16),
         textAlign: 'center',
     },
     loadingSubtext: {
         fontSize: normalize(12),
-        color: '#666',
+        color: isDark ? '#94a3b8' : '#666',
         marginTop: normalizeVertical(8),
         textAlign: 'center',
     },

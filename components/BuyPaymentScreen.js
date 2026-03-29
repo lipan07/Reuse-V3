@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     View,
     Text,
@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useTheme } from '../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 const scale = width / 375;
@@ -22,6 +23,7 @@ const BuyPaymentScreen = () => {
     const navigation = useNavigation();
     const route = useRoute();
     const { productId, postTitle, amount } = route.params || {};
+    const { isDarkMode } = useTheme();
 
     const [secondsLeft, setSecondsLeft] = useState(TIMER_SECONDS);
     const [confirmEnabled, setConfirmEnabled] = useState(false);
@@ -42,6 +44,136 @@ const BuyPaymentScreen = () => {
         }, 1000);
         return () => clearInterval(interval);
     }, [productId]);
+
+    const styles = useMemo(
+        () =>
+            StyleSheet.create({
+                container: {
+                    flex: 1,
+                    backgroundColor: isDarkMode ? '#121212' : '#f0f4f8',
+                    padding: normalize(20),
+                    paddingTop: normalize(56),
+                    justifyContent: 'center',
+                },
+                backBar: {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginBottom: 16,
+                    paddingVertical: 8,
+                },
+                backBarText: {
+                    marginLeft: 8,
+                    fontSize: normalize(16),
+                    fontWeight: '600',
+                    color: isDarkMode ? '#e2e8f0' : '#333',
+                },
+                center: {
+                    flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    padding: 20,
+                    backgroundColor: isDarkMode ? '#121212' : '#f0f4f8',
+                },
+                errorText: {
+                    fontSize: normalize(16),
+                    color: isDarkMode ? '#94a3b8' : '#666',
+                    marginBottom: 16,
+                },
+                backBtn: {
+                    paddingVertical: 12,
+                    paddingHorizontal: 24,
+                    backgroundColor: '#007BFF',
+                    borderRadius: 8,
+                },
+                backBtnText: {
+                    color: '#fff',
+                    fontWeight: '600',
+                },
+                card: {
+                    backgroundColor: isDarkMode ? '#1e293b' : '#fff',
+                    borderRadius: 16,
+                    padding: normalize(24),
+                    alignItems: 'center',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.08,
+                    shadowRadius: 8,
+                    elevation: 4,
+                    borderWidth: isDarkMode ? 1 : 0,
+                    borderColor: isDarkMode ? '#334155' : 'transparent',
+                },
+                title: {
+                    fontSize: normalize(18),
+                    fontWeight: '700',
+                    color: isDarkMode ? '#f1f5f9' : '#222',
+                    textAlign: 'center',
+                    marginBottom: 8,
+                },
+                amount: {
+                    fontSize: normalize(28),
+                    fontWeight: '800',
+                    color: isDarkMode ? '#60a5fa' : '#007BFF',
+                    marginBottom: 8,
+                },
+                hint: {
+                    fontSize: normalize(14),
+                    color: isDarkMode ? '#94a3b8' : '#666',
+                    marginBottom: 20,
+                },
+                qrWrap: {
+                    width: 220,
+                    height: 220,
+                    backgroundColor: isDarkMode ? '#0f172a' : '#fff',
+                    borderRadius: 12,
+                    padding: 10,
+                    marginBottom: 24,
+                    borderWidth: 1,
+                    borderColor: isDarkMode ? '#475569' : '#e5e7eb',
+                },
+                qr: {
+                    width: '100%',
+                    height: '100%',
+                },
+                timerWrap: {
+                    alignItems: 'center',
+                    marginBottom: 24,
+                },
+                timerText: {
+                    fontSize: normalize(32),
+                    fontWeight: '700',
+                    color: isDarkMode ? '#f1f5f9' : '#333',
+                    marginTop: 8,
+                },
+                timerHint: {
+                    fontSize: normalize(12),
+                    color: isDarkMode ? '#64748b' : '#888',
+                    marginTop: 4,
+                },
+                timerReady: {
+                    fontSize: normalize(16),
+                    color: '#22c55e',
+                    fontWeight: '600',
+                    marginTop: 8,
+                },
+                confirmBtn: {
+                    backgroundColor: '#22c55e',
+                    paddingVertical: 14,
+                    paddingHorizontal: 32,
+                    borderRadius: 12,
+                    width: '100%',
+                    alignItems: 'center',
+                },
+                confirmBtnDisabled: {
+                    backgroundColor: '#9ca3af',
+                },
+                confirmBtnText: {
+                    color: '#fff',
+                    fontWeight: '700',
+                    fontSize: normalize(16),
+                },
+            }),
+        [isDarkMode]
+    );
 
     const formatTime = (sec) => {
         const m = Math.floor(sec / 60);
@@ -75,7 +207,7 @@ const BuyPaymentScreen = () => {
     return (
         <View style={styles.container}>
             <TouchableOpacity style={styles.backBar} onPress={() => navigation.goBack()}>
-                <Icon name="arrow-left" size={normalize(24)} color="#333" />
+                <Icon name="arrow-left" size={normalize(24)} color={isDarkMode ? '#e2e8f0' : '#333'} />
                 <Text style={styles.backBarText}>Back</Text>
             </TouchableOpacity>
             <View style={styles.card}>
@@ -88,7 +220,7 @@ const BuyPaymentScreen = () => {
                 <View style={styles.timerWrap}>
                     {!confirmEnabled ? (
                         <>
-                            <Icon name="timer-outline" size={normalize(24)} color="#666" />
+                            <Icon name="timer-outline" size={normalize(24)} color={isDarkMode ? '#94a3b8' : '#666'} />
                             <Text style={styles.timerText}>{formatTime(secondsLeft)}</Text>
                             <Text style={styles.timerHint}>Confirm payment will be enabled after 1 minute</Text>
                         </>
@@ -110,128 +242,5 @@ const BuyPaymentScreen = () => {
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f0f4f8',
-        padding: normalize(20),
-        paddingTop: normalize(56),
-        justifyContent: 'center',
-    },
-    backBar: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 16,
-        paddingVertical: 8,
-    },
-    backBarText: {
-        marginLeft: 8,
-        fontSize: normalize(16),
-        fontWeight: '600',
-        color: '#333',
-    },
-    center: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-    },
-    errorText: {
-        fontSize: normalize(16),
-        color: '#666',
-        marginBottom: 16,
-    },
-    backBtn: {
-        paddingVertical: 12,
-        paddingHorizontal: 24,
-        backgroundColor: '#007BFF',
-        borderRadius: 8,
-    },
-    backBtnText: {
-        color: '#fff',
-        fontWeight: '600',
-    },
-    card: {
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: normalize(24),
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-        elevation: 4,
-    },
-    title: {
-        fontSize: normalize(18),
-        fontWeight: '700',
-        color: '#222',
-        textAlign: 'center',
-        marginBottom: 8,
-    },
-    amount: {
-        fontSize: normalize(28),
-        fontWeight: '800',
-        color: '#007BFF',
-        marginBottom: 8,
-    },
-    hint: {
-        fontSize: normalize(14),
-        color: '#666',
-        marginBottom: 20,
-    },
-    qrWrap: {
-        width: 220,
-        height: 220,
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        padding: 10,
-        marginBottom: 24,
-        borderWidth: 1,
-        borderColor: '#e5e7eb',
-    },
-    qr: {
-        width: '100%',
-        height: '100%',
-    },
-    timerWrap: {
-        alignItems: 'center',
-        marginBottom: 24,
-    },
-    timerText: {
-        fontSize: normalize(32),
-        fontWeight: '700',
-        color: '#333',
-        marginTop: 8,
-    },
-    timerHint: {
-        fontSize: normalize(12),
-        color: '#888',
-        marginTop: 4,
-    },
-    timerReady: {
-        fontSize: normalize(16),
-        color: '#22c55e',
-        fontWeight: '600',
-        marginTop: 8,
-    },
-    confirmBtn: {
-        backgroundColor: '#22c55e',
-        paddingVertical: 14,
-        paddingHorizontal: 32,
-        borderRadius: 12,
-        width: '100%',
-        alignItems: 'center',
-    },
-    confirmBtnDisabled: {
-        backgroundColor: '#9ca3af',
-    },
-    confirmBtnText: {
-        color: '#fff',
-        fontWeight: '700',
-        fontSize: normalize(16),
-    },
-});
 
 export default BuyPaymentScreen;

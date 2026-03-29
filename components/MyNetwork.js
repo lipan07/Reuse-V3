@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image, Modal, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTheme } from '../context/ThemeContext';
 
 const MyNetwork = () => {
+  const { isDarkMode } = useTheme();
   const [activeTab, setActiveTab] = useState('Following'); // Tab selection state
   const [followingFilter, setFollowingFilter] = useState('Post'); // Sub-selection for Following
   const [followersFilter, setFollowersFilter] = useState('Post'); // Sub-selection for Followers
@@ -129,6 +131,85 @@ const MyNetwork = () => {
       Alert.alert('Error', 'Failed to unfollow. Please try again.');
     }
   };
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: { flex: 1, backgroundColor: isDarkMode ? '#121212' : '#fff' },
+        tabContainer: {
+          flexDirection: 'row',
+          justifyContent: 'space-around',
+          paddingVertical: 10,
+          backgroundColor: isDarkMode ? '#0f172a' : '#fff',
+          borderBottomWidth: 1,
+          borderBottomColor: isDarkMode ? '#334155' : '#ccc',
+        },
+        tabItem: { flex: 1, alignItems: 'center', paddingVertical: 12 },
+        activeTab: { borderBottomWidth: 3, borderBottomColor: '#007bff' },
+        tabText: { fontSize: 16, fontWeight: '600', color: isDarkMode ? '#94a3b8' : '#333' },
+        activeTabText: { color: '#007bff' },
+        subTabContainer: { flexDirection: 'row', justifyContent: 'space-around', padding: 8 },
+        subTabButton: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
+        activeSubTabButton: { backgroundColor: '#007bff' },
+        subTabButtonText: { color: isDarkMode ? '#cbd5e1' : '#333', fontWeight: '500' },
+        activeSubTabButtonText: { color: '#fff' },
+        contentContainer: { flex: 1 },
+        userList: { padding: 8 },
+        userItem: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginVertical: 10,
+          paddingBottom: 10,
+          borderBottomWidth: StyleSheet.hairlineWidth,
+          borderBottomColor: isDarkMode ? '#334155' : '#eee',
+        },
+        userImage: { width: 50, height: 50, borderRadius: 25 },
+        userInfo: { flex: 1, marginLeft: 10 },
+        userName: { fontSize: 16, fontWeight: 'bold', color: isDarkMode ? '#f1f5f9' : '#000' },
+        userPhone: { fontSize: 14, color: isDarkMode ? '#94a3b8' : '#777' },
+        userStatus: { fontSize: 12, color: isDarkMode ? '#64748b' : '#999' },
+        unfollowButton: { backgroundColor: '#ff3333', padding: 10, borderRadius: 8 },
+        blockButton: { backgroundColor: '#007bff', padding: 10, borderRadius: 8 },
+        buttonText: { color: '#fff', fontWeight: '600' },
+        modalOverlay: {
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        },
+        modalContainer: {
+          width: '80%',
+          backgroundColor: isDarkMode ? '#1e293b' : '#fff',
+          borderRadius: 8,
+          padding: 20,
+          alignItems: 'center',
+          borderWidth: isDarkMode ? 1 : 0,
+          borderColor: isDarkMode ? '#334155' : 'transparent',
+        },
+        modalTitle: {
+          fontSize: 20,
+          fontWeight: 'bold',
+          marginBottom: 12,
+          color: isDarkMode ? '#f1f5f9' : '#000',
+        },
+        modalText: {
+          fontSize: 16,
+          textAlign: 'center',
+          marginBottom: 20,
+          color: isDarkMode ? '#cbd5e1' : '#000',
+        },
+        modalButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
+        cancelButton: { flex: 1, padding: 10, margin: 4, backgroundColor: isDarkMode ? '#334155' : '#ccc', borderRadius: 8 },
+        cancelButtonText: {
+          textAlign: 'center',
+          fontWeight: '600',
+          color: isDarkMode ? '#e2e8f0' : '#333',
+        },
+        confirmButton: { flex: 1, padding: 10, margin: 4, backgroundColor: '#007bff', borderRadius: 8 },
+        confirmButtonText: { textAlign: 'center', fontWeight: '600', color: '#fff' },
+      }),
+    [isDarkMode]
+  );
 
   const renderUserItem = ({ item }) => (
     <View style={styles.userItem}>
@@ -257,57 +338,5 @@ const MyNetwork = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  tabContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 10,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-  },
-  tabItem: { flex: 1, alignItems: 'center', paddingVertical: 12 },
-  activeTab: { borderBottomWidth: 3, borderBottomColor: '#007bff' },
-  tabText: { fontSize: 16, fontWeight: '600', color: '#333' },
-  activeTabText: { color: '#007bff' },
-  subTabContainer: { flexDirection: 'row', justifyContent: 'space-around', padding: 8 },
-  subTabButton: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
-  activeSubTabButton: { backgroundColor: '#007bff' },
-  subTabButtonText: { color: '#333', fontWeight: '500' },
-  activeSubTabButtonText: { color: '#fff' },
-  contentContainer: { flex: 1 },
-  userList: { padding: 8 },
-  userItem: { flexDirection: 'row', alignItems: 'center', marginVertical: 10 },
-  userImage: { width: 50, height: 50, borderRadius: 25 },
-  userInfo: { flex: 1, marginLeft: 10 },
-  userName: { fontSize: 16, fontWeight: 'bold' },
-  userPhone: { fontSize: 14, color: '#777' },
-  userStatus: { fontSize: 12, color: '#999' },
-  unfollowButton: { backgroundColor: '#ff3333', padding: 10, borderRadius: 8 },
-  blockButton: { backgroundColor: '#007bff', padding: 10, borderRadius: 8 },
-  buttonText: { color: '#fff', fontWeight: '600' },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContainer: {
-    width: '80%',
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 20,
-    alignItems: 'center',
-  },
-  modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 12 },
-  modalText: { fontSize: 16, textAlign: 'center', marginBottom: 20 },
-  modalButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
-  cancelButton: { flex: 1, padding: 10, margin: 4, backgroundColor: '#ccc', borderRadius: 8 },
-  cancelButtonText: { textAlign: 'center', fontWeight: '600', color: '#333' },
-  confirmButton: { flex: 1, padding: 10, margin: 4, backgroundColor: '#007bff', borderRadius: 8 },
-  confirmButtonText: { textAlign: 'center', fontWeight: '600', color: '#fff' },
-});
 
 export default MyNetwork;

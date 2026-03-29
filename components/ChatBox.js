@@ -23,6 +23,7 @@ import moment from 'moment';
 import { createEcho } from '../service/echo';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { isMessageSeen, sameMessageId } from '../utils/chatUtils';
+import { useTheme } from '../context/ThemeContext';
 
 /** Keeps first occurrence per message id — API pages can overlap or requests can race when loading older messages. */
 function dedupeMessagesById(messages) {
@@ -62,6 +63,7 @@ function prependOlderMessagesUnique(olderBatch, existing) {
 
 const ChatBox = ({ route }) => {
   const navigation = useNavigation();
+  const { isDarkMode } = useTheme();
   const insets = useSafeAreaInsets();
   const { width: winW, height: winH } = useWindowDimensions();
 
@@ -343,6 +345,28 @@ const ChatBox = ({ route }) => {
         marginLeft: n(4),
         fontSize: nf(13),
       },
+      darkContainer: { backgroundColor: '#121212' },
+      darkHeaderContainer: {
+        backgroundColor: '#1e293b',
+        borderBottomColor: '#334155',
+      },
+      darkHeaderTitle: { color: '#f1f5f9' },
+      darkMetaSeparator: { color: '#64748b' },
+      darkProductCategory: { color: '#94a3b8' },
+      darkUserName: { color: '#e2e8f0' },
+      darkStatusText: { color: '#94a3b8' },
+      darkLoadingContainer: { backgroundColor: '#121212' },
+      darkLoadMoreText: { color: '#94a3b8' },
+      darkDateSeparatorText: {
+        backgroundColor: '#334155',
+        color: '#e2e8f0',
+      },
+      darkFooter: {
+        backgroundColor: '#1e293b',
+        borderTopColor: '#334155',
+      },
+      darkInputContainer: { backgroundColor: '#334155' },
+      darkInput: { color: '#f1f5f9' },
     });
 
     return { styles, contentMaxWidth, n, nf, nv };
@@ -952,7 +976,7 @@ const ChatBox = ({ route }) => {
     return (
       <View style={styles.loadMoreContainer}>
         <ActivityIndicator size="small" color="#007AFF" />
-        <Text style={styles.loadMoreText}>Loading older messages...</Text>
+        <Text style={[styles.loadMoreText, isDarkMode && styles.darkLoadMoreText]}>Loading older messages...</Text>
       </View>
     );
   };
@@ -963,7 +987,7 @@ const ChatBox = ({ route }) => {
     return (
       <View style={styles.loadMoreContainer}>
         <ActivityIndicator size="small" color="#007AFF" />
-        <Text style={styles.loadMoreText}>
+        <Text style={[styles.loadMoreText, isDarkMode && styles.darkLoadMoreText]}>
           {isInitialLoad ? 'Loading messages...' : 'Loading more messages...'}
         </Text>
       </View>
@@ -974,7 +998,8 @@ const ChatBox = ({ route }) => {
     if (item.type === 'date') {
       return (
         <View style={styles.dateSeparatorContainer}>
-          <Text style={styles.dateSeparatorText}>
+          <Text style={[styles.dateSeparatorText, isDarkMode && styles.darkDateSeparatorText]}
+          >
             {moment(item.date).calendar(null, {
               sameDay: '[Today]',
               lastDay: '[Yesterday]',
@@ -1015,13 +1040,13 @@ const ChatBox = ({ route }) => {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, isDarkMode && styles.darkContainer]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? nv(80) : nv(100)}
     >
       <View style={[styles.outerColumn, { maxWidth: contentMaxWidth }]}>
         <TouchableOpacity
-          style={styles.headerContainer}
+          style={[styles.headerContainer, isDarkMode && styles.darkHeaderContainer]}
           activeOpacity={0.8}
           onPress={() => {
             navigation.navigate('ProductDetails', {
@@ -1035,7 +1060,7 @@ const ChatBox = ({ route }) => {
           />
           <View style={styles.headerContent}>
             <View style={styles.headerTopSection}>
-              <Text style={styles.headerTitle} numberOfLines={1}>
+              <Text style={[styles.headerTitle, isDarkMode && styles.darkHeaderTitle]} numberOfLines={1}>
                 {postTitle || productInfo?.title || 'Chat'}
               </Text>
               {productInfo?.type && (
@@ -1069,14 +1094,14 @@ const ChatBox = ({ route }) => {
               {productInfo?.category?.name && (
                 <>
                   {productInfo && productInfo.type !== 'donate' && productInfo.amount && (
-                    <Text style={styles.metaSeparator}>•</Text>
+                    <Text style={[styles.metaSeparator, isDarkMode && styles.darkMetaSeparator]}>•</Text>
                   )}
-                  <Text style={styles.productCategory}>{productInfo.category.name}</Text>
+                  <Text style={[styles.productCategory, isDarkMode && styles.darkProductCategory]}>{productInfo.category.name}</Text>
                 </>
               )}
             </View>
             <View style={styles.userStatusContainer}>
-              <Text style={styles.userName}>{otherUserName}</Text>
+              <Text style={[styles.userName, isDarkMode && styles.darkUserName]}>{otherUserName}</Text>
               <View style={styles.statusDotContainer}>
                 <View style={[
                   styles.statusDot,
@@ -1084,18 +1109,19 @@ const ChatBox = ({ route }) => {
                 ]} />
                 <Text style={[
                   styles.statusText,
-                  otherPersonStatus === 'online' && styles.statusTextOnline
+                  otherPersonStatus === 'online' && styles.statusTextOnline,
+                  isDarkMode && otherPersonStatus !== 'online' && styles.darkStatusText,
                 ]}>
                   {otherPersonStatus === 'online' ? 'Online' : 'Offline'}
                 </Text>
               </View>
             </View>
           </View>
-          <MaterialIcons name="chevron-right" size={n(26)} color="#888" style={{ marginLeft: n(8) }} />
+          <MaterialIcons name="chevron-right" size={n(26)} color={isDarkMode ? '#94a3b8' : '#888'} style={{ marginLeft: n(8) }} />
         </TouchableOpacity>
 
       {loading && isInitialLoad ? (
-        <View style={styles.loadingContainer}>
+        <View style={[styles.loadingContainer, isDarkMode && styles.darkLoadingContainer]}>
           <ActivityIndicator size="large" color="#007AFF" />
         </View>
       ) : (
@@ -1129,15 +1155,16 @@ const ChatBox = ({ route }) => {
       <View style={[
         styles.footer,
         !keyboardVisible && Platform.OS === 'ios' && styles.iosFooter,
+        isDarkMode && styles.darkFooter,
           { paddingBottom: keyboardVisible ? nv(8) : (insets?.bottom ?? 0) + nv(8) }
       ]}>
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, isDarkMode && styles.darkInputContainer]}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, isDarkMode && styles.darkInput]}
             value={inputText}
             onChangeText={setInputText}
             placeholder="Type a message..."
-            placeholderTextColor="#888"
+            placeholderTextColor={isDarkMode ? '#64748b' : '#888'}
             multiline
               maxHeight={n(100)}
           />

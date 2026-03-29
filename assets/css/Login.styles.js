@@ -257,4 +257,76 @@ export default StyleSheet.create({
    toastCloseButton: {
       padding: 4,
    },
+
+   darkContainer: {
+      backgroundColor: '#121212',
+   },
+   darkLoginTitle: {
+      color: '#f1f5f9',
+   },
+   darkLoginSubtitle: {
+      color: '#94a3b8',
+   },
+   darkSwitchText: {
+      color: '#94a3b8',
+   },
+   darkFreeServiceText: {
+      color: '#64748b',
+   },
+   darkInput: {
+      backgroundColor: '#1e293b',
+      borderColor: '#475569',
+      color: '#f1f5f9',
+   },
+   darkPhoneInputContainer: {
+      backgroundColor: '#1e293b',
+      borderColor: '#475569',
+   },
+   darkCountryCodeText: {
+      color: '#e2e8f0',
+   },
+   darkPhoneNumberInput: {
+      color: '#e2e8f0',
+   },
+   darkVerificationCodeLabel: {
+      color: '#94a3b8',
+   },
+   darkOtpBox: {
+      backgroundColor: '#1e293b',
+      borderColor: '#475569',
+      color: '#f1f5f9',
+   },
+   darkTimerText: {
+      color: '#94a3b8',
+   },
+   darkModalContainer: {
+      backgroundColor: '#1e293b',
+   },
+   darkModalHeader: {
+      borderBottomColor: '#334155',
+   },
+   darkModalTitle: {
+      color: '#f1f5f9',
+   },
+   darkSearchContainer: {
+      backgroundColor: '#334155',
+   },
+   darkSearchInput: {
+      color: '#f1f5f9',
+   },
+   darkCountryCodeItem: {
+      borderBottomColor: '#334155',
+   },
+   darkCountryListText: {
+      color: '#e2e8f0',
+   },
+   darkSwitchLink: {
+      color: '#38bdf8',
+   },
+   darkBrandName: {
+      color: '#38bdf8',
+   },
+   darkResendCountText: {
+      color: '#94a3b8',
+   },
 });

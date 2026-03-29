@@ -30,15 +30,20 @@ import ReportPostModal from './ReportPostModal';
 import ModalScreen from './SupportElement/ModalScreen';
 import CustomStatusBar from './Screens/CustomStatusBar';
 import { getProductDetailsStyles } from '../assets/css/ProductDetailsPage.styles';
+import { useTheme } from '../context/ThemeContext';
 import { normalize } from '../utils/responsive';
 import useFollowPost from '../hooks/useFollowPost'; // Import the hook
 import AnimatedFollowButton from './AnimatedFollowButton';
 
 const ProductDetails = () => {
+    const { isDarkMode } = useTheme();
     const { width: rawWidth, height: rawHeight } = useWindowDimensions();
     const width = Math.max(rawWidth || 375, 200);
     const height = Math.max(rawHeight || 812, 400);
-    const styles = useMemo(() => StyleSheet.create(getProductDetailsStyles(width, height)), [width, height]);
+    const styles = useMemo(
+        () => StyleSheet.create(getProductDetailsStyles(width, height, isDarkMode)),
+        [width, height, isDarkMode]
+    );
 
     const insets = useSafeAreaInsets();
     const floatingBottom = normalize(30, width) + (insets?.bottom ?? 0);
@@ -699,7 +704,7 @@ const ProductDetails = () => {
 
     return (
         <SafeAreaView style={styles.safeArea} edges={['bottom']}>
-            <CustomStatusBar />
+            <CustomStatusBar darkMode={isDarkMode} />
             <ScrollView
                 contentContainerStyle={styles.container}
                 ref={scrollViewRef}

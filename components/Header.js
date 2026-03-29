@@ -17,17 +17,14 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Geolocation from '@react-native-community/geolocation';
 import { normalize, normalizeVertical } from '../utils/responsive';
+import { useTheme } from '../context/ThemeContext';
 
 const createHeaderStyles = (n, nV, safeWidth, safeHeight) =>
    StyleSheet.create({
-      headerContainer: {
-         backgroundColor: 'transparent',
-         minHeight: Math.max(
-            Platform.select({ ios: nV(56), android: nV(52), default: nV(52) }),
-            n(50)
-         ),
-         paddingHorizontal: n(12),
-         paddingVertical: n(4),
+      headerBar: {
+         width: '100%',
+         paddingHorizontal: n(14),
+         paddingBottom: n(10),
          justifyContent: 'center',
       },
       contentContainer: {
@@ -43,18 +40,18 @@ const createHeaderStyles = (n, nV, safeWidth, safeHeight) =>
          minHeight: n(46),
       },
       logoWrapper: {
-         width: n(36),
-         height: n(36),
+         width: n(42),
+         height: n(42),
          justifyContent: 'center',
          alignItems: 'center',
-         marginRight: n(10),
-         borderColor: '#007BFF',
-         borderWidth: 0.8,
-         borderRadius: n(2),
+         marginRight: n(12),
+         borderRadius: n(12),
+         borderWidth: StyleSheet.hairlineWidth * 2,
+         overflow: 'hidden',
       },
       logo: {
-         width: n(32),
-         height: n(32),
+         width: n(34),
+         height: n(34),
          resizeMode: 'contain',
       },
       titleContainer: {
@@ -120,6 +117,7 @@ const createHeaderStyles = (n, nV, safeWidth, safeHeight) =>
    });
 
 const Header = () => {
+   const { isDarkMode } = useTheme();
    const { width, height } = useWindowDimensions();
    const safeWidth = Math.max(width || 375, 200);
    const safeHeight = Math.max(height || 812, 400);
@@ -133,6 +131,14 @@ const Header = () => {
    const navigation = useNavigation();
    const [address, setAddress] = useState("Set Location");
    const statusBarHeight = StatusBar.currentHeight || (Platform.OS === 'ios' ? 20 : 24);
+   /** Full-width bar behind logo + location (not transparent — avoids white bleed in dark mode). */
+   const headerBarColor = isDarkMode ? '#0f172a' : '#007BFF';
+   /** Text/icons on the solid bar: white on blue (light), light slate on navy (dark). */
+   const onBarPrimary = isDarkMode ? '#f8fafc' : '#ffffff';
+   const onBarMuted = isDarkMode ? 'rgba(248,250,252,0.78)' : 'rgba(255,255,255,0.88)';
+   const logoRingBorder = isDarkMode ? 'rgba(248,250,252,0.45)' : '#E5E7EB';
+   /** Light mode: solid white tile behind logo on blue bar; dark: subtle glass on slate. */
+   const logoRingBg = isDarkMode ? 'rgba(248,250,252,0.12)' : '#FFFFFF';
 
    const handleNavigation = async () => {
       try {
@@ -263,24 +269,32 @@ const Header = () => {
    return (
       <>
          <StatusBar
-            backgroundColor="#007BFF"
+            backgroundColor={headerBarColor}
             barStyle="light-content"
             translucent={true}
          />
-         {/* Blue background for status bar area */}
-         <View style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: statusBarHeight,
-            backgroundColor: '#007BFF',
-            zIndex: 1,
-         }} />
-         <View style={[styles.headerContainer, { paddingTop: statusBarHeight }]}>
+         <View
+            style={[
+               styles.headerBar,
+               {
+                  backgroundColor: headerBarColor,
+                  paddingTop: statusBarHeight,
+                  borderBottomWidth: StyleSheet.hairlineWidth,
+                  borderBottomColor: isDarkMode ? '#334155' : 'rgba(255,255,255,0.22)',
+               },
+            ]}
+         >
             <View style={styles.contentContainer}>
                <View style={styles.logoContainer}>
-                  <View style={styles.logoWrapper}>
+                  <View
+                     style={[
+                        styles.logoWrapper,
+                        {
+                           borderColor: logoRingBorder,
+                           backgroundColor: logoRingBg,
+                        },
+                     ]}
+                  >
                      <Image
                         source={require('../assets/logo.png')}
                         style={styles.logo}
@@ -288,10 +302,10 @@ const Header = () => {
                   </View>
                   <View style={styles.titleContainer}>
                      <View style={styles.appNameRow}>
-                        <Text style={styles.appNameFirstLetter}>n</Text>
-                        <Text style={styles.appNameRest}>earX</Text>
+                        <Text style={[styles.appNameFirstLetter, { color: onBarPrimary }]}>n</Text>
+                        <Text style={[styles.appNameRest, { color: onBarPrimary }]}>earX</Text>
                      </View>
-                     <Text style={styles.appSubName}>International</Text>
+                     <Text style={[styles.appSubName, { color: onBarMuted }]}>International</Text>
                   </View>
                </View>
                <View style={styles.rightIcons}>
@@ -299,15 +313,14 @@ const Header = () => {
                      style={styles.locationContainer}
                      onPress={handleLocationPress}
                   >
-                     {/* Down arrow icon before address */}
                      <Ionicons
                         name="chevron-down-outline"
                         size={n(14)}
-                        color="#007BFF"
+                        color={onBarPrimary}
                         style={{ marginRight: n(4), alignSelf: 'center' }}
                      />
                      <Text
-                        style={styles.addressText}
+                        style={[styles.addressText, { color: onBarPrimary }]}
                         numberOfLines={1}
                         ellipsizeMode="tail"
                      >
@@ -316,7 +329,7 @@ const Header = () => {
                      <Ionicons
                         name="location-outline"
                         size={n(20)}
-                        color="#007BFF"
+                        color={onBarPrimary}
                         style={styles.locationIcon}
                      />
                   </TouchableOpacity>

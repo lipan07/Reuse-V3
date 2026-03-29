@@ -5,9 +5,10 @@ import { getResponsiveScale, getVerticalScale } from '../../utils/responsive';
  * Returns responsive styles for ProductDetailsPage. Use with useWindowDimensions for tablet/rotation.
  * Scale is capped so UI doesn't get too large on tablet.
  */
-export function getProductDetailsStyles(width, height) {
+export function getProductDetailsStyles(width, height, isDarkMode = false) {
     const safeW = Math.max(width || 375, 200);
     const safeH = Math.max(height || 812, 400);
+    const d = isDarkMode;
     const scale = getResponsiveScale(safeW);
     const verticalScale = getVerticalScale(safeH);
     const normalize = (size) => Math.round(scale * size);
@@ -16,7 +17,7 @@ export function getProductDetailsStyles(width, height) {
     return {
     safeArea: {
         flex: 1,
-        backgroundColor: '#F5F7FA',
+        backgroundColor: d ? '#121212' : '#F5F7FA',
     },
     container: {
         paddingTop: 0,
@@ -48,11 +49,11 @@ export function getProductDetailsStyles(width, height) {
         height: '100%',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#F8F9FA',
+        backgroundColor: d ? '#1e293b' : '#F8F9FA',
     },
     noImageText: {
         marginTop: normalize(8),
-        color: '#8E8E93',
+        color: d ? '#94a3b8' : '#8E8E93',
         fontSize: normalize(14),
     },
     videoLoadingText: {
@@ -161,7 +162,7 @@ export function getProductDetailsStyles(width, height) {
     },
     sellerDetailText: {
         fontSize: normalize(12),
-        color: '#8E8E93',
+        color: d ? '#94a3b8' : '#8E8E93',
         marginLeft: normalize(6),
         flex: 1,
         minWidth: 0,
@@ -169,7 +170,7 @@ export function getProductDetailsStyles(width, height) {
     followSellerButton: {
         padding: normalize(8),
         borderRadius: normalize(20),
-        backgroundColor: '#f0f0f0',
+        backgroundColor: d ? '#334155' : '#f0f0f0',
         marginRight: normalize(8),
     },
     sellerNameRow: {
@@ -180,17 +181,17 @@ export function getProductDetailsStyles(width, height) {
     followSellerButtonInline: {
         padding: normalize(6),
         borderRadius: normalize(15),
-        backgroundColor: '#f0f0f0',
+        backgroundColor: d ? '#334155' : '#f0f0f0',
         marginLeft: normalize(8),
     },
         callIconLegacy: {
         padding: normalize(8),
         borderRadius: normalize(20),
-        backgroundColor: '#f0f0f0',
+        backgroundColor: d ? '#334155' : '#f0f0f0',
     },
     headerContainer: {
         padding: normalize(16),
-        backgroundColor: '#FFFFFF',
+        backgroundColor: d ? '#1e293b' : '#FFFFFF',
         marginHorizontal: normalize(8),
         marginTop: normalize(12),
         borderRadius: normalize(12),
@@ -200,6 +201,8 @@ export function getProductDetailsStyles(width, height) {
         shadowRadius: 4,
         elevation: 3,
         minHeight: normalize(80),
+        borderWidth: d ? 1 : 0,
+        borderColor: d ? '#334155' : 'transparent',
     },
     headerTopRow: {
         flexDirection: 'row',
@@ -210,7 +213,7 @@ export function getProductDetailsStyles(width, height) {
     titleText: {
         fontSize: normalize(16),
         fontWeight: '600',
-        color: '#1A1A1A',
+        color: d ? '#f1f5f9' : '#1A1A1A',
         marginBottom: normalize(8),
         lineHeight: normalize(22),
         flexShrink: 0,
@@ -232,7 +235,7 @@ export function getProductDetailsStyles(width, height) {
     metaText: {
         marginLeft: normalize(6),
         fontSize: normalize(12),
-        color: '#6B7280',
+        color: d ? '#94a3b8' : '#6B7280',
         fontWeight: '500',
         flex: 1,
         minWidth: 0,
@@ -242,7 +245,7 @@ export function getProductDetailsStyles(width, height) {
         fontWeight: '600',
     },
     section: {
-        backgroundColor: '#FFFFFF',
+        backgroundColor: d ? '#1e293b' : '#FFFFFF',
         padding: normalize(16),
         marginHorizontal: normalize(8),
         marginTop: normalize(12),
@@ -253,18 +256,20 @@ export function getProductDetailsStyles(width, height) {
         shadowRadius: 3,
         elevation: 2,
         minHeight: normalize(60),
+        borderWidth: d ? 1 : 0,
+        borderColor: d ? '#334155' : 'transparent',
     },
     sectionTitle: {
         fontSize: normalize(15),
         fontWeight: '600',
-        color: '#1A1A1A',
+        color: d ? '#f1f5f9' : '#1A1A1A',
         marginBottom: normalize(10),
         letterSpacing: 0.2,
     },
     descriptionText: {
         fontSize: normalize(13),
         lineHeight: normalize(20),
-        color: '#4A4A4A',
+        color: d ? '#cbd5e1' : '#4A4A4A',
         flexShrink: 0,
     },
     sellerImage: {
@@ -273,7 +278,7 @@ export function getProductDetailsStyles(width, height) {
         borderRadius: normalize(22),
         marginRight: normalize(12),
         borderWidth: 1,
-        borderColor: '#E9ECEF',
+        borderColor: d ? '#475569' : '#E9ECEF',
     },
     sellerInfo: {
         flex: 1,
@@ -281,7 +286,7 @@ export function getProductDetailsStyles(width, height) {
     sellerName: {
         fontSize: normalize(14),
         fontWeight: '600',
-        color: '#1A1A1A',
+        color: d ? '#f1f5f9' : '#1A1A1A',
         marginBottom: normalize(3),
     },
     sellerMeta: {
@@ -291,7 +296,7 @@ export function getProductDetailsStyles(width, height) {
     },
     sellerMetaText: {
         fontSize: normalize(12),
-        color: '#6B7280',
+        color: d ? '#94a3b8' : '#6B7280',
         fontWeight: '500',
         marginLeft: normalize(4),
     },
@@ -309,12 +314,43 @@ export function getProductDetailsStyles(width, height) {
     map: {
         ...StyleSheet.absoluteFillObject,
     },
+    /** Inline address row (e.g. AddressSection) — distinct from map overlay `addressText` */
+    addressContainer: {
+        marginHorizontal: normalize(8),
+        marginTop: normalize(8),
+        paddingVertical: normalize(10),
+        paddingHorizontal: normalize(12),
+        backgroundColor: d ? '#1e293b' : '#FFFFFF',
+        borderRadius: normalize(10),
+        borderWidth: 1,
+        borderColor: d ? '#334155' : '#E9ECEF',
+    },
+    addressRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+    },
+    addressHeader: {
+        fontSize: normalize(14),
+        fontWeight: '600',
+        color: d ? '#94a3b8' : '#6B7280',
+    },
+    addressRowValue: {
+        flex: 1,
+        fontSize: normalize(14),
+        fontWeight: '600',
+        color: d ? '#f1f5f9' : '#1A1A1A',
+        marginLeft: normalize(4),
+    },
+    mapIcon: {
+        marginLeft: normalize(8),
+    },
     addressOverlay: {
         position: 'absolute',
         bottom: normalize(12),
         left: normalize(8),
         right: normalize(8),
-        backgroundColor: 'rgba(255,255,255,0.95)',
+        backgroundColor: d ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255,255,255,0.95)',
         padding: normalize(12),
         borderRadius: normalize(8),
         shadowColor: '#000',
@@ -325,7 +361,7 @@ export function getProductDetailsStyles(width, height) {
     },
     addressText: {
         fontSize: normalize(13),
-        color: '#1A1A1A',
+        color: d ? '#f1f5f9' : '#1A1A1A',
         fontWeight: '600',
     },
     actionBar: {
@@ -335,7 +371,7 @@ export function getProductDetailsStyles(width, height) {
         right: 0,
         flexDirection: 'row',
         padding: normalize(12),
-        backgroundColor: '#FFFFFF',
+        backgroundColor: d ? '#0f172a' : '#FFFFFF',
         borderTopLeftRadius: normalize(16),
         borderTopRightRadius: normalize(16),
         shadowColor: '#000',
@@ -343,6 +379,8 @@ export function getProductDetailsStyles(width, height) {
         shadowOpacity: 0.08,
         shadowRadius: 4,
         elevation: 4,
+        borderTopWidth: d ? StyleSheet.hairlineWidth : 0,
+        borderTopColor: d ? '#334155' : 'transparent',
     },
         actionBarButton: {
         flex: 1,
@@ -411,7 +449,7 @@ export function getProductDetailsStyles(width, height) {
         left: normalize(8),
         flexDirection: 'row',
         gap: normalize(20),
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        backgroundColor: d ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.9)',
         paddingHorizontal: normalize(12),
         paddingVertical: normalize(8),
         borderRadius: normalize(20),
@@ -423,7 +461,7 @@ export function getProductDetailsStyles(width, height) {
         },
     statText: {
         fontSize: normalize(12),
-        color: '#666',
+        color: d ? '#cbd5e1' : '#666',
         fontWeight: '500',
     },
     likedText: {
@@ -431,7 +469,7 @@ export function getProductDetailsStyles(width, height) {
         fontWeight: 'bold',
     },
     statsCard: {
-        backgroundColor: '#FFFFFF',
+        backgroundColor: d ? '#1e293b' : '#FFFFFF',
         marginHorizontal: normalize(8),
         marginTop: normalize(12),
         borderRadius: normalize(12),
@@ -443,7 +481,7 @@ export function getProductDetailsStyles(width, height) {
         shadowRadius: 4,
         elevation: 3,
         borderWidth: 1,
-        borderColor: '#E5E5EA',
+        borderColor: d ? '#334155' : '#E5E5EA',
     },
     statsRow: {
         flexDirection: 'row',
@@ -453,7 +491,7 @@ export function getProductDetailsStyles(width, height) {
     statsTitle: {
         fontSize: normalize(16),
         fontWeight: '600',
-        color: '#1C1C1E',
+        color: d ? '#f1f5f9' : '#1C1C1E',
         marginRight: normalize(8),
     },
     statsContent: {
@@ -469,18 +507,18 @@ export function getProductDetailsStyles(width, height) {
     statNumber: {
         fontSize: normalize(16),
         fontWeight: '700',
-        color: '#1C1C1E',
+        color: d ? '#f1f5f9' : '#1C1C1E',
         marginRight: normalize(4),
     },
     statLabel: {
         fontSize: normalize(12),
-        color: '#8E8E93',
+        color: d ? '#94a3b8' : '#8E8E93',
         fontWeight: '500',
     },
     statDivider: {
         width: 1,
         height: normalize(24),
-        backgroundColor: '#E5E5EA',
+        backgroundColor: d ? '#334155' : '#E5E5EA',
         marginHorizontal: normalize(8),
     },
     likeButtonContainer: {
@@ -525,10 +563,10 @@ export function getProductDetailsStyles(width, height) {
         marginHorizontal: normalize(8),
         marginTop: normalize(12),
         marginBottom: normalize(8),
-        backgroundColor: '#FFF5F5',
+        backgroundColor: d ? '#3f1f1f' : '#FFF5F5',
         borderRadius: normalize(10),
         borderWidth: 1,
-        borderColor: '#FFE6E6',
+        borderColor: d ? '#7f1d1d' : '#FFE6E6',
     },
     reportButtonText: {
         color: '#FF3B30',
@@ -540,17 +578,17 @@ export function getProductDetailsStyles(width, height) {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: d ? '#121212' : '#FFFFFF',
     },
 
     sellerCard: {
         flexDirection: 'row',
         alignItems: 'center',
         padding: normalize(12),
-        backgroundColor: '#F8F9FA',
+        backgroundColor: d ? '#0f172a' : '#F8F9FA',
         borderRadius: normalize(10),
         borderWidth: 1,
-        borderColor: '#E9ECEF',
+        borderColor: d ? '#334155' : '#E9ECEF',
     },
         followSellerButtonCard: {
         padding: normalize(8),
@@ -559,14 +597,14 @@ export function getProductDetailsStyles(width, height) {
     priceContainer: {
         marginTop: 12,
         padding: 10,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: d ? '#334155' : '#f5f5f5',
         borderRadius: 8,
         alignItems: 'center',
     },
     priceText: {
         fontSize: normalize(18),
         fontWeight: '700',
-        color: '#007AFF',
+        color: d ? '#60a5fa' : '#007AFF',
         letterSpacing: 0.3,
     },
     sellerActions: {
@@ -576,12 +614,12 @@ export function getProductDetailsStyles(width, height) {
     callIcon: {
         marginRight: normalize(8),
         padding: normalize(6),
-        backgroundColor: '#E8F5E8',
+        backgroundColor: d ? '#14532d' : '#E8F5E8',
         borderRadius: normalize(6),
     },
     chatIcon: {
         padding: normalize(6),
-        backgroundColor: '#E3F2FD',
+        backgroundColor: d ? '#1e3a5f' : '#E3F2FD',
         borderRadius: normalize(6),
     },
     };

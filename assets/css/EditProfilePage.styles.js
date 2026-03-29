@@ -12,6 +12,9 @@ export function buildEditProfileStyles(width, height) {
     keyboardView: {
       flex: 1,
     },
+    darkKeyboardView: {
+      backgroundColor: '#121212',
+    },
     scrollContent: {
       padding: n(16),
       alignSelf: 'center',
@@ -229,6 +232,58 @@ export function buildEditProfileStyles(width, height) {
       color: '#fff',
       fontWeight: '600',
       fontSize: nf(16),
+    },
+    darkContainer: {
+      backgroundColor: '#121212',
+    },
+    darkLoaderContainer: {
+      backgroundColor: '#121212',
+    },
+    darkLoaderText: {
+      color: '#94a3b8',
+    },
+    darkHeaderTitle: {
+      color: '#f1f5f9',
+    },
+    darkHeaderSubtitle: {
+      color: '#94a3b8',
+    },
+    darkAvatar: {
+      borderColor: '#475569',
+    },
+    darkAvatarPlaceholder: {
+      backgroundColor: '#1e293b',
+      borderColor: '#475569',
+    },
+    darkCard: {
+      backgroundColor: '#1e293b',
+    },
+    darkCardTitle: {
+      color: '#f1f5f9',
+    },
+    darkInputLabel: {
+      color: '#cbd5e1',
+    },
+    darkInput: {
+      backgroundColor: '#0f172a',
+      borderColor: '#475569',
+      color: '#f1f5f9',
+    },
+    darkDivider: {
+      backgroundColor: '#475569',
+    },
+    darkButtonContainer: {
+      backgroundColor: '#121212',
+      borderTopColor: '#334155',
+    },
+    darkModalContainer: {
+      backgroundColor: '#1e293b',
+    },
+    darkModalTitle: {
+      color: '#f1f5f9',
+    },
+    darkModalMessage: {
+      color: '#94a3b8',
     },
   });
 

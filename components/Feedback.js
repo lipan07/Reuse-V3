@@ -18,6 +18,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Header from './Screens/Header';
 import CustomStatusBar from './Screens/CustomStatusBar';
+import { useTheme } from '../context/ThemeContext';
 
 const Feedback = ({ navigation }) => {
     const { width, height } = useWindowDimensions();
@@ -28,7 +29,7 @@ const Feedback = ({ navigation }) => {
     const [rating, setRating] = useState(3);
     const [feedback, setFeedback] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [darkMode, setDarkMode] = useState(false);
+    const { isDarkMode: darkMode } = useTheme();
 
     const handleSubmit = async () => {
         if (!feedback.trim()) {
@@ -77,7 +78,7 @@ const Feedback = ({ navigation }) => {
 
     return (
         <>
-            <CustomStatusBar />
+            <CustomStatusBar darkMode={darkMode} />
             <View style={[styles.container, darkMode && styles.darkContainer]}>
 
                 {/* Header with proper spacing */}

@@ -5,6 +5,7 @@ import ParentCategoryPanel from '../components/ParentCategoryPanel';
 import BottomNavBar from '../components/BottomNavBar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import { useTheme } from '../context/ThemeContext';
 
 const verticalScale = Math.min(Math.max(Math.max(Dimensions.get('window').width, Dimensions.get('window').height) / 812, 0.9), 1.08);
 const normalizeVertical = (size) => Math.round(verticalScale * size);
@@ -220,6 +221,7 @@ const staticCategories = [
 ];
 
 const ProductAddPage = ({ route }) => {
+  const { isDarkMode } = useTheme();
   // const [categories, setCategories] = useState([]);
   const [categories] = useState(staticCategories);
   const [isLoading, setIsLoading] = useState(false);
@@ -300,7 +302,7 @@ const ProductAddPage = ({ route }) => {
   const listBottomPadding = (insets?.bottom ?? 0) + BOTTOM_BAR_HEIGHT;
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+    <SafeAreaView style={[styles.container, isDarkMode && styles.darkContainer]} edges={['bottom', 'left', 'right']}>
       <ParentCategoryPanel
         categories={categories}
         onSelectCategory={handleCategorySelect}
@@ -318,6 +320,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+  },
+  darkContainer: {
+    backgroundColor: '#121212',
   },
 });
 

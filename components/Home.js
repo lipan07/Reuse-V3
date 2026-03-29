@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { getHomeStyles } from '../assets/css/Home.styles';
 import { getNumColumns, normalize } from '../utils/responsive';
+import { useTheme } from '../context/ThemeContext';
 
 import {
   BannerAd,
@@ -34,6 +35,7 @@ const PLACEHOLDER_TEXTS = [
 ];
 
 const Home = () => {
+  const { isDarkMode } = useTheme();
   const { width: rawWidth, height: rawHeight } = useWindowDimensions();
   const width = Math.max(rawWidth || 375, 200);
   const height = Math.max(rawHeight || 812, 400);
@@ -468,7 +470,7 @@ const Home = () => {
 
     return (
       <TouchableOpacity
-        style={styles.productItem}
+        style={[styles.productItem, isDarkMode && styles.darkProductItem]}
         onPress={() => navigation.navigate('ProductDetails', { productDetails: item })}
       >
         <View style={styles.imageContainer}>
@@ -520,7 +522,8 @@ const Home = () => {
                 />
               ))
             ) : (
-              <View style={styles.placeholderContainer}>
+                <View style={[styles.placeholderContainer, isDarkMode && styles.darkPlaceholderContainer]}
+                >
                   {/* Show play icon if video available, otherwise show image icon */}
                   {hasVideos ? (
                     <AnimatedPlayIcon size={normalize(35, width)} color="rgba(76, 175, 79, 0.81)" />
@@ -528,7 +531,7 @@ const Home = () => {
                     <Icon name="image" size={normalize(50, width)} color="#ccc" style={{ marginBottom: normalize(10, width) }} />
                   )}
                   {/* Category text below icon */}
-                <Text style={styles.placeholderText}>
+                  <Text style={[styles.placeholderText, isDarkMode && styles.darkPlaceholderText]}>
                   {item.category?.name || 'No image available'}
                 </Text>
               </View>
@@ -538,24 +541,24 @@ const Home = () => {
 
         {/* Compact Text Layout */}
         <View style={styles.textContainer}>
-          <Text style={styles.productName} numberOfLines={1}>{item.title}</Text>
-          <Text style={styles.details} numberOfLines={2} ellipsizeMode="tail">
+          <Text style={[styles.productName, isDarkMode && styles.darkProductName]} numberOfLines={1}>{item.title}</Text>
+          <Text style={[styles.details, isDarkMode && styles.darkDetails]} numberOfLines={2} ellipsizeMode="tail">
             {item.post_details?.description || item.description || ''}
           </Text>
 
           {/* Location and Distance Row */}
           <View style={styles.locationDistanceContainer}>
             <View style={styles.locationContainer}>
-              <Icon name="location-on" size={normalize(12, width)} color="#888" />
-              <Text style={styles.address} numberOfLines={1}>
+              <Icon name="location-on" size={normalize(12, width)} color={isDarkMode ? '#94a3b8' : '#888'} />
+              <Text style={[styles.address, isDarkMode && styles.darkAddress]} numberOfLines={1}>
                 {item.address || 'Address not available'}
               </Text>
             </View>
           </View>
 
           <View style={styles.priceAddressContainer}>
-            <Text style={styles.price}>
-              <Text style={styles.priceText}>₹{item.amount ?? item.post_details?.amount ?? 'N/A'}</Text>
+            <Text style={[styles.price, isDarkMode && styles.darkPrice]}>
+              <Text style={[styles.priceText, isDarkMode && styles.darkPriceText]}>₹{item.amount ?? item.post_details?.amount ?? 'N/A'}</Text>
             </Text>
           </View>
         </View>
@@ -688,12 +691,15 @@ const Home = () => {
     fetchProducts(true, cleanParams(newFilters));
   };
 
-  // Add this component just below the CategoryMenu in your FlatList ListHeaderComponent
-  const FilterBar = ({ categories }) => (
-    <View style={styles.filterBarContainer}>
-      {activeFilterCount > 0 && (
+  // Shown only when at least one filter is active (avoids empty strip under categories).
+  const FilterBar = ({ categories }) => {
+    if (activeFilterCount === 0) {
+      return null;
+    }
+    return (
+      <View style={[styles.filterBarContainer, isDarkMode && styles.darkFilterBarContainer]}>
         <View style={styles.activeFiltersContainer}>
-          <Text style={styles.activeFiltersText}>Filters:</Text>
+          <Text style={[styles.activeFiltersText, isDarkMode && styles.darkActiveFiltersText]}>Filters:</Text>
           {activeFilters.search && (
             <TouchableOpacity
               style={styles.filterPill}
@@ -777,116 +783,137 @@ const Home = () => {
               fetchProducts(true, cleanParams(resetFilters));
             }}
           >
-            <Icon name="refresh" size={normalize(16, width)} color="#007bff" />
-            <Text style={styles.quickFilterText}>Reset All</Text>
+            <Icon name="refresh" size={normalize(16, width)} color={isDarkMode ? '#60a5fa' : '#007bff'} />
+            <Text style={[styles.quickFilterText, isDarkMode && styles.darkQuickFilterText]}>Reset All</Text>
           </TouchableOpacity>
         </View>
-      )}
     </View>
-  );
+    );
+  };
 
 
 
   return (
-      <View style={styles.container} pointerEvents="box-none">
-            {/* Banner Ad */}
-            {/* <View style={styles.bannerAdContainer}>
+    <View style={[styles.container, isDarkMode && styles.darkContainer]} pointerEvents="box-none">
+      {/* Banner Ad */}
+      {/* <View style={styles.bannerAdContainer}>
           <BannerAd
             unitId={adUnitId}
             size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
             style={styles.bannerAd}
           />
-        </View> */}
-            <FlatList
-              key={numColumns}
-              data={products}
-              renderItem={renderProductItem}
-              keyExtractor={(item) => `${item.id}_${currentPage}`}
-              numColumns={numColumns}
-              style={styles.flex1}
-              contentContainerStyle={styles.productList}
-              ListHeaderComponent={
-                <View pointerEvents="box-none">
-                  <View style={styles.searchBarSpacer} />
-                  <CategoryMenu
-                    onCategorySelect={handleCategorySelect}
-                    selectedCategory={selectedCategory}
-                  />
-                  <FilterBar categories={categories} />
-                  <Text style={styles.recommendedText}>Recommended</Text>
-                </View>
-              }
-              ListEmptyComponent={() => (
-                !isLoading && <Text style={styles.noProductsText}>No products found</Text>
-              )}
-              ListFooterComponent={
-                hasMore && (
-                  <ActivityIndicator
-                    size="large"
-                    color="#007bff"
-                    style={styles.loaderBottom}
-                  />
-                )
-              }
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={handleRefresh}
-                  progressViewOffset={56}
-                />
-              }
-              onEndReached={handleScrollEndReached}
-              onEndReachedThreshold={0.5}
-              keyboardShouldPersistTaps="handled"
-              keyboardDismissMode="on-drag"
-              onScrollBeginDrag={handleOutsidePress}
-              removeClippedSubviews={true}
-              initialNumToRender={10}
-              maxToRenderPerBatch={10}
-              windowSize={21}
+      </View> */}
+      <FlatList
+        key={numColumns}
+        data={products}
+        renderItem={renderProductItem}
+        keyExtractor={(item) => `${item.id}_${currentPage}`}
+        numColumns={numColumns}
+        style={styles.flex1}
+        contentContainerStyle={styles.productList}
+        ListHeaderComponent={
+          <View pointerEvents="box-none">
+            <View style={styles.searchBarSpacer} />
+            <CategoryMenu
+              onCategorySelect={handleCategorySelect}
+              selectedCategory={selectedCategory}
             />
-            {/* Search Bar - only input is tappable so scroll works on empty space */}
-            <View style={styles.searchContainer} pointerEvents="box-none">
-              <TouchableOpacity
-                style={styles.searchInputWrapper}
-                onPress={() => navigation.navigate('FilterScreen', {
-                  initialFilters: { ...activeFilters, search, category: selectedCategory }
-                })}
-                activeOpacity={0.7}
-              >
-                <Icon name="search" size={normalize(18, width)} color="#888" style={styles.searchIcon} />
-                {search ? (
-                  <Text style={styles.searchDisplayText}>{search}</Text>
-                ) : (
-                  <Animated.Text style={[styles.searchDisplayText, styles.searchPlaceholder, { opacity: placeholderOpacity }]}>
-                    {PLACEHOLDER_TEXTS[placeholderIndex]}
-                  </Animated.Text>
-                )}
+            <FilterBar categories={categories} />
+            <Text style={[styles.recommendedText, isDarkMode && styles.darkRecommendedText]}>Recommended</Text>
+          </View>
+        }
+        ListEmptyComponent={() => (
+          !isLoading && <Text style={[styles.noProductsText, isDarkMode && styles.darkNoProductsText]}>No products found</Text>
+        )}
+        ListFooterComponent={
+          hasMore && (
+            <ActivityIndicator
+              size="large"
+              color={isDarkMode ? '#60a5fa' : '#007bff'}
+              style={styles.loaderBottom}
+            />
+          )
+        }
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            progressViewOffset={56}
+            tintColor={isDarkMode ? '#60a5fa' : '#007bff'}
+            // Android: never pass undefined/empty colors — native SwipeRefreshLayout crashes (length=0; index=0).
+            colors={isDarkMode ? ['#60a5fa'] : ['#007bff']}
+          />
+        }
+        onEndReached={handleScrollEndReached}
+        onEndReachedThreshold={0.5}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        onScrollBeginDrag={handleOutsidePress}
+        removeClippedSubviews={true}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={21}
+      />
+      {/* Search + filter row: opens FilterScreen (search terms & filters). Matches stack header + safe strip. */}
+      <View
+        style={[styles.searchContainer, isDarkMode && styles.darkSearchContainer]}
+        pointerEvents="box-none"
+      >
+        <TouchableOpacity
+          style={[styles.searchInputWrapper, isDarkMode && styles.darkSearchInputWrapper]}
+          onPress={() => navigation.navigate('FilterScreen', {
+            initialFilters: { ...activeFilters, search, category: selectedCategory }
+          })}
+          activeOpacity={0.7}
+        >
+          <Icon name="search" size={normalize(18, width)} color={isDarkMode ? '#94a3b8' : '#888'} style={styles.searchIcon} />
+          {search ? (
+            <Text style={[styles.searchDisplayText, isDarkMode && styles.darkSearchDisplayText]} numberOfLines={1}>
+              {search}
+            </Text>
+          ) : (
+            <Animated.Text
+              style={[styles.searchDisplayText, styles.searchPlaceholder, isDarkMode && styles.darkSearchDisplayText, { opacity: placeholderOpacity }]}
+              numberOfLines={1}
+            >
+              {PLACEHOLDER_TEXTS[placeholderIndex]}
+            </Animated.Text>
+          )}
+        </TouchableOpacity>
+        {/* <TouchableOpacity
+          style={[styles.filterButton, { marginLeft: normalize(8, width) }]}
+          onPress={() => navigation.navigate('FilterScreen', {
+            initialFilters: { ...activeFilters, search, category: selectedCategory }
+          })}
+          activeOpacity={0.85}
+          accessibilityLabel="Open filters"
+        >
+          <Icon name="filter-list" size={normalize(20, width)} color="#fff" />
                 {activeFilterCount > 0 && (
                   <View style={styles.filterBadge}>
                     <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
                   </View>
                 )}
-              </TouchableOpacity>
-            </View>
-            <BottomNavBar navigation={navigation} />
-        {showLocationPopup && (
-          <View style={styles.popupOverlay}>
-            <View style={styles.popupContainer}>
-              <Text style={styles.popupTitle}>Location Required</Text>
-              <Text style={styles.popupMessage}>
-                Please set your location to find products near you
-              </Text>
-              <TouchableOpacity
-                style={styles.popupButton}
-                onPress={handleLocationPopupConfirm}
-              >
-                <Text style={styles.popupButtonText}>Set Location</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
+              </TouchableOpacity> */}
       </View>
+      <BottomNavBar navigation={navigation} />
+      {showLocationPopup && (
+        <View style={styles.popupOverlay}>
+          <View style={[styles.popupContainer, isDarkMode && styles.darkPopupContainer]}>
+            <Text style={[styles.popupTitle, isDarkMode && styles.darkPopupTitle]}>Location Required</Text>
+            <Text style={[styles.popupMessage, isDarkMode && styles.darkPopupMessage]}>
+              Please set your location to find products near you
+            </Text>
+            <TouchableOpacity
+              style={styles.popupButton}
+              onPress={handleLocationPopupConfirm}
+            >
+              <Text style={styles.popupButtonText}>Set Location</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+    </View>
   );
 };
 

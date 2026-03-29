@@ -5,12 +5,14 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import SubCategoryPanel from '../SubCategoryPanel';
 import BottomNavBar from '../BottomNavBar';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { useTheme } from '../../context/ThemeContext';
 
 const verticalScale = Math.min(Math.max(Math.max(Dimensions.get('window').width, Dimensions.get('window').height) / 812, 0.9), 1.08);
 const normalizeVertical = (size) => Math.round(verticalScale * size);
 const BOTTOM_BAR_HEIGHT = normalizeVertical(52);
 
 const SubCategoryScreen = () => {
+    const { isDarkMode } = useTheme();
     const navigation = useNavigation();
     const route = useRoute();
     const { subcategories, parentCategory, listingType } = route.params;
@@ -143,7 +145,7 @@ const SubCategoryScreen = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+        <SafeAreaView style={[styles.container, isDarkMode && styles.darkContainer]} edges={['bottom', 'left', 'right']}>
             <SubCategoryPanel
                 subcategories={subcategories}
                 onSelectSubcategory={handleSubcategorySelect}
@@ -160,6 +162,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#FFFFFF',
+    },
+    darkContainer: {
+        backgroundColor: '#121212',
     },
 });
 

@@ -208,6 +208,11 @@ export function getHomeStyles(width, height) {
     fontWeight: 'bold',
     color: '#007bff',
   },
+  priceText: {
+    fontSize: normalize(13),
+    fontWeight: 'bold',
+    color: '#007bff',
+  },
 
   address: {
     fontSize: normalize(10),
@@ -368,17 +373,24 @@ export function getHomeStyles(width, height) {
 
   // Add to Home.styles.js
   filterBarContainer: {
+    marginHorizontal: normalize(10),
+    marginBottom: normalize(8),
     paddingHorizontal: normalize(10),
     paddingVertical: normalize(8),
     backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderRadius: normalize(12),
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
   },
   activeFiltersContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
-    marginBottom: normalize(8),
   },
   activeFiltersText: {
     fontSize: normalize(12),
@@ -521,6 +533,31 @@ export function getHomeStyles(width, height) {
     fontSize: normalize(10),
     fontWeight: 'bold',
   },
+
+  darkContainer: { backgroundColor: '#121212' },
+  darkProductItem: { backgroundColor: '#1e293b' },
+  darkProductName: { color: '#f1f5f9' },
+  darkDetails: { color: '#94a3b8' },
+  darkAddress: { color: '#cbd5e1' },
+  darkPlaceholderContainer: { backgroundColor: '#334155' },
+  darkPlaceholderText: { color: '#94a3b8' },
+  darkRecommendedText: { color: '#94a3b8' },
+  darkNoProductsText: { color: '#64748b' },
+  darkSearchContainer: { backgroundColor: 'rgba(18, 18, 18, 0.92)' },
+  darkSearchInputWrapper: { backgroundColor: '#334155' },
+  darkSearchDisplayText: { color: '#f1f5f9' },
+  darkSearchInput: { backgroundColor: '#475569', color: '#f1f5f9' },
+  darkFilterBarContainer: {
+    backgroundColor: '#1e293b',
+    borderColor: '#334155',
+  },
+  darkActiveFiltersText: { color: '#94a3b8' },
+  darkQuickFilterText: { color: '#60a5fa' },
+  darkPopupContainer: { backgroundColor: '#1e293b' },
+  darkPopupTitle: { color: '#f1f5f9' },
+  darkPopupMessage: { color: '#94a3b8' },
+  darkPrice: { color: '#60a5fa' },
+  darkPriceText: { color: '#93c5fd' },
   };
 }
 

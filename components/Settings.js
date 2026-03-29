@@ -17,6 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Header from './Screens/Header';
 import CustomStatusBar from './Screens/CustomStatusBar';
 import { buildSettingsStyles } from '../assets/css/Settings.styles';
+import { useTheme } from '../context/ThemeContext';
 
 const SettingsPage = ({ navigation }) => {
     const { width, height } = useWindowDimensions();
@@ -24,16 +25,14 @@ const SettingsPage = ({ navigation }) => {
         () => buildSettingsStyles(width, height),
         [width, height]
     );
+    const { isDarkMode, toggleDarkMode } = useTheme();
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
     const [is2FAEnabled, setIs2FAEnabled] = useState(false);
-    const [isDarkMode, setIsDarkMode] = useState(false);
-    const [darkMode, setDarkMode] = useState(false);
 
     const handleDeleteAccount = () => setIsDeleteModalVisible(true);
     const handleLogoutAllDevices = () => setIsLogoutModalVisible(true);
     const toggle2FA = () => setIs2FAEnabled(previousState => !previousState);
-    const toggleDarkMode = () => setIsDarkMode(previousState => !previousState);
 
     const confirmDeletion = async () => {
         setIsDeleteModalVisible(false);
@@ -110,13 +109,13 @@ const SettingsPage = ({ navigation }) => {
 
     return (
         <>
-            <CustomStatusBar />
+            <CustomStatusBar darkMode={isDarkMode} />
             <View style={[styles.container, isDarkMode && styles.darkContainer]}>
                 {/* Header with proper spacing */}
                 <Header
                     title="Settings"
                     navigation={navigation}
-                    darkMode={darkMode}
+                    darkMode={isDarkMode}
                 />
 
                 <ScrollView

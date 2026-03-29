@@ -156,6 +156,52 @@ export function buildInviteTokensStyles(width, height) {
       color: '#0984e3',
       fontWeight: '600',
     },
+    darkContainer: {
+      backgroundColor: '#121212',
+    },
+    darkLoadingContainer: {
+      backgroundColor: '#121212',
+    },
+    darkInfoBox: {
+      backgroundColor: '#1e3a5f',
+    },
+    darkInfoText: {
+      color: '#93c5fd',
+    },
+    darkInactiveBanner: {
+      backgroundColor: '#3d2a1a',
+    },
+    darkInactiveBannerText: {
+      color: '#fdba74',
+    },
+    darkInactiveHint: {
+      color: '#fb923c',
+    },
+    darkEmptyText: {
+      color: '#94a3b8',
+    },
+    darkTokenCard: {
+      backgroundColor: '#1e293b',
+    },
+    darkTokenLabel: {
+      color: '#94a3b8',
+    },
+    darkTokenValue: {
+      color: '#f1f5f9',
+    },
+    darkTokenDetails: {
+      borderTopColor: '#334155',
+    },
+    darkDetailText: {
+      color: '#cbd5e1',
+    },
+    darkActionButton: {
+      backgroundColor: '#334155',
+      borderColor: '#475569',
+    },
+    darkActionButtonText: {
+      color: '#7dd3fc',
+    },
   });
 
   return { styles, n, nf, nv, contentMaxWidth };

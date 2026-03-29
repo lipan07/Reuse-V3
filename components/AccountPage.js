@@ -12,8 +12,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import { buildAccountPageStyles } from '../assets/css/AccountPage.styles';
 import CustomStatusBar from './Screens/CustomStatusBar';
+import { useTheme } from '../context/ThemeContext';
 
 const AccountPage = ({ navigation }) => {
+    const { isDarkMode } = useTheme();
     const { width: winW, height: winH } = useWindowDimensions();
     const { styles, nf } = useMemo(
         () => buildAccountPageStyles(winW, winH),
@@ -65,14 +67,18 @@ const AccountPage = ({ navigation }) => {
     };
 
     const renderLink = (text, icon, onPress, color) => (
-        <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.6}>
+        <TouchableOpacity
+            style={[styles.menuItem, isDarkMode && styles.darkMenuItem]}
+            onPress={onPress}
+            activeOpacity={0.6}
+        >
             <View style={styles.menuLeft}>
                 <View style={[styles.iconWrapper, { backgroundColor: color + '10' }]}>
                     <FontAwesome5 name={icon} size={nf(16)} color={color} />
                 </View>
-                <Text style={styles.menuText}>{text}</Text>
+                <Text style={[styles.menuText, isDarkMode && styles.darkMenuText]}>{text}</Text>
             </View>
-            <FontAwesome5 name="chevron-right" size={nf(12)} color="#CCC" />
+            <FontAwesome5 name="chevron-right" size={nf(12)} color={isDarkMode ? '#64748b' : '#CCC'} />
         </TouchableOpacity>
     );
 
@@ -82,8 +88,12 @@ const AccountPage = ({ navigation }) => {
                 backgroundColor="#FFFFFF"
                 barStyle="dark-content"
                 translucent={false}
+                darkMode={isDarkMode}
             />
-            <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
+            <SafeAreaView
+                style={[styles.safeArea, isDarkMode && styles.darkSafeArea]}
+                edges={['top', 'left', 'right', 'bottom']}
+            >
                 <ScrollView
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={styles.scrollContent}
@@ -100,25 +110,36 @@ const AccountPage = ({ navigation }) => {
                                     <FontAwesome5 name="pen" size={nf(10)} color="#FFF" />
                                 </TouchableOpacity>
                             </View>
-                            <Text style={styles.greeting}>Hello, {userName}!</Text>
-                            <Text style={styles.subGreeting}>Manage your profile and settings</Text>
+                            <Text style={[styles.greeting, isDarkMode && styles.darkGreeting]}>
+                                Hello, {userName}!
+                            </Text>
+                            <Text style={[styles.subGreeting, isDarkMode && styles.darkSubGreeting]}>
+                                Manage your profile and settings
+                            </Text>
                         </View>
 
                         <View style={styles.section}>
-                            <Text style={styles.sectionLabel}>Account Activity</Text>
+                            <Text style={[styles.sectionLabel, isDarkMode && styles.darkSectionLabel]}>
+                                Account Activity
+                            </Text>
                             {renderLink('Following', 'users', () => navigation.navigate('FollowingPage'), '#6366f1')}
                             {joinedViaInvite &&
                                 renderLink('Invite Tokens', 'ticket-alt', () => navigation.navigate('InviteTokens'), '#a855f7')}
                         </View>
 
                         <View style={styles.section}>
-                            <Text style={styles.sectionLabel}>Preferences</Text>
+                            <Text style={[styles.sectionLabel, isDarkMode && styles.darkSectionLabel]}>
+                                Preferences
+                            </Text>
                             {renderLink('Settings', 'cog', () => navigation.navigate('Settings'), '#64748b')}
                             {renderLink('Help & Support', 'info-circle', () => navigation.navigate('HelpSupport'), '#ef4444')}
                             {renderLink('Feedback', 'comment-alt', () => navigation.navigate('Feedback'), '#22c55e')}
                         </View>
 
-                        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+                        <TouchableOpacity
+                            style={[styles.logoutBtn, isDarkMode && styles.darkLogoutBtn]}
+                            onPress={handleLogout}
+                        >
                             <Text style={styles.logoutText}>Log Out</Text>
                         </TouchableOpacity>
                     </View>

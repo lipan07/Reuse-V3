@@ -24,13 +24,16 @@ import AddressAutocomplete from './AddressAutocomplete';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CustomStatusBar from './Screens/CustomStatusBar';
 import { buildEditProfileStyles } from '../assets/css/EditProfilePage.styles';
+import { useTheme } from '../context/ThemeContext';
 
 const EditProfilePage = () => {
+  const { isDarkMode } = useTheme();
   const { width, height } = useWindowDimensions();
   const { styles, n, nf, nv } = useMemo(
     () => buildEditProfileStyles(width, height),
     [width, height]
   );
+  const placeholderColor = isDarkMode ? '#64748b' : '#999999';
   const insets = useSafeAreaInsets();
   const bottomInset = insets?.bottom ?? 0;
   const [userData, setUserData] = useState({
@@ -315,17 +318,17 @@ const EditProfilePage = () => {
 
   if (isLoading) {
     return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#6366F1" />
-        <Text style={styles.loaderText}>Loading profile...</Text>
+      <View style={[styles.loaderContainer, isDarkMode && styles.darkLoaderContainer]}>
+        <ActivityIndicator size="large" color={isDarkMode ? '#818cf8' : '#6366F1'} />
+        <Text style={[styles.loaderText, isDarkMode && styles.darkLoaderText]}>Loading profile...</Text>
       </View>
     );
   }
 
   return (
     <>
-      <CustomStatusBar />
-      <View style={styles.container}>
+      <CustomStatusBar darkMode={isDarkMode} />
+      <View style={[styles.container, isDarkMode && styles.darkContainer]}>
         <Modal
           visible={modalVisible}
           transparent
@@ -334,7 +337,7 @@ const EditProfilePage = () => {
         >
           <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
             <View style={styles.modalOverlay}>
-              <View style={styles.modalContainer}>
+              <View style={[styles.modalContainer, isDarkMode && styles.darkModalContainer]}>
                 <View style={[
                   styles.modalIconContainer,
                   modalType === 'success' && styles.successIcon,
@@ -350,8 +353,8 @@ const EditProfilePage = () => {
                     color="#fff"
                   />
                 </View>
-                <Text style={styles.modalTitle}>{modalTitle}</Text>
-                <Text style={styles.modalMessage}>{modalMessage}</Text>
+                <Text style={[styles.modalTitle, isDarkMode && styles.darkModalTitle]}>{modalTitle}</Text>
+                <Text style={[styles.modalMessage, isDarkMode && styles.darkModalMessage]}>{modalMessage}</Text>
                 <TouchableOpacity
                   style={styles.modalButton}
                   onPress={() => setModalVisible(false)}
@@ -365,7 +368,7 @@ const EditProfilePage = () => {
 
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.keyboardView}
+          style={[styles.keyboardView, isDarkMode && styles.darkKeyboardView]}
         >
           <ScrollView
             contentContainerStyle={[
@@ -376,17 +379,19 @@ const EditProfilePage = () => {
           >
             {/* Header */}
             <View style={styles.header}>
-              <Text style={styles.headerTitle}>Edit Profile</Text>
-              <Text style={styles.headerSubtitle}>Update your personal and business information</Text>
+              <Text style={[styles.headerTitle, isDarkMode && styles.darkHeaderTitle]}>Edit Profile</Text>
+              <Text style={[styles.headerSubtitle, isDarkMode && styles.darkHeaderSubtitle]}>
+                Update your personal and business information
+              </Text>
             </View>
 
             {/* Profile Image */}
             <View style={styles.avatarSection}>
               <TouchableOpacity style={styles.avatarContainer} onPress={handleChooseImage}>
                 {userData.profileImage ? (
-                  <Image source={{ uri: userData.profileImage }} style={styles.avatar} />
+                  <Image source={{ uri: userData.profileImage }} style={[styles.avatar, isDarkMode && styles.darkAvatar]} />
                 ) : (
-                    <View style={styles.avatarPlaceholder}>
+                    <View style={[styles.avatarPlaceholder, isDarkMode && styles.darkAvatarPlaceholder]}>
                       <Ionicons name="person" size={nf(32)} color="#6366F1" />
                     </View>
                 )}
@@ -397,26 +402,28 @@ const EditProfilePage = () => {
             </View>
 
             {/* Personal Information */}
-            <View style={styles.card}>
+            <View style={[styles.card, isDarkMode && styles.darkCard]}>
               <View style={styles.cardHeader}>
                 <Ionicons name="person-outline" size={nf(20)} color="#6366F1" />
-                <Text style={styles.cardTitle}>Personal Information</Text>
+                <Text style={[styles.cardTitle, isDarkMode && styles.darkCardTitle]}>Personal Information</Text>
               </View>
 
               <View style={styles.nameRow}>
                 <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>First Name</Text>
+                  <Text style={[styles.inputLabel, isDarkMode && styles.darkInputLabel]}>First Name</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, isDarkMode && styles.darkInput]}
+                    placeholderTextColor={placeholderColor}
                     placeholder="Enter first name"
                     value={userData.firstName}
                     onChangeText={(text) => handleChange('firstName', text)}
                   />
                 </View>
                 <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Last Name</Text>
+                  <Text style={[styles.inputLabel, isDarkMode && styles.darkInputLabel]}>Last Name</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, isDarkMode && styles.darkInput]}
+                    placeholderTextColor={placeholderColor}
                     placeholder="Enter last name"
                     value={userData.lastName}
                     onChangeText={(text) => handleChange('lastName', text)}
@@ -425,9 +432,10 @@ const EditProfilePage = () => {
               </View>
 
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Email</Text>
+                <Text style={[styles.inputLabel, isDarkMode && styles.darkInputLabel]}>Email</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, isDarkMode && styles.darkInput]}
+                  placeholderTextColor={placeholderColor}
                   placeholder="Enter email address"
                   value={userData.email}
                   onChangeText={(text) => handleChange('email', text)}
@@ -436,9 +444,10 @@ const EditProfilePage = () => {
               </View>
 
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Phone Number</Text>
+                <Text style={[styles.inputLabel, isDarkMode && styles.darkInputLabel]}>Phone Number</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, isDarkMode && styles.darkInput]}
+                  placeholderTextColor={placeholderColor}
                   placeholder="Enter phone number"
                   value={userData.phoneNumber}
                   onChangeText={(text) => handleChange('phoneNumber', text)}
@@ -447,28 +456,29 @@ const EditProfilePage = () => {
               </View>
 
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Business Address</Text>
+                <Text style={[styles.inputLabel, isDarkMode && styles.darkInputLabel]}>Business Address</Text>
                 <AddressAutocomplete
                   initialAddress={userData.businessAddress}
                   onAddressSelect={({ address }) => handleChange('businessAddress', address)}
                   styles={{
-                    input: styles.input,
-                    predictionText: { fontSize: nf(14), color: '#333' },
+                    input: [styles.input, isDarkMode && styles.darkInput],
+                    predictionText: { fontSize: nf(14), color: isDarkMode ? '#e2e8f0' : '#333' },
                   }}
                 />
               </View>
             </View>
 
             {/* About Section */}
-            <View style={styles.card}>
+            <View style={[styles.card, isDarkMode && styles.darkCard]}>
               <View style={styles.cardHeader}>
                 <Ionicons name="information-circle-outline" size={nf(20)} color="#6366F1" />
-                <Text style={styles.cardTitle}>About</Text>
+                <Text style={[styles.cardTitle, isDarkMode && styles.darkCardTitle]}>About</Text>
               </View>
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Bio</Text>
+                <Text style={[styles.inputLabel, isDarkMode && styles.darkInputLabel]}>Bio</Text>
                 <TextInput
-                  style={[styles.input, styles.bioInput]}
+                  style={[styles.input, styles.bioInput, isDarkMode && styles.darkInput]}
+                  placeholderTextColor={placeholderColor}
                   placeholder="Tell us about yourself..."
                   value={userData.bio}
                   onChangeText={(text) => handleChange('bio', text)}
@@ -480,13 +490,13 @@ const EditProfilePage = () => {
 
             {/* Business Information */}
             <TouchableOpacity
-              style={[styles.card, styles.businessCard]}
+              style={[styles.card, styles.businessCard, isDarkMode && styles.darkCard]}
               onPress={() => setBusinessExpanded(!businessExpanded)}
               activeOpacity={0.8}
             >
               <View style={styles.cardHeader}>
                 <Ionicons name="business-outline" size={nf(20)} color="#6366F1" />
-                <Text style={styles.cardTitle}>Business Information</Text>
+                <Text style={[styles.cardTitle, isDarkMode && styles.darkCardTitle]}>Business Information</Text>
                 <MaterialIcons
                   name={businessExpanded ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
                   size={nf(24)}
@@ -496,11 +506,12 @@ const EditProfilePage = () => {
             </TouchableOpacity>
 
             {businessExpanded && (
-              <View style={styles.card}>
+              <View style={[styles.card, isDarkMode && styles.darkCard]}>
                 <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Business Name</Text>
+                  <Text style={[styles.inputLabel, isDarkMode && styles.darkInputLabel]}>Business Name</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, isDarkMode && styles.darkInput]}
+                    placeholderTextColor={placeholderColor}
                     placeholder="Enter business name"
                     value={userData.businessName}
                     onChangeText={(text) => handleChange('businessName', text)}
@@ -508,9 +519,10 @@ const EditProfilePage = () => {
                 </View>
 
                 <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Business Type</Text>
+                  <Text style={[styles.inputLabel, isDarkMode && styles.darkInputLabel]}>Business Type</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, isDarkMode && styles.darkInput]}
+                    placeholderTextColor={placeholderColor}
                     placeholder="Enter business type"
                     value={userData.businessType}
                     onChangeText={(text) => handleChange('businessType', text)}
@@ -518,9 +530,10 @@ const EditProfilePage = () => {
                 </View>
 
                 <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Website</Text>
+                  <Text style={[styles.inputLabel, isDarkMode && styles.darkInputLabel]}>Website</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, isDarkMode && styles.darkInput]}
+                    placeholderTextColor={placeholderColor}
                     placeholder="https://example.com"
                     value={userData.businessWebsite}
                     onChangeText={(text) => handleChange('businessWebsite', text)}
@@ -528,14 +541,17 @@ const EditProfilePage = () => {
                   />
                 </View>
 
-                <View style={styles.divider} />
+                <View style={[styles.divider, isDarkMode && styles.darkDivider]} />
 
-                <Text style={[styles.cardTitle, { marginBottom: n(16) }]}>Primary Contact</Text>
+                <Text style={[styles.cardTitle, { marginBottom: n(16) }, isDarkMode && styles.darkCardTitle]}>
+                  Primary Contact
+                </Text>
 
                 <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Contact Person Name</Text>
+                  <Text style={[styles.inputLabel, isDarkMode && styles.darkInputLabel]}>Contact Person Name</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, isDarkMode && styles.darkInput]}
+                    placeholderTextColor={placeholderColor}
                     placeholder="Enter contact person name"
                     value={userData.contactPersonName}
                     onChangeText={(text) => handleChange('contactPersonName', text)}
@@ -543,9 +559,10 @@ const EditProfilePage = () => {
                 </View>
 
                 <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Role/Position</Text>
+                  <Text style={[styles.inputLabel, isDarkMode && styles.darkInputLabel]}>Role/Position</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, isDarkMode && styles.darkInput]}
+                    placeholderTextColor={placeholderColor}
                     placeholder="Enter role/position"
                     value={userData.contactPersonRole}
                     onChangeText={(text) => handleChange('contactPersonRole', text)}
@@ -553,9 +570,10 @@ const EditProfilePage = () => {
                 </View>
 
                 <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Email</Text>
+                  <Text style={[styles.inputLabel, isDarkMode && styles.darkInputLabel]}>Email</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, isDarkMode && styles.darkInput]}
+                    placeholderTextColor={placeholderColor}
                     placeholder="Enter email address"
                     value={userData.contactPersonEmail}
                     onChangeText={(text) => handleChange('contactPersonEmail', text)}
@@ -564,9 +582,10 @@ const EditProfilePage = () => {
                 </View>
 
                 <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Phone Number</Text>
+                  <Text style={[styles.inputLabel, isDarkMode && styles.darkInputLabel]}>Phone Number</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, isDarkMode && styles.darkInput]}
+                    placeholderTextColor={placeholderColor}
                     placeholder="Enter phone number"
                     value={userData.contactPersonPhone}
                     onChangeText={(text) => handleChange('contactPersonPhone', text)}
@@ -581,7 +600,7 @@ const EditProfilePage = () => {
           </ScrollView>
 
           {/* Save Button */}
-          <View style={[styles.buttonContainer, { bottom: bottomInset }]}>
+          <View style={[styles.buttonContainer, { bottom: bottomInset }, isDarkMode && styles.darkButtonContainer]}>
             <TouchableOpacity
               style={[styles.saveButton, isSubmitting && styles.saveButtonDisabled]}
               onPress={handleSave}

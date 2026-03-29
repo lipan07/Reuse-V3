@@ -604,6 +604,53 @@ export function buildFilterScreenStyles(width, height) {
         fontWeight: '500',
         marginRight: n(4),
     },
+
+    darkContainer: { backgroundColor: '#121212' },
+    darkLeftPanel: { backgroundColor: '#0f172a', borderRightColor: '#334155' },
+    darkPanelTitle: {
+        backgroundColor: '#1e293b',
+        borderBottomColor: '#334155',
+        color: '#94a3b8',
+    },
+    darkCategoryItem: {
+        backgroundColor: '#1e293b',
+        borderBottomColor: '#334155',
+    },
+    darkCategoryText: { color: '#e2e8f0' },
+    darkRightPanel: { backgroundColor: '#121212' },
+    darkSectionTitle: { color: '#f1f5f9' },
+    darkSearchInputWrapper: { backgroundColor: '#334155' },
+    darkSearchInput: { color: '#f1f5f9' },
+    darkAddressContainer: {
+        backgroundColor: '#334155',
+        borderColor: '#475569',
+    },
+    darkAddressInput: { color: '#f1f5f9' },
+    darkLocationPredictions: {
+        backgroundColor: '#1e293b',
+        borderColor: '#475569',
+    },
+    darkLocationPredictionItem: { borderBottomColor: '#334155' },
+    darkLocationPredictionText: { color: '#e2e8f0' },
+    darkSubcategoryPanel: { backgroundColor: 'transparent' },
+    darkSubcategoryTitle: { color: '#f1f5f9' },
+    darkSubcategorySubtitle: { color: '#94a3b8' },
+    darkSubcategoryItem: {
+        backgroundColor: '#1e293b',
+        borderColor: '#475569',
+    },
+    darkSubcategoryText: { color: '#e2e8f0' },
+    darkSkipButton: { backgroundColor: '#334155', borderColor: '#475569' },
+    darkSkipButtonText: { color: '#94a3b8' },
+    darkClearButton: { backgroundColor: '#334155', borderColor: '#475569' },
+    darkClearButtonText: { color: '#e2e8f0' },
+    darkFilterChip: { backgroundColor: '#334155', borderColor: '#475569' },
+    darkFilterChipText: { color: '#e2e8f0' },
+    darkPriceInputWrapper: {
+        backgroundColor: '#334155',
+        borderColor: '#475569',
+    },
+    darkPriceInput: { color: '#f1f5f9' },
     });
 
     return { styles, n, nf, nv, bottomBarMaxWidth, scrollBottomPadding };

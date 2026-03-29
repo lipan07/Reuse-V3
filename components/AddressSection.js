@@ -1,9 +1,16 @@
-import React, { useRef, useEffect } from 'react';
-import { Animated, TouchableOpacity, View, Text, StyleSheet } from 'react-native';
+import React, { useRef, useEffect, useMemo } from 'react';
+import { Animated, TouchableOpacity, View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import styles from '../assets/css/ProductDetailsPage.styles';
+import { getProductDetailsStyles } from '../assets/css/ProductDetailsPage.styles';
+import { useTheme } from '../context/ThemeContext';
 
 const AddressSection = ({ address, handleMapPress }) => {
+    const { isDarkMode } = useTheme();
+    const { width, height } = useWindowDimensions();
+    const styles = useMemo(
+        () => StyleSheet.create(getProductDetailsStyles(width, height, isDarkMode)),
+        [width, height, isDarkMode]
+    );
     const bounceAnim = useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
@@ -35,14 +42,19 @@ const AddressSection = ({ address, handleMapPress }) => {
             <View style={styles.addressRow}>
                 <Text style={styles.addressHeader}>Address: </Text>
                 <Text
-                    style={styles.addressText}
+                    style={styles.addressRowValue}
                     numberOfLines={1}
                     ellipsizeMode="tail"
                 >
-                    {"Agarpara, Kolkata-700109"}
+                    {address || 'Agarpara, Kolkata-700109'}
                 </Text>
                 <Animated.View style={{ transform: [{ scale: bounceAnim }] }}>
-                    <Icon name="map-marker" size={24} color="#007bff" style={styles.mapIcon} />
+                    <Icon
+                        name="map-marker"
+                        size={24}
+                        color={isDarkMode ? '#60a5fa' : '#007bff'}
+                        style={styles.mapIcon}
+                    />
                 </Animated.View>
             </View>
         </TouchableOpacity>

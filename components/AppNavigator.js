@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Header from './Header';
-import CustomStatusBar from './Screens/CustomStatusBar';
 
 // Import all necessary components
 import Home from './Home';

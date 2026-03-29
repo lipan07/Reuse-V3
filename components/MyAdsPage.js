@@ -3,6 +3,7 @@ import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Modal, Touch
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BottomNavBar from './BottomNavBar';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { useTheme } from '../context/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
 
@@ -20,6 +21,7 @@ const isIphoneX = Platform.OS === 'ios' && longSide >= 812;
 const bottomSafeArea = isIphoneX ? 34 : 0;
 
 const MyAdsPage = ({ navigation }) => {
+  const { isDarkMode } = useTheme();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const isCompactModalScreen = windowHeight < 760 || windowWidth > windowHeight;
   const modalMaxHeight = windowHeight * 0.82;
@@ -155,7 +157,10 @@ const MyAdsPage = ({ navigation }) => {
     const amount = item.post_details?.amount || item.amount || item.price || '0';
 
     return (
-      <TouchableOpacity style={styles.productItem} onPress={() => showPopup(item)}>
+      <TouchableOpacity
+        style={[styles.productItem, isDarkMode && styles.darkProductItem]}
+        onPress={() => showPopup(item)}
+      >
         {item.images && item.images.length > 0 ? (
           <Image
             source={{ uri: item.images[0] }}
@@ -163,25 +168,33 @@ const MyAdsPage = ({ navigation }) => {
             onError={() => console.warn('Failed to load image:', item.images[0])}
           />
         ) : (
-          <View style={styles.imagePlaceholder}>
-            <Text style={styles.placeholderText}>
+          <View style={[styles.imagePlaceholder, isDarkMode && styles.darkImagePlaceholder]}>
+            <Text style={[styles.placeholderText, isDarkMode && styles.darkPlaceholderText]}>
               {item.category?.name || 'No image found'}
             </Text>
           </View>
         )}
         <View style={styles.productDetails}>
-          <Text style={styles.productName}>{item.title}</Text>
-          <Text style={styles.productDesc}>{item.post_details?.description || item.description || ''}</Text>
+          <Text style={[styles.productName, isDarkMode && styles.darkProductName]}>{item.title}</Text>
+          <Text style={[styles.productDesc, isDarkMode && styles.darkProductDesc]}>
+            {item.post_details?.description || item.description || ''}
+          </Text>
           <Text style={styles.price}>Price: ₹{amount}</Text>
         </View>
-        <Icon name="angle-right" size={24} color="#007BFF" style={styles.arrowIcon} />
+        <Icon name="angle-right" size={24} color={isDarkMode ? '#60a5fa' : '#007BFF'} style={styles.arrowIcon} />
       </TouchableOpacity>
     );
   };
 
   const renderFooter = () => {
     if (!isLoading || isRefreshing) return null;
-    return <ActivityIndicator size="large" color="#007BFF" style={styles.loadingIndicator} />;
+    return (
+      <ActivityIndicator
+        size="large"
+        color={isDarkMode ? '#60a5fa' : '#007BFF'}
+        style={styles.loadingIndicator}
+      />
+    );
   };
 
   const handleLoadMore = () => {
@@ -366,7 +379,7 @@ const MyAdsPage = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isDarkMode && styles.darkContainer]}>
       <FlatList
         data={products}
         renderItem={renderProductItem}
@@ -380,7 +393,9 @@ const MyAdsPage = ({ navigation }) => {
         ListEmptyComponent={
           !isLoading && (
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>You have not posted any item yet.</Text>
+              <Text style={[styles.emptyText, isDarkMode && styles.darkEmptyText]}>
+                You have not posted any item yet.
+              </Text>
             </View>
           )
         }
@@ -403,7 +418,11 @@ const MyAdsPage = ({ navigation }) => {
           <TouchableWithoutFeedback onPress={() => { }}>
             <View style={styles.modernBottomSheet} pointerEvents="box-none">
               <ScrollView
-                style={[styles.bottomSheetContent, { maxHeight: modalMaxHeight }]}
+                style={[
+                  styles.bottomSheetContent,
+                  isDarkMode && styles.darkBottomSheetContent,
+                  { maxHeight: modalMaxHeight },
+                ]}
                 contentContainerStyle={styles.bottomSheetScrollContent}
                 showsVerticalScrollIndicator={isCompactModalScreen}
                 scrollEnabled={isCompactModalScreen}
@@ -411,23 +430,23 @@ const MyAdsPage = ({ navigation }) => {
                 keyboardShouldPersistTaps="handled"
               >
                 {/* Drag Handle */}
-                <View style={styles.dragHandle} />
+                <View style={[styles.dragHandle, isDarkMode && styles.darkDragHandle]} />
 
                 {/* Product Preview Card */}
                 {selectedProduct && (
-                  <View style={styles.productPreviewCard}>
+                  <View style={[styles.productPreviewCard, isDarkMode && styles.darkProductPreviewCard]}>
                     {selectedProduct.images && selectedProduct.images.length > 0 ? (
                       <Image
                         source={{ uri: selectedProduct.images[0] }}
                         style={styles.previewImageLarge}
                       />
                     ) : (
-                        <View style={styles.previewImageLargePlaceholder}>
-                          <Icon name="image" size={40} color="#CCC" />
+                        <View style={[styles.previewImageLargePlaceholder, isDarkMode && styles.darkPreviewPlaceholder]}>
+                          <Icon name="image" size={40} color={isDarkMode ? '#64748b' : '#CCC'} />
                       </View>
                     )}
                     <View style={styles.productInfoCard}>
-                      <Text style={styles.productTitleLarge} numberOfLines={2}>
+                      <Text style={[styles.productTitleLarge, isDarkMode && styles.darkProductTitleLarge]} numberOfLines={2}>
                         {selectedProduct.title}
                       </Text>
                       <View style={styles.priceTagContainer}>
@@ -441,12 +460,12 @@ const MyAdsPage = ({ navigation }) => {
                 )}
 
                 {/* Quick Actions Title */}
-                <Text style={styles.actionsTitle}>Quick Actions</Text>
+                <Text style={[styles.actionsTitle, isDarkMode && styles.darkActionsTitle]}>Quick Actions</Text>
 
                 {/* Action Buttons - List Style */}
-                <View style={styles.actionsList}>
+                <View style={[styles.actionsList, isDarkMode && styles.darkActionsList]}>
                   <TouchableOpacity
-                    style={styles.actionListItem}
+                    style={[styles.actionListItem, isDarkMode && styles.darkActionListItem]}
                     activeOpacity={0.7}
                     onPress={() => {
                       hidePopup();
@@ -459,14 +478,14 @@ const MyAdsPage = ({ navigation }) => {
                       <Icon name="eye" size={20} color="#007BFF" />
                     </View>
                     <View style={styles.actionListContent}>
-                      <Text style={styles.actionListTitle}>View Ad</Text>
-                      <Text style={styles.actionListSubtitle}>See how others see it</Text>
+                      <Text style={[styles.actionListTitle, isDarkMode && styles.darkActionListTitle]}>View Ad</Text>
+                      <Text style={[styles.actionListSubtitle, isDarkMode && styles.darkActionListSubtitle]}>See how others see it</Text>
                     </View>
-                    <Icon name="chevron-right" size={20} color="#CCC" />
+                    <Icon name="chevron-right" size={20} color={isDarkMode ? '#64748b' : '#CCC'} />
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={styles.actionListItem}
+                    style={[styles.actionListItem, isDarkMode && styles.darkActionListItem]}
                     activeOpacity={0.7}
                     onPress={() => {
                       hidePopup();
@@ -479,14 +498,14 @@ const MyAdsPage = ({ navigation }) => {
                       <Icon name="heart" size={20} color="#EC4899" />
                     </View>
                     <View style={styles.actionListContent}>
-                      <Text style={styles.actionListTitle}>Interested Users</Text>
-                      <Text style={styles.actionListSubtitle}>View who liked your ad</Text>
+                      <Text style={[styles.actionListTitle, isDarkMode && styles.darkActionListTitle]}>Interested Users</Text>
+                      <Text style={[styles.actionListSubtitle, isDarkMode && styles.darkActionListSubtitle]}>View who liked your ad</Text>
                     </View>
-                    <Icon name="chevron-right" size={20} color="#CCC" />
+                    <Icon name="chevron-right" size={20} color={isDarkMode ? '#64748b' : '#CCC'} />
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={styles.actionListItem}
+                    style={[styles.actionListItem, isDarkMode && styles.darkActionListItem]}
                     activeOpacity={0.7}
                     onPress={() => {
                       hidePopup();
@@ -500,14 +519,14 @@ const MyAdsPage = ({ navigation }) => {
                       <Icon name="pencil" size={20} color="#10B981" />
                     </View>
                     <View style={styles.actionListContent}>
-                      <Text style={styles.actionListTitle}>Edit Listing</Text>
-                      <Text style={styles.actionListSubtitle}>Update details & photos</Text>
+                      <Text style={[styles.actionListTitle, isDarkMode && styles.darkActionListTitle]}>Edit Listing</Text>
+                      <Text style={[styles.actionListSubtitle, isDarkMode && styles.darkActionListSubtitle]}>Update details & photos</Text>
                     </View>
-                    <Icon name="chevron-right" size={20} color="#CCC" />
+                    <Icon name="chevron-right" size={20} color={isDarkMode ? '#64748b' : '#CCC'} />
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={[styles.actionListItem, styles.promoteBadge]}
+                    style={[styles.actionListItem, styles.promoteBadge, isDarkMode && styles.darkActionListItem]}
                     activeOpacity={0.7}
                     onPress={handleBoost}
                   >
@@ -516,14 +535,14 @@ const MyAdsPage = ({ navigation }) => {
                     </View>
                     <View style={styles.actionListContent}>
                       <View style={styles.promoteHeader}>
-                        <Text style={styles.actionListTitle}>Promote Ad</Text>
+                        <Text style={[styles.actionListTitle, isDarkMode && styles.darkActionListTitle]}>Promote Ad</Text>
                         <View style={styles.promoBadge}>
                           <Text style={styles.promoBadgeText}>24h</Text>
                         </View>
                       </View>
-                      <Text style={styles.actionListSubtitle}>Get 10x more visibility</Text>
+                      <Text style={[styles.actionListSubtitle, isDarkMode && styles.darkActionListSubtitle]}>Get 10x more visibility</Text>
                     </View>
-                    <Icon name="chevron-right" size={20} color="#CCC" />
+                    <Icon name="chevron-right" size={20} color={isDarkMode ? '#64748b' : '#CCC'} />
                   </TouchableOpacity>
                 </View>
 
@@ -542,7 +561,12 @@ const MyAdsPage = ({ navigation }) => {
                   </TouchableOpacity>
                 </View>
                 {/* Solid white fill to screen edge so no gap / no see-through; when nav buttons enabled add a little extra margin */}
-                <View style={{ height: (insets?.bottom ?? 0) > 0 ? (insets.bottom + 12) : 16, backgroundColor: '#FFFFFF' }} />
+                <View
+                  style={{
+                    height: (insets?.bottom ?? 0) > 0 ? (insets.bottom + 12) : 16,
+                    backgroundColor: isDarkMode ? '#121212' : '#FFFFFF',
+                  }}
+                />
               </ScrollView>
             </View>
           </TouchableWithoutFeedback>
@@ -1115,6 +1139,60 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: normalize(15),
     fontWeight: '700',
+  },
+
+  darkContainer: {
+    backgroundColor: '#121212',
+  },
+  darkProductItem: {
+    borderBottomColor: '#334155',
+  },
+  darkProductName: {
+    color: '#f1f5f9',
+  },
+  darkProductDesc: {
+    color: '#94a3b8',
+  },
+  darkImagePlaceholder: {
+    backgroundColor: '#334155',
+  },
+  darkPlaceholderText: {
+    color: '#94a3b8',
+  },
+  darkEmptyText: {
+    color: '#94a3b8',
+  },
+  darkBottomSheetContent: {
+    backgroundColor: '#121212',
+  },
+  darkDragHandle: {
+    backgroundColor: '#475569',
+  },
+  darkProductPreviewCard: {
+    backgroundColor: '#1e293b',
+    borderColor: '#334155',
+  },
+  darkPreviewPlaceholder: {
+    backgroundColor: '#334155',
+  },
+  darkProductTitleLarge: {
+    color: '#f1f5f9',
+  },
+  darkActionsTitle: {
+    color: '#94a3b8',
+  },
+  darkActionsList: {
+    backgroundColor: '#1e293b',
+  },
+  darkActionListItem: {
+    backgroundColor: '#1e293b',
+    borderBottomColor: '#334155',
+  },
+  darkActionListTitle: {
+    color: '#f1f5f9',
+  },
+  darkActionListSubtitle: {
+    color: '#94a3b8',
   },
 });
 

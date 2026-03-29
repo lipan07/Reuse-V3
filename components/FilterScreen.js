@@ -15,6 +15,7 @@ import FA6Icon from 'react-native-vector-icons/FontAwesome6';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { buildFilterScreenStyles } from '../assets/css/FilterScreen.styles.js';
+import { useTheme } from '../context/ThemeContext';
 
 // Subcategory data for categories with children
 const CATEGORY_SUBCATEGORIES = {
@@ -170,6 +171,7 @@ const SUBCATEGORY_COLOR_MAPPING = {
 
 
 const FilterScreen = ({ navigation }) => {
+    const { isDarkMode } = useTheme();
     const route = useRoute();
     const { width: winW, height: winH } = useWindowDimensions();
     const { styles, n, nf, bottomBarMaxWidth, scrollBottomPadding } = useMemo(
@@ -365,7 +367,8 @@ const FilterScreen = ({ navigation }) => {
                 key={category.id || 'all'}
                 style={[
                     styles.categoryItem,
-                    isSelected && styles.categoryItemSelected
+                    isSelected && styles.categoryItemSelected,
+                    !isSelected && isDarkMode && styles.darkCategoryItem,
                 ]}
                 onPress={() => handleCategorySelect(category.id)}
                 activeOpacity={0.7}
@@ -384,7 +387,8 @@ const FilterScreen = ({ navigation }) => {
                     <Text
                         style={[
                             styles.categoryText,
-                            isSelected && styles.categoryTextSelected
+                            isSelected && styles.categoryTextSelected,
+                            !isSelected && isDarkMode && styles.darkCategoryText,
                         ]}
                         numberOfLines={2}
                         ellipsizeMode="tail"
@@ -398,8 +402,11 @@ const FilterScreen = ({ navigation }) => {
 
     // edges: no `top` — AppNavigator already shows Header under status bar; `top` added a double gap.
     return (
-        <SafeAreaView style={styles.container} edges={['left', 'right']}>
-            <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        <SafeAreaView style={[styles.container, isDarkMode && styles.darkContainer]} edges={['left', 'right']}>
+            <StatusBar
+                barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+                backgroundColor={isDarkMode ? '#121212' : '#FFFFFF'}
+            />
 
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -407,8 +414,8 @@ const FilterScreen = ({ navigation }) => {
             >
                 <View style={styles.splitContainer}>
                     {/* Left Panel - Categories */}
-                    <View style={styles.leftPanel}>
-                        <Text style={styles.panelTitle}>Categories</Text>
+                    <View style={[styles.leftPanel, isDarkMode && styles.darkLeftPanel]}>
+                        <Text style={[styles.panelTitle, isDarkMode && styles.darkPanelTitle]}>Categories</Text>
                         <ScrollView
                             style={styles.categoryScroll}
                             contentContainerStyle={{ paddingBottom: scrollPadBottom }}
@@ -420,17 +427,17 @@ const FilterScreen = ({ navigation }) => {
 
                     {/* Right Panel - Subcategories or Filters */}
                     <ScrollView
-                        style={styles.rightPanel}
+                        style={[styles.rightPanel, isDarkMode && styles.darkRightPanel]}
                         contentContainerStyle={{ paddingBottom: scrollPadBottom }}
                         showsVerticalScrollIndicator={false}
                         keyboardShouldPersistTaps="handled"
                     >
                         {/* Show Subcategories if available and showSubcategories is true */}
                         {showSubcategories && currentSubcategories.length > 0 ? (
-                            <View style={styles.subcategoryPanel}>
+                            <View style={[styles.subcategoryPanel, isDarkMode && styles.darkSubcategoryPanel]}>
                                 <View style={styles.subcategoryHeader}>
-                                    <Text style={styles.subcategoryTitle}>Select Subcategory</Text>
-                                    <Text style={styles.subcategorySubtitle}>Choose to refine your search</Text>
+                                    <Text style={[styles.subcategoryTitle, isDarkMode && styles.darkSubcategoryTitle]}>Select Subcategory</Text>
+                                    <Text style={[styles.subcategorySubtitle, isDarkMode && styles.darkSubcategorySubtitle]}>Choose to refine your search</Text>
                                 </View>
                                 <View style={styles.subcategoryList}>
                                     {currentSubcategories.map((sub) => {
@@ -441,7 +448,8 @@ const FilterScreen = ({ navigation }) => {
                                                 key={sub.id}
                                                 style={[
                                                     styles.subcategoryItem,
-                                                    isSelected && styles.subcategoryItemSelected
+                                                    isSelected && styles.subcategoryItemSelected,
+                                                    !isSelected && isDarkMode && styles.darkSubcategoryItem,
                                                 ]}
                                                 onPress={() => handleSubcategorySelect(sub.id)}
                                                 activeOpacity={0.7}
@@ -461,7 +469,7 @@ const FilterScreen = ({ navigation }) => {
                                                     <Text style={[
                                                         styles.subcategoryText,
                                                         isSelected && styles.subcategoryTextSelected,
-                                                        !isSelected && { color: '#374151' }
+                                                        !isSelected && (isDarkMode ? styles.darkSubcategoryText : { color: '#374151' }),
                                                     ]} numberOfLines={2}>
                                                         {sub.name}
                                                     </Text>
@@ -476,9 +484,9 @@ const FilterScreen = ({ navigation }) => {
                                     })}
                                 </View>
                                 <View style={styles.skipButtonContainer}>
-                                    <TouchableOpacity onPress={handleSkipSubcategories} style={styles.skipButton}>
-                                        <Text style={styles.skipButtonText}>Skip & Show All</Text>
-                                        <Ionicons name="arrow-forward" size={nf(16)} color="#6B7280" />
+                                    <TouchableOpacity onPress={handleSkipSubcategories} style={[styles.skipButton, isDarkMode && styles.darkSkipButton]}>
+                                        <Text style={[styles.skipButtonText, isDarkMode && styles.darkSkipButtonText]}>Skip & Show All</Text>
+                                        <Ionicons name="arrow-forward" size={nf(16)} color={isDarkMode ? '#94a3b8' : '#6B7280'} />
                                     </TouchableOpacity>
                                 </View>
                             </View>
@@ -486,11 +494,11 @@ const FilterScreen = ({ navigation }) => {
                             <>
                                     {/* Search */}
                                     <View style={styles.filterSection}>
-                                        <Text style={styles.sectionTitle}>Search</Text>
-                                        <View style={styles.searchInputWrapper}>
+                                        <Text style={[styles.sectionTitle, isDarkMode && styles.darkSectionTitle]}>Search</Text>
+                                        <View style={[styles.searchInputWrapper, isDarkMode && styles.darkSearchInputWrapper]}>
                                             <Ionicons name="search" size={nf(18)} color="#9CA3AF" style={styles.searchIcon} />
                                             <TextInput
-                                                style={styles.searchInput}
+                                                style={[styles.searchInput, isDarkMode && styles.darkSearchInput]}
                                                 value={filters.search}
                                                 onChangeText={(text) => handleInputChange('search', text)}
                                                 placeholder="Search products..."
@@ -506,7 +514,7 @@ const FilterScreen = ({ navigation }) => {
 
                                     {/* Location */}
                                     <View style={[styles.filterSection, { zIndex: 100 }]}>
-                                        <Text style={styles.sectionTitle}>Location</Text>
+                                        <Text style={[styles.sectionTitle, isDarkMode && styles.darkSectionTitle]}>Location</Text>
                                         <AddressAutocomplete
                                             initialAddress={filters.address}
                                             initialLatitude={filters.latitude}
@@ -514,10 +522,11 @@ const FilterScreen = ({ navigation }) => {
                                             onAddressSelect={handleAddressSelect}
                                             styles={{
                                                 container: styles.locationContainer,
-                                                input: styles.locationInput,
-                                                predictionsContainer: styles.locationPredictions,
-                                                predictionItem: styles.locationPredictionItem,
-                                                predictionText: styles.locationPredictionText,
+                                                inputWrapper: [styles.addressContainer, isDarkMode && styles.darkAddressContainer],
+                                                input: [styles.addressInput, styles.locationInput, isDarkMode && styles.darkAddressInput],
+                                                predictionsContainer: [styles.locationPredictions, isDarkMode && styles.darkLocationPredictions],
+                                                predictionItem: [styles.locationPredictionItem, isDarkMode && styles.darkLocationPredictionItem],
+                                                predictionText: [styles.locationPredictionText, isDarkMode && styles.darkLocationPredictionText],
                                             }}
                                         />
                                     </View>
@@ -525,7 +534,7 @@ const FilterScreen = ({ navigation }) => {
                                     {/* Listing Type - Hide for Job and Donate category */}
                                     {!isJobCategory && !isDonateCategory && (
                                         <View style={styles.filterSection}>
-                                            <Text style={styles.sectionTitle}>Listing Type</Text>
+                                            <Text style={[styles.sectionTitle, isDarkMode && styles.darkSectionTitle]}>Listing Type</Text>
                                             <View style={styles.chipContainer}>
                                                 {listingTypes.map((type) => {
                                                     const isSelected = type === 'all'
@@ -534,10 +543,20 @@ const FilterScreen = ({ navigation }) => {
                                                     return (
                                                         <TouchableOpacity
                                                             key={type}
-                                                            style={[styles.chip, isSelected && styles.chipSelected]}
+                                                            style={[
+                                                                styles.chip,
+                                                                isSelected && styles.chipSelected,
+                                                                !isSelected && isDarkMode && styles.darkFilterChip,
+                                                            ]}
                                                             onPress={() => handleInputChange('listingType', type === 'all' ? null : type)}
                                                         >
-                                                            <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
+                                                            <Text
+                                                                style={[
+                                                                    styles.chipText,
+                                                                    isSelected && styles.chipTextSelected,
+                                                                    !isSelected && isDarkMode && styles.darkFilterChipText,
+                                                                ]}
+                                                            >
                                                                 {type === 'all' ? 'All' : type.charAt(0).toUpperCase() + type.slice(1)}
                                                             </Text>
                                                         </TouchableOpacity>
@@ -549,15 +568,25 @@ const FilterScreen = ({ navigation }) => {
 
                                     {/* Distance */}
                                     <View style={styles.filterSection}>
-                                        <Text style={styles.sectionTitle}>Search Radius</Text>
+                                        <Text style={[styles.sectionTitle, isDarkMode && styles.darkSectionTitle]}>Search Radius</Text>
                                         <View style={styles.chipContainer}>
                                             {distances.map((distance) => (
                                                 <TouchableOpacity
                                                     key={distance}
-                                                    style={[styles.chip, filters.distance === distance && styles.chipSelected]}
+                                                    style={[
+                                                        styles.chip,
+                                                        filters.distance === distance && styles.chipSelected,
+                                                        filters.distance !== distance && isDarkMode && styles.darkFilterChip,
+                                                    ]}
                                                     onPress={() => handleInputChange('distance', distance)}
                                                 >
-                                                    <Text style={[styles.chipText, filters.distance === distance && styles.chipTextSelected]}>
+                                                    <Text
+                                                        style={[
+                                                            styles.chipText,
+                                                            filters.distance === distance && styles.chipTextSelected,
+                                                            filters.distance !== distance && isDarkMode && styles.darkFilterChipText,
+                                                        ]}
+                                                    >
                                                         {distance} km
                                                     </Text>
                                                 </TouchableOpacity>
@@ -567,15 +596,25 @@ const FilterScreen = ({ navigation }) => {
 
                                     {/* Sort By */}
                                     <View style={styles.filterSection}>
-                                        <Text style={styles.sectionTitle}>Sort By</Text>
+                                        <Text style={[styles.sectionTitle, isDarkMode && styles.darkSectionTitle]}>Sort By</Text>
                                         <View style={styles.chipContainer}>
                                             {sortOptions.map((option) => (
                                                 <TouchableOpacity
                                                     key={option}
-                                                    style={[styles.chip, filters.sortBy === option && styles.chipSelected]}
+                                                    style={[
+                                                        styles.chip,
+                                                        filters.sortBy === option && styles.chipSelected,
+                                                        filters.sortBy !== option && isDarkMode && styles.darkFilterChip,
+                                                    ]}
                                                     onPress={() => handleInputChange('sortBy', option)}
                                                 >
-                                                    <Text style={[styles.chipText, filters.sortBy === option && styles.chipTextSelected]}>
+                                                    <Text
+                                                        style={[
+                                                            styles.chipText,
+                                                            filters.sortBy === option && styles.chipTextSelected,
+                                                            filters.sortBy !== option && isDarkMode && styles.darkFilterChipText,
+                                                        ]}
+                                                    >
                                                         {option}
                                                     </Text>
                                                 </TouchableOpacity>
@@ -586,12 +625,17 @@ const FilterScreen = ({ navigation }) => {
                                     {/* Price Range Inputs - Hide for Donate category */}
                                     {!isDonateCategory && (
                                         <View style={styles.filterSection}>
-                                            <Text style={styles.sectionTitle}>{isJobCategory ? 'Salary Range (₹)' : 'Price Range (₹)'}</Text>
+                                            <Text style={[styles.sectionTitle, isDarkMode && styles.darkSectionTitle]}>{isJobCategory ? 'Salary Range (₹)' : 'Price Range (₹)'}</Text>
                                             <View style={styles.priceInputContainer}>
-                                                <View style={styles.priceInputWrapper}>
+                                                <View
+                                                    style={[
+                                                        styles.priceInputWrapper,
+                                                        isDarkMode && styles.darkPriceInputWrapper,
+                                                    ]}
+                                                >
                                                     {/* <Text style={styles.priceInputPrefix}>₹</Text> */}
                                                     <TextInput
-                                                        style={styles.priceInput}
+                                                        style={[styles.priceInput, isDarkMode && styles.darkPriceInput]}
                                                         value={minPrice}
                                                         onChangeText={(text) => {
                                                             // Allow only numbers
@@ -599,14 +643,19 @@ const FilterScreen = ({ navigation }) => {
                                                             setMinPrice(numericValue);
                                                         }}
                                                         placeholder="Minimum"
-                                                        placeholderTextColor="#9CA3AF"
+                                                        placeholderTextColor={isDarkMode ? '#64748b' : '#9CA3AF'}
                                                         keyboardType="numeric"
                                                     />
                                                 </View>
-                                                <View style={styles.priceInputWrapper}>
+                                                <View
+                                                    style={[
+                                                        styles.priceInputWrapper,
+                                                        isDarkMode && styles.darkPriceInputWrapper,
+                                                    ]}
+                                                >
                                                     {/* <Text style={styles.priceInputPrefix}>₹</Text> */}
                                                     <TextInput
-                                                        style={styles.priceInput}
+                                                        style={[styles.priceInput, isDarkMode && styles.darkPriceInput]}
                                                         value={maxPrice}
                                                         onChangeText={(text) => {
                                                             // Allow only numbers
@@ -614,7 +663,7 @@ const FilterScreen = ({ navigation }) => {
                                                             setMaxPrice(numericValue);
                                                         }}
                                                         placeholder="Maximum"
-                                                        placeholderTextColor="#9CA3AF"
+                                                        placeholderTextColor={isDarkMode ? '#64748b' : '#9CA3AF'}
                                                         keyboardType="numeric"
                                                     />
                                                 </View>
@@ -634,14 +683,24 @@ const FilterScreen = ({ navigation }) => {
             >
                 <View style={[styles.bottomActionsRow, { maxWidth: bottomBarMaxWidth }]} pointerEvents="box-none">
                     <TouchableOpacity
-                        style={[styles.clearButton, loading && styles.buttonDisabled]}
+                        style={[
+                            styles.clearButton,
+                            isDarkMode && styles.darkClearButton,
+                            loading && styles.buttonDisabled,
+                        ]}
                         onPress={handleClearFilters}
                         disabled={loading}
                         activeOpacity={0.7}
                     >
                         <View style={styles.clearButtonContent}>
-                            <Ionicons name="refresh-outline" size={nf(20)} color="#6B7280" />
-                            <Text style={styles.clearButtonText}>Clear All</Text>
+                            <Ionicons
+                                name="refresh-outline"
+                                size={nf(20)}
+                                color={isDarkMode ? '#94a3b8' : '#6B7280'}
+                            />
+                            <Text style={[styles.clearButtonText, isDarkMode && styles.darkClearButtonText]}>
+                                Clear All
+                            </Text>
                         </View>
                     </TouchableOpacity>
 

@@ -8,6 +8,7 @@ import { getMessaging, getToken, onMessage } from '@react-native-firebase/messag
 import { getApp } from '@react-native-firebase/app';
 
 import { BASE_URL } from '@env';
+import { useTheme } from '../context/ThemeContext';
 
 const countryCodes = [
    { code: '+1', name: 'United States', flag: '🇺🇸' },
@@ -223,6 +224,9 @@ const Login = () => {
    const [isSubmitting, setIsSubmitting] = useState(false);
    const navigation = useNavigation();
    const route = useRoute();
+   const { isDarkMode } = useTheme();
+   const placeholderColor = isDarkMode ? '#64748b' : '#bbb';
+   const mutedIconColor = isDarkMode ? '#94a3b8' : '#666';
    const OTP_LENGTH = 6;
    const otpInputRefs = useRef([]);
 
@@ -618,7 +622,7 @@ const Login = () => {
 
    const renderCountryCodeItem = ({ item }) => (
       <TouchableOpacity
-         style={styles.countryCodeItem}
+         style={[styles.countryCodeItem, isDarkMode && styles.darkCountryCodeItem]}
          onPress={() => {
             if (activeTab === 'signup') {
                setSignupCountryCode(item.code);
@@ -626,7 +630,9 @@ const Login = () => {
             setIsModalVisible(false);
          }}
       >
-         <Text style={styles.countryCodeText}>{item.flag} {item.name} ({item.code})</Text>
+         <Text style={[styles.countryCodeText, isDarkMode && styles.darkCountryListText]}>
+            {item.flag} {item.name} ({item.code})
+         </Text>
       </TouchableOpacity>
    );
 
@@ -637,8 +643,11 @@ const Login = () => {
 
    return (
       <>
-         <StatusBar backgroundColor="#f8f9fa" barStyle="dark-content" />
-         <View style={styles.container}>
+         <StatusBar
+            backgroundColor={isDarkMode ? '#121212' : '#f8f9fa'}
+            barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+         />
+         <View style={[styles.container, isDarkMode && styles.darkContainer]}>
             <Toast
                visible={showAlert}
                type={alertType}
@@ -647,8 +656,10 @@ const Login = () => {
                onClose={() => setShowAlert(false)}
             />
 
-            <Text style={styles.loginTitle}>Welcome to <Text style={styles.brandName}>nearX</Text>!</Text>
-            <Text style={styles.loginSubtitle}>
+            <Text style={[styles.loginTitle, isDarkMode && styles.darkLoginTitle]}>
+               Welcome to <Text style={[styles.brandName, isDarkMode && styles.darkBrandName]}>nearX</Text>!
+            </Text>
+            <Text style={[styles.loginSubtitle, isDarkMode && styles.darkLoginSubtitle]}>
                {activeTab === 'login' ? 'Login to your account' : 'Create your account'}
             </Text>
 
@@ -657,12 +668,12 @@ const Login = () => {
                <>
                   {/* Email Field */}
                   <TextInput
-                     style={styles.input}
+                     style={[styles.input, isDarkMode && styles.darkInput]}
                      value={loginEmail}
                      onChangeText={setLoginEmail}
                      keyboardType="email-address"
                      placeholder="Email *"
-                     placeholderTextColor="#bbb"
+                     placeholderTextColor={placeholderColor}
                      autoCapitalize="none"
                      editable={!loginShowOtpField}
                   />
@@ -670,13 +681,15 @@ const Login = () => {
                   {/* One time verification code - 6 digit boxes */}
                   {loginShowOtpField && loginShowTimer && (
                      <>
-                        <Text style={styles.verificationCodeLabel}>Enter your one time verification code</Text>
+                        <Text style={[styles.verificationCodeLabel, isDarkMode && styles.darkVerificationCodeLabel]}>
+                           Enter your one time verification code
+                        </Text>
                         <View style={styles.otpBoxContainer}>
                            {Array.from({ length: OTP_LENGTH }, (_, i) => (
                               <TextInput
                                  key={i}
                                  ref={el => { otpInputRefs.current[i] = el; }}
-                                 style={styles.otpBox}
+                                 style={[styles.otpBox, isDarkMode && styles.darkOtpBox]}
                                  value={loginOtp[i] ?? ''}
                                  onChangeText={text => handleOtpDigitChange(i, text)}
                                  onKeyPress={e => handleOtpKeyPress(i, e)}
@@ -687,11 +700,11 @@ const Login = () => {
                               />
                            ))}
                         </View>
-                        <Text style={styles.timerText}>
+                        <Text style={[styles.timerText, isDarkMode && styles.darkTimerText]}>
                            Resend available in: {Math.floor(loginTimer / 60)}:{(loginTimer % 60).toString().padStart(2, '0')}
                         </Text>
                         {loginResendCount > 0 && (
-                           <Text style={styles.resendCountText}>
+                           <Text style={[styles.resendCountText, isDarkMode && styles.darkResendCountText]}>
                               Resend attempts: {loginResendCount}/5
                            </Text>
                         )}
@@ -759,43 +772,45 @@ const Login = () => {
                <>
                   {/* Name Field */}
                   <TextInput
-                     style={styles.input}
+                     style={[styles.input, isDarkMode && styles.darkInput]}
                      value={signupName}
                      onChangeText={setSignupName}
                      placeholder="Name *"
-                     placeholderTextColor="#bbb"
+                     placeholderTextColor={placeholderColor}
                      autoCapitalize="words"
                   />
 
                   {/* Email Field */}
                   <TextInput
-                     style={styles.input}
+                     style={[styles.input, isDarkMode && styles.darkInput]}
                      value={signupEmail}
                      onChangeText={setSignupEmail}
                      keyboardType="email-address"
                      placeholder="Email *"
-                     placeholderTextColor="#bbb"
+                     placeholderTextColor={placeholderColor}
                      autoCapitalize="none"
                   />
 
                   {/* Phone Number Field - Optional */}
-                  <View style={styles.phoneInputContainer}>
+                  <View style={[styles.phoneInputContainer, isDarkMode && styles.darkPhoneInputContainer]}>
                      <TouchableOpacity
                         style={styles.countryCodeInput}
                         onPress={() => setIsModalVisible(true)}
                         activeOpacity={0.8}
                      >
-                        <Text style={styles.countryCodeText}>{signupCountryCode}</Text>
-                        <MaterialIcons name="arrow-drop-down" size={24} color="#666" />
+                        <Text style={[styles.countryCodeText, isDarkMode && styles.darkCountryCodeText]}>
+                           {signupCountryCode}
+                        </Text>
+                        <MaterialIcons name="arrow-drop-down" size={24} color={mutedIconColor} />
                      </TouchableOpacity>
 
                      <TextInput
-                        style={styles.phoneNumberInput}
+                        style={[styles.phoneNumberInput, isDarkMode && styles.darkPhoneNumberInput]}
                         value={signupPhoneNumber}
                         onChangeText={setSignupPhoneNumber}
                         keyboardType="phone-pad"
                         placeholder="Phone Number (Optional)"
-                        placeholderTextColor="#bbb"
+                        placeholderTextColor={placeholderColor}
                      />
                   </View>
 
@@ -819,7 +834,7 @@ const Login = () => {
             {/* Link to switch between Login and Signup */}
             {!isLoggedIn && (
                <View style={styles.switchContainer}>
-                  <Text style={styles.switchText}>
+                  <Text style={[styles.switchText, isDarkMode && styles.darkSwitchText]}>
                      {activeTab === 'login' ? "Don't have an account? " : 'Already have an account? '}
                   </Text>
                   <TouchableOpacity
@@ -828,7 +843,7 @@ const Login = () => {
                      }}
                      activeOpacity={0.7}
                   >
-                     <Text style={styles.switchLink}>
+                     <Text style={[styles.switchLink, isDarkMode && styles.darkSwitchLink]}>
                         {activeTab === 'login' ? 'Sign Up' : 'Login'}
                      </Text>
                   </TouchableOpacity>
@@ -841,29 +856,31 @@ const Login = () => {
                </TouchableOpacity>
             )}
 
-            <Text style={styles.freeServiceText}>Always 100% free — no charges, no subscriptions, ever.</Text>
+            <Text style={[styles.freeServiceText, isDarkMode && styles.darkFreeServiceText]}>
+               Always 100% free — no charges, no subscriptions, ever.
+            </Text>
 
             <Modal visible={isModalVisible} transparent animationType="slide">
                <TouchableWithoutFeedback onPress={() => setIsModalVisible(false)}>
                   <View style={styles.modalOverlay}>
                      <TouchableWithoutFeedback>
-                        <View style={styles.modalContainer}>
-                           <View style={styles.modalHeader}>
-                              <Text style={styles.modalTitle}>Select Country</Text>
+                        <View style={[styles.modalContainer, isDarkMode && styles.darkModalContainer]}>
+                           <View style={[styles.modalHeader, isDarkMode && styles.darkModalHeader]}>
+                              <Text style={[styles.modalTitle, isDarkMode && styles.darkModalTitle]}>Select Country</Text>
                               <TouchableOpacity
                                  onPress={() => setIsModalVisible(false)}
                                  style={styles.closeButton}
                               >
-                                 <MaterialIcons name="close" size={24} color="#666" />
+                                 <MaterialIcons name="close" size={24} color={mutedIconColor} />
                               </TouchableOpacity>
                            </View>
 
-                           <View style={styles.searchContainer}>
-                              <MaterialIcons name="search" size={20} color="#666" style={styles.searchIcon} />
+                           <View style={[styles.searchContainer, isDarkMode && styles.darkSearchContainer]}>
+                              <MaterialIcons name="search" size={20} color={mutedIconColor} style={styles.searchIcon} />
                               <TextInput
-                                 style={styles.searchInput}
+                                 style={[styles.searchInput, isDarkMode && styles.darkSearchInput]}
                                  placeholder="Search country or code"
-                                 placeholderTextColor="#aaa"
+                                 placeholderTextColor={isDarkMode ? '#64748b' : '#aaa'}
                                  value={searchQuery}
                                  onChangeText={setSearchQuery}
                               />

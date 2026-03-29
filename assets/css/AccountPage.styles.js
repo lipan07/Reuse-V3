@@ -115,6 +115,28 @@ export function buildAccountPageStyles(width, height) {
       fontWeight: '700',
       fontSize: nf(14),
     },
+    darkSafeArea: {
+      backgroundColor: '#121212',
+    },
+    darkGreeting: {
+      color: '#f1f5f9',
+    },
+    darkSubGreeting: {
+      color: '#94a3b8',
+    },
+    darkSectionLabel: {
+      color: '#64748b',
+    },
+    darkMenuItem: {
+      borderBottomColor: '#334155',
+    },
+    darkMenuText: {
+      color: '#e2e8f0',
+    },
+    darkLogoutBtn: {
+      backgroundColor: '#2a1518',
+      borderColor: '#4c0519',
+    },
   });
 
   return { styles, n, nf, nv, contentMaxWidth };

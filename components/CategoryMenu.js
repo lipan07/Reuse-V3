@@ -7,10 +7,12 @@ import FA5Icon from 'react-native-vector-icons/FontAwesome5';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { normalize, isTablet } from '../utils/responsive';
+import { useTheme } from '../context/ThemeContext';
 
 const ITEMS_PER_ROW_MOBILE = 6;
 
 const CategoryMenu = ({ onCategorySelect, selectedCategory }) => {
+  const { isDarkMode } = useTheme();
   const { width: rawWidth } = useWindowDimensions();
   const width = Math.max(rawWidth || 375, 200);
   const [showAll, setShowAll] = useState(false);
@@ -112,7 +114,7 @@ const CategoryMenu = ({ onCategorySelect, selectedCategory }) => {
           <MCIcon
             name={showAll ? 'chevron-up' : 'chevron-down'}
             size={n(22)}
-            color="#007bff"
+            color={isDarkMode ? '#60a5fa' : '#007bff'}
             style={styles.icon}
           />
         </View>
@@ -136,7 +138,7 @@ const CategoryMenu = ({ onCategorySelect, selectedCategory }) => {
 
   const styles = useMemo(() => ({
     container: {
-      backgroundColor: '#ffffff',
+      backgroundColor: isDarkMode ? '#121212' : '#ffffff',
       paddingVertical: n(8),
     },
     // Tablet: single horizontal row
@@ -163,7 +165,7 @@ const CategoryMenu = ({ onCategorySelect, selectedCategory }) => {
       marginHorizontal: n(1),
     },
     iconContainer: {
-      backgroundColor: '#f7f7f7ff',
+      backgroundColor: isDarkMode ? '#1e293b' : '#f7f7f7ff',
       padding: n(8),
       width: n(50),
       height: n(50),
@@ -188,18 +190,18 @@ const CategoryMenu = ({ onCategorySelect, selectedCategory }) => {
     categoryName: {
       fontSize: n(10),
       fontWeight: '500',
-      color: '#64748b',
+      color: isDarkMode ? '#94a3b8' : '#64748b',
       textAlign: 'center',
       maxWidth: n(55),
     },
     selectedText: {
-      color: '#007bff',
+      color: isDarkMode ? '#93c5fd' : '#007bff',
       fontWeight: '600',
     },
     selectedItem: {},
     icon: { textAlign: 'center' },
     showAllIconContainer: {
-      backgroundColor: '#f8f9fa',
+      backgroundColor: isDarkMode ? '#1e293b' : '#f8f9fa',
       padding: n(8),
       width: n(50),
       height: n(50),
@@ -213,16 +215,16 @@ const CategoryMenu = ({ onCategorySelect, selectedCategory }) => {
       justifyContent: 'center',
       alignItems: 'center',
       borderWidth: 1,
-      borderColor: '#e9ecef',
+      borderColor: isDarkMode ? '#334155' : '#e9ecef',
     },
     showAllText: {
       fontSize: n(10),
       fontWeight: '600',
-      color: '#007bff',
+      color: isDarkMode ? '#60a5fa' : '#007bff',
       textAlign: 'center',
       maxWidth: n(55),
     },
-  }), [width, tablet]);
+  }), [width, tablet, isDarkMode]);
 
   // Tablet: single horizontal row with all categories (no Show all button)
   if (tablet) {

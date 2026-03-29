@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     View,
     Text,
@@ -16,6 +16,7 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { BASE_URL } from '@env';
+import { useTheme } from '../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 const scale = width / 375;
@@ -27,6 +28,7 @@ const UploadScreenshotScreen = () => {
     const navigation = useNavigation();
     const route = useRoute();
     const { productId, postTitle, amount } = route.params || {};
+    const { isDarkMode } = useTheme();
 
     const [screenshotUri, setScreenshotUri] = useState(null);
     const [submitting, setSubmitting] = useState(false);
@@ -34,6 +36,183 @@ const UploadScreenshotScreen = () => {
     const [city, setCity] = useState('');
     const [pinCode, setPinCode] = useState('');
     const [country, setCountry] = useState('India');
+
+    const styles = useMemo(
+        () =>
+            StyleSheet.create({
+                container: {
+                    flex: 1,
+                    backgroundColor: isDarkMode ? '#121212' : '#f0f4f8',
+                },
+                content: {
+                    padding: normalize(20),
+                    paddingTop: normalize(56),
+                    paddingBottom: 40,
+                },
+                backBar: {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginBottom: 16,
+                    paddingVertical: 8,
+                },
+                backBarText: {
+                    marginLeft: 8,
+                    fontSize: normalize(16),
+                    fontWeight: '600',
+                    color: isDarkMode ? '#e2e8f0' : '#333',
+                },
+                center: {
+                    flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    padding: 20,
+                    backgroundColor: isDarkMode ? '#121212' : '#f0f4f8',
+                },
+                errorText: {
+                    fontSize: normalize(16),
+                    color: isDarkMode ? '#94a3b8' : '#666',
+                    marginBottom: 16,
+                },
+                backBtn: {
+                    paddingVertical: 12,
+                    paddingHorizontal: 24,
+                    backgroundColor: '#007BFF',
+                    borderRadius: 8,
+                },
+                backBtnText: {
+                    color: '#fff',
+                    fontWeight: '600',
+                },
+                card: {
+                    backgroundColor: isDarkMode ? '#1e293b' : '#fff',
+                    borderRadius: 16,
+                    padding: normalize(24),
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.08,
+                    shadowRadius: 8,
+                    elevation: 4,
+                    borderWidth: isDarkMode ? 1 : 0,
+                    borderColor: isDarkMode ? '#334155' : 'transparent',
+                },
+                title: {
+                    fontSize: normalize(20),
+                    fontWeight: '700',
+                    color: isDarkMode ? '#f1f5f9' : '#222',
+                    marginBottom: 8,
+                },
+                subtitle: {
+                    fontSize: normalize(14),
+                    color: isDarkMode ? '#94a3b8' : '#666',
+                    marginBottom: 24,
+                },
+                uploadArea: {
+                    borderWidth: 2,
+                    borderStyle: 'dashed',
+                    borderColor: isDarkMode ? '#475569' : '#d1d5db',
+                    borderRadius: 12,
+                    padding: normalize(40),
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 24,
+                    backgroundColor: isDarkMode ? '#0f172a' : 'transparent',
+                },
+                uploadText: {
+                    fontSize: normalize(14),
+                    color: isDarkMode ? '#94a3b8' : '#6b7280',
+                    marginTop: 12,
+                },
+                previewWrap: {
+                    marginBottom: 24,
+                },
+                preview: {
+                    width: '100%',
+                    height: 280,
+                    borderRadius: 12,
+                    backgroundColor: isDarkMode ? '#334155' : '#f3f4f6',
+                },
+                changeBtn: {
+                    marginTop: 12,
+                    alignSelf: 'center',
+                },
+                changeBtnText: {
+                    color: isDarkMode ? '#60a5fa' : '#007BFF',
+                    fontWeight: '600',
+                    fontSize: normalize(14),
+                },
+                sectionLabel: {
+                    fontSize: normalize(16),
+                    fontWeight: '600',
+                    color: isDarkMode ? '#f1f5f9' : '#222',
+                    marginBottom: 12,
+                    marginTop: 8,
+                },
+                input: {
+                    borderWidth: 1,
+                    borderColor: isDarkMode ? '#475569' : '#d1d5db',
+                    borderRadius: 10,
+                    paddingVertical: 12,
+                    paddingHorizontal: 14,
+                    fontSize: normalize(15),
+                    color: isDarkMode ? '#f1f5f9' : '#222',
+                    marginBottom: 12,
+                    backgroundColor: isDarkMode ? '#0f172a' : '#fff',
+                },
+                inputPin: {
+                    maxWidth: 160,
+                },
+                countryWrap: {
+                    marginBottom: 20,
+                },
+                countryLabel: {
+                    fontSize: normalize(14),
+                    color: isDarkMode ? '#94a3b8' : '#666',
+                    marginBottom: 8,
+                },
+                countryRow: {
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    marginHorizontal: -4,
+                },
+                countryChip: {
+                    paddingVertical: 8,
+                    paddingHorizontal: 14,
+                    borderRadius: 20,
+                    backgroundColor: isDarkMode ? '#334155' : '#f3f4f6',
+                    marginRight: 8,
+                    marginBottom: 8,
+                    borderWidth: 1,
+                    borderColor: isDarkMode ? '#475569' : '#e5e7eb',
+                },
+                countryChipActive: {
+                    backgroundColor: '#007BFF',
+                    borderColor: '#007BFF',
+                },
+                countryChipText: {
+                    fontSize: normalize(14),
+                    color: isDarkMode ? '#e2e8f0' : '#374151',
+                    fontWeight: '500',
+                },
+                countryChipTextActive: {
+                    color: '#fff',
+                },
+                submitBtn: {
+                    backgroundColor: '#007BFF',
+                    paddingVertical: 14,
+                    borderRadius: 12,
+                    alignItems: 'center',
+                },
+                submitBtnDisabled: {
+                    backgroundColor: '#9ca3af',
+                },
+                submitBtnText: {
+                    color: '#fff',
+                    fontWeight: '700',
+                    fontSize: normalize(16),
+                },
+            }),
+        [isDarkMode]
+    );
 
     const pickImage = () => {
         launchImageLibrary(
@@ -140,7 +319,7 @@ const UploadScreenshotScreen = () => {
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
             <TouchableOpacity style={styles.backBar} onPress={() => navigation.goBack()}>
-                <Icon name="arrow-left" size={normalize(24)} color="#333" />
+                <Icon name="arrow-left" size={normalize(24)} color={isDarkMode ? '#e2e8f0' : '#333'} />
                 <Text style={styles.backBarText}>Back</Text>
             </TouchableOpacity>
             <View style={styles.card}>
@@ -156,7 +335,7 @@ const UploadScreenshotScreen = () => {
                     </View>
                 ) : (
                     <TouchableOpacity style={styles.uploadArea} onPress={pickImage}>
-                        <Icon name="camera-plus" size={normalize(48)} color="#9ca3af" />
+                        <Icon name="camera-plus" size={normalize(48)} color={isDarkMode ? '#64748b' : '#9ca3af'} />
                         <Text style={styles.uploadText}>Tap to select screenshot</Text>
                     </TouchableOpacity>
                 )}
@@ -165,21 +344,21 @@ const UploadScreenshotScreen = () => {
                 <TextInput
                     style={styles.input}
                     placeholder="Street address, building, apartment"
-                    placeholderTextColor="#9ca3af"
+                    placeholderTextColor={isDarkMode ? '#64748b' : '#9ca3af'}
                     value={streetAddress}
                     onChangeText={setStreetAddress}
                 />
                 <TextInput
                     style={styles.input}
                     placeholder="City"
-                    placeholderTextColor="#9ca3af"
+                    placeholderTextColor={isDarkMode ? '#64748b' : '#9ca3af'}
                     value={city}
                     onChangeText={setCity}
                 />
                 <TextInput
                     style={[styles.input, styles.inputPin]}
                     placeholder="PIN code (6 digits)"
-                    placeholderTextColor="#9ca3af"
+                    placeholderTextColor={isDarkMode ? '#64748b' : '#9ca3af'}
                     value={pinCode}
                     onChangeText={(t) => setPinCode(t.replace(/\D/g, '').slice(0, 6))}
                     keyboardType="number-pad"
@@ -215,173 +394,5 @@ const UploadScreenshotScreen = () => {
         </ScrollView>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f0f4f8',
-    },
-    content: {
-        padding: normalize(20),
-        paddingTop: normalize(56),
-        paddingBottom: 40,
-    },
-    backBar: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 16,
-        paddingVertical: 8,
-    },
-    backBarText: {
-        marginLeft: 8,
-        fontSize: normalize(16),
-        fontWeight: '600',
-        color: '#333',
-    },
-    center: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-    },
-    errorText: {
-        fontSize: normalize(16),
-        color: '#666',
-        marginBottom: 16,
-    },
-    backBtn: {
-        paddingVertical: 12,
-        paddingHorizontal: 24,
-        backgroundColor: '#007BFF',
-        borderRadius: 8,
-    },
-    backBtnText: {
-        color: '#fff',
-        fontWeight: '600',
-    },
-    card: {
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: normalize(24),
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-        elevation: 4,
-    },
-    title: {
-        fontSize: normalize(20),
-        fontWeight: '700',
-        color: '#222',
-        marginBottom: 8,
-    },
-    subtitle: {
-        fontSize: normalize(14),
-        color: '#666',
-        marginBottom: 24,
-    },
-    uploadArea: {
-        borderWidth: 2,
-        borderStyle: 'dashed',
-        borderColor: '#d1d5db',
-        borderRadius: 12,
-        padding: normalize(40),
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: 24,
-    },
-    uploadText: {
-        fontSize: normalize(14),
-        color: '#6b7280',
-        marginTop: 12,
-    },
-    previewWrap: {
-        marginBottom: 24,
-    },
-    preview: {
-        width: '100%',
-        height: 280,
-        borderRadius: 12,
-        backgroundColor: '#f3f4f6',
-    },
-    changeBtn: {
-        marginTop: 12,
-        alignSelf: 'center',
-    },
-    changeBtnText: {
-        color: '#007BFF',
-        fontWeight: '600',
-        fontSize: normalize(14),
-    },
-    sectionLabel: {
-        fontSize: normalize(16),
-        fontWeight: '600',
-        color: '#222',
-        marginBottom: 12,
-        marginTop: 8,
-    },
-    input: {
-        borderWidth: 1,
-        borderColor: '#d1d5db',
-        borderRadius: 10,
-        paddingVertical: 12,
-        paddingHorizontal: 14,
-        fontSize: normalize(15),
-        color: '#222',
-        marginBottom: 12,
-    },
-    inputPin: {
-        maxWidth: 160,
-    },
-    countryWrap: {
-        marginBottom: 20,
-    },
-    countryLabel: {
-        fontSize: normalize(14),
-        color: '#666',
-        marginBottom: 8,
-    },
-    countryRow: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        marginHorizontal: -4,
-    },
-    countryChip: {
-        paddingVertical: 8,
-        paddingHorizontal: 14,
-        borderRadius: 20,
-        backgroundColor: '#f3f4f6',
-        marginRight: 8,
-        marginBottom: 8,
-        borderWidth: 1,
-        borderColor: '#e5e7eb',
-    },
-    countryChipActive: {
-        backgroundColor: '#007BFF',
-        borderColor: '#007BFF',
-    },
-    countryChipText: {
-        fontSize: normalize(14),
-        color: '#374151',
-        fontWeight: '500',
-    },
-    countryChipTextActive: {
-        color: '#fff',
-    },
-    submitBtn: {
-        backgroundColor: '#007BFF',
-        paddingVertical: 14,
-        borderRadius: 12,
-        alignItems: 'center',
-    },
-    submitBtnDisabled: {
-        backgroundColor: '#9ca3af',
-    },
-    submitBtnText: {
-        color: '#fff',
-        fontWeight: '700',
-        fontSize: normalize(16),
-    },
-});
 
 export default UploadScreenshotScreen;

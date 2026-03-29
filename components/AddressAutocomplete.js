@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
     View,
     TextInput,
@@ -10,9 +10,85 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useTheme } from '../context/ThemeContext';
 
 const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_MAP_API_KEY;
 const DEBOUNCE_TIME = 300;
+
+function createAddressAutocompleteStyles(isDarkMode) {
+    const d = isDarkMode;
+    return StyleSheet.create({
+        container: {
+            position: 'relative',
+            marginBottom: 16,
+            zIndex: 100,
+        },
+        inputWrapper: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: d ? '#1e293b' : '#F3F4F6',
+            borderRadius: 10,
+            borderWidth: 1,
+            borderColor: d ? '#334155' : '#E5E7EB',
+            paddingLeft: 12,
+            paddingRight: 8,
+            minHeight: 48,
+        },
+        locationIcon: {
+            marginRight: 10,
+            flexShrink: 0,
+        },
+        input: {
+            flex: 1,
+            paddingVertical: 12,
+            paddingRight: 8,
+            fontSize: 14,
+            color: d ? '#f1f5f9' : '#1F2937',
+            textAlign: 'left',
+        },
+        clearIcon: {
+            padding: 4,
+            marginLeft: 4,
+            flexShrink: 0,
+        },
+        loader: {
+            marginLeft: 4,
+            marginRight: 4,
+            flexShrink: 0,
+        },
+        predictionsContainer: {
+            position: 'absolute',
+            top: 50,
+            left: 0,
+            right: 0,
+            backgroundColor: d ? '#1e293b' : '#FFFFFF',
+            borderRadius: 10,
+            borderWidth: 1,
+            borderColor: d ? '#334155' : '#E5E7EB',
+            maxHeight: 200,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: d ? 0.35 : 0.15,
+            shadowRadius: 8,
+            elevation: 8,
+            zIndex: 1000,
+        },
+        predictionItem: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingVertical: 12,
+            paddingHorizontal: 14,
+            borderBottomWidth: 1,
+            borderBottomColor: d ? '#334155' : '#F3F4F6',
+        },
+        predictionText: {
+            flex: 1,
+            fontSize: 13,
+            color: d ? '#e2e8f0' : '#374151',
+            lineHeight: 18,
+        },
+    });
+}
 
 const AddressAutocomplete = ({
     initialAddress = '',
@@ -21,6 +97,12 @@ const AddressAutocomplete = ({
     onAddressSelect,
     styles: customStyles
 }) => {
+    const { isDarkMode } = useTheme();
+    const localStyles = useMemo(() => createAddressAutocompleteStyles(isDarkMode), [isDarkMode]);
+    const accent = isDarkMode ? '#60a5fa' : '#2563eb';
+    const muted = isDarkMode ? '#64748b' : '#9CA3AF';
+    const iconMuted = isDarkMode ? '#94a3b8' : '#6B7280';
+
     const [searchQuery, setSearchQuery] = useState(initialAddress);
     const [predictions, setPredictions] = useState([]);
     const [focused, setFocused] = useState(false);
@@ -90,7 +172,6 @@ const AddressAutocomplete = ({
                 setSearchQuery(address);
                 setPredictions([]);
 
-                // await AsyncStorage.setItem('defaultLocation', JSON.stringify(locationData));
                 if (onAddressSelect) onAddressSelect(locationData);
             }
         } catch (err) {
@@ -110,7 +191,7 @@ const AddressAutocomplete = ({
         <View style={[localStyles.container, customStyles?.container]}>
             <View style={{ position: 'relative' }}>
                 <View style={[localStyles.inputWrapper, customStyles?.inputWrapper]}>
-                    <Ionicons name="location" size={18} color="#2563eb" style={localStyles.locationIcon} />
+                    <Ionicons name="location" size={18} color={accent} style={localStyles.locationIcon} />
                     <TextInput
                         style={[localStyles.input, customStyles?.input]}
                         placeholder="Search location..."
@@ -118,12 +199,12 @@ const AddressAutocomplete = ({
                         onChangeText={setSearchQuery}
                         onFocus={() => setFocused(true)}
                         onBlur={() => setTimeout(() => setFocused(false), 200)}
-                        placeholderTextColor="#9CA3AF"
+                        placeholderTextColor={muted}
                     />
                     {loading && (
                         <ActivityIndicator
                             size="small"
-                            color="#2563eb"
+                            color={accent}
                             style={localStyles.loader}
                         />
                     )}
@@ -132,7 +213,7 @@ const AddressAutocomplete = ({
                             style={localStyles.clearIcon}
                             onPress={clearAddress}
                         >
-                            <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+                            <Ionicons name="close-circle" size={20} color={muted} />
                         </TouchableOpacity>
                     )}
                 </View>
@@ -150,7 +231,7 @@ const AddressAutocomplete = ({
                             style={[localStyles.predictionItem, customStyles?.predictionItem]}
                             onPress={() => handlePlaceSelect(item.place_id)}
                         >
-                            <Ionicons name="location-outline" size={16} color="#6B7280" style={{ marginRight: 10 }} />
+                            <Ionicons name="location-outline" size={16} color={iconMuted} style={{ marginRight: 10 }} />
                             <Text style={[localStyles.predictionText, customStyles?.predictionText]} numberOfLines={2}>
                                 {item.description}
                             </Text>
@@ -161,77 +242,5 @@ const AddressAutocomplete = ({
         </View>
     );
 };
-
-const localStyles = StyleSheet.create({
-    container: {
-        position: 'relative',
-        marginBottom: 16,
-        zIndex: 100,
-    },
-    inputWrapper: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#F3F4F6',
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
-        paddingLeft: 12,
-        paddingRight: 8,
-        minHeight: 48,
-    },
-    locationIcon: {
-        marginRight: 10,
-        flexShrink: 0,
-    },
-    input: {
-        flex: 1,
-        paddingVertical: 12,
-        paddingRight: 8,
-        fontSize: 14,
-        color: '#1F2937',
-        textAlign: 'left',
-    },
-    clearIcon: {
-        padding: 4,
-        marginLeft: 4,
-        flexShrink: 0,
-    },
-    loader: {
-        marginLeft: 4,
-        marginRight: 4,
-        flexShrink: 0,
-    },
-    predictionsContainer: {
-        position: 'absolute',
-        top: 50,
-        left: 0,
-        right: 0,
-        backgroundColor: '#FFFFFF',
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
-        maxHeight: 200,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 8,
-        zIndex: 1000,
-    },
-    predictionItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 14,
-        borderBottomWidth: 1,
-        borderBottomColor: '#F3F4F6',
-    },
-    predictionText: {
-        flex: 1,
-        fontSize: 13,
-        color: '#374151',
-        lineHeight: 18,
-    },
-});
 
 export default AddressAutocomplete;

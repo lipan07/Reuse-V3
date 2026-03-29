@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Alert, ActivityIndicator, StyleSheet, Platform, Linking, PermissionsAndroid } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, Platform, Linking, PermissionsAndroid } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -7,9 +7,10 @@ import { BASE_URL } from '@env';
 import { Video } from 'react-native-compressor';
 import RNFS from 'react-native-fs';
 import backblazeService from '../../../service/backblazeService';
-import styles from '../../../assets/css/AddProductForm.styles.js';
+import { useAddProductFormStyles } from '../useAddProductFormStyles';
 
 const VideoPickerComponent = ({ formData, setFormData, propertyTitle = '', onUploadStateChange, onShowAlert }) => {
+    const { videoPickerStyles: customStyles, videoAccent, videoDanger } = useAddProductFormStyles();
     const [isUploading, setIsUploading] = useState(false);
     const [isCompressing, setIsCompressing] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
@@ -486,7 +487,7 @@ const VideoPickerComponent = ({ formData, setFormData, propertyTitle = '', onUpl
                                     <View style={customStyles.progressContent}>
                                         <View style={customStyles.progressLeft}>
                                             <View style={customStyles.iconContainer}>
-                                                <MaterialIcons name="settings" size={24} color="#007BFF" />
+                                                <MaterialIcons name="settings" size={24} color={videoAccent} />
                                             </View>
                                             <View style={customStyles.progressTextContainer}>
                                                 <Text style={customStyles.progressTitle}>Compressing Video</Text>
@@ -510,7 +511,7 @@ const VideoPickerComponent = ({ formData, setFormData, propertyTitle = '', onUpl
                                     <View style={customStyles.progressContent}>
                                         <View style={customStyles.progressLeft}>
                                             <View style={customStyles.iconContainer}>
-                                                <MaterialIcons name="cloud-upload" size={24} color="#007BFF" />
+                                                <MaterialIcons name="cloud-upload" size={24} color={videoAccent} />
                                             </View>
                                             <View style={customStyles.progressTextContainer}>
                                                 <Text style={customStyles.progressTitle}>Uploading Video</Text>
@@ -538,7 +539,7 @@ const VideoPickerComponent = ({ formData, setFormData, propertyTitle = '', onUpl
                             activeOpacity={0.7}
                             style={customStyles.uploadButton}
                         >
-                            <MaterialIcons name="videocam" size={24} color="#007BFF" />
+                            <MaterialIcons name="videocam" size={24} color={videoAccent} />
                             <Text style={customStyles.uploadText}>
                                 {isCompressing ? 'Compressing...' : 'Tap to upload'}
                             </Text>
@@ -549,7 +550,7 @@ const VideoPickerComponent = ({ formData, setFormData, propertyTitle = '', onUpl
                 <View style={customStyles.videoContainer}>
                     <View style={customStyles.videoInfo}>
                         <View style={customStyles.successIconContainer}>
-                            <MaterialIcons name="check-circle" size={24} color="#007BFF" />
+                            <MaterialIcons name="check-circle" size={24} color={videoAccent} />
                         </View>
                         <View style={customStyles.videoTextContainer}>
                             <Text style={customStyles.videoUrlText} numberOfLines={1}>
@@ -563,7 +564,7 @@ const VideoPickerComponent = ({ formData, setFormData, propertyTitle = '', onUpl
                         onPress={handleVideoRemove}
                         activeOpacity={0.7}
                     >
-                        <MaterialIcons name="delete-outline" size={16} color="#DC2626" />
+                        <MaterialIcons name="delete-outline" size={16} color={videoDanger} />
                         <Text style={customStyles.removeButtonText}>Remove</Text>
                     </TouchableOpacity>
                 </View>
@@ -571,177 +572,6 @@ const VideoPickerComponent = ({ formData, setFormData, propertyTitle = '', onUpl
         </View>
     );
 };
-
-const customStyles = StyleSheet.create({
-    container: {
-        width: '100%',
-    },
-    uploadArea: {
-        width: '100%',
-    },
-    progressWrapper: {
-        width: '100%',
-    },
-    progressCard: {
-        width: '100%',
-        backgroundColor: '#FFFFFF',
-        borderRadius: 12,
-        padding: 14,
-        borderWidth: 1.5,
-        borderColor: '#E5E7EB',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
-        elevation: 4,
-    },
-    progressContent: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 12,
-    },
-    progressLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        flex: 1,
-        marginRight: 12,
-    },
-    iconContainer: {
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 12,
-        flexShrink: 0,
-    },
-    progressTextContainer: {
-        flex: 1,
-        justifyContent: 'center',
-    },
-    progressTitle: {
-        fontSize: 13,
-        fontWeight: '600',
-        color: '#007BFF',
-        marginBottom: 4,
-    },
-    progressSubtext: {
-        fontSize: 11,
-        color: '#666',
-        fontWeight: '400',
-    },
-    progressRight: {
-        justifyContent: 'center',
-        alignItems: 'flex-end',
-        minWidth: 50,
-        flexShrink: 0,
-    },
-    progressPercent: {
-        fontSize: 13,
-        fontWeight: '600',
-        color: '#007BFF',
-    },
-    progressBarWrapper: {
-        width: '100%',
-    },
-    progressBarContainer: {
-        height: 4,
-        backgroundColor: '#E0E0E0',
-        borderRadius: 2,
-        overflow: 'hidden',
-        width: '100%',
-    },
-    progressBar: {
-        height: '100%',
-        borderRadius: 2,
-        backgroundColor: '#007BFF',
-    },
-    uploadButton: {
-        borderWidth: 1,
-        borderColor: '#007BFF',
-        borderRadius: 12,
-        paddingVertical: 14,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#F5F7FA',
-        marginBottom: 18,
-        width: '100%',
-        height: 74,
-        alignSelf: 'center',
-        borderStyle: 'dashed',
-    },
-    uploadText: {
-        marginTop: 5,
-        fontSize: 13,
-        color: '#007BFF',
-        textAlign: 'center',
-    },
-    videoContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: 12,
-        backgroundColor: '#F5F7FA',
-        borderRadius: 12,
-        marginTop: 0,
-        marginBottom: 18,
-        borderWidth: 1,
-        borderColor: '#007BFF',
-    },
-    videoInfo: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        flex: 1,
-        marginRight: 12,
-    },
-    successIconContainer: {
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 10,
-        flexShrink: 0,
-    },
-    videoTextContainer: {
-        flex: 1,
-        justifyContent: 'center',
-    },
-    videoUrlText: {
-        color: '#007BFF',
-        fontSize: 13,
-        fontWeight: '600',
-        marginBottom: 2,
-    },
-    videoSubtext: {
-        color: '#666',
-        fontSize: 11,
-        fontWeight: '400',
-    },
-    removeButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 8,
-        backgroundColor: '#FEE2E2',
-        borderWidth: 1,
-        borderColor: '#FECACA',
-        gap: 5,
-    },
-    removeButtonText: {
-        color: '#DC2626',
-        fontSize: 13,
-        fontWeight: '600',
-        letterSpacing: 0.2,
-    },
-    uploadAreaDisabled: {
-        opacity: 0.6,
-    },
-    hintText: {
-        fontSize: 11,
-        color: '#6B7280',
-        marginTop: 4,
-        textAlign: 'center',
-        fontWeight: '400',
-        lineHeight: 16,
-    },
-});
 
 export default VideoPickerComponent;
 

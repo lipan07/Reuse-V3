@@ -10,6 +10,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNotification } from '../context/NotificationContext';
+import { useTheme } from '../context/ThemeContext';
 import { normalize, normalizeVertical } from '../utils/responsive';
 
 // Use only the system-reported bottom inset: gesture nav = 0 (bar at bottom, no margin);
@@ -18,10 +19,8 @@ function getBottomInset(insets) {
   return insets?.bottom ?? 0;
 }
 
-const BAR_BG = 'rgba(255, 255, 255, 0.75)';
-const BUMP_BG = 'rgba(255, 255, 255, 0.82)';
-
 const BottomNavBar = () => {
+  const { isDarkMode } = useTheme();
   const { width: rawWidth, height: rawHeight } = useWindowDimensions();
   const width = Math.max(rawWidth || 375, 200);
   const height = Math.max(rawHeight || 812, 400);
@@ -45,6 +44,10 @@ const BottomNavBar = () => {
     { key: 'Account', route: 'AccountPage', icon: 'person-outline', color: '#9C27B0', size: n(30) },
   ], [width]);
 
+  const barBg = isDarkMode ? 'rgba(30, 41, 59, 0.92)' : 'rgba(255, 255, 255, 0.75)';
+  const bumpBg = isDarkMode ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.82)';
+  const barBorder = isDarkMode ? 'rgba(71, 85, 105, 0.9)' : 'rgba(224, 224, 224, 0.8)';
+
   const styles = useMemo(() => StyleSheet.create({
     wrapper: {
       position: 'absolute',
@@ -57,17 +60,17 @@ const BottomNavBar = () => {
       flexDirection: 'row',
       justifyContent: 'space-around',
       alignItems: 'center',
-      backgroundColor: BAR_BG,
+      backgroundColor: barBg,
       height: nV(52),
       minHeight: 48,
       borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: 'rgba(224, 224, 224, 0.8)',
+      borderTopColor: barBorder,
       paddingHorizontal: n(8),
       marginHorizontal: n(8),
       borderRadius: n(12),
       shadowColor: '#000',
       shadowOffset: { width: 0, height: -2 },
-      shadowOpacity: 0.08,
+      shadowOpacity: isDarkMode ? 0.35 : 0.08,
       shadowRadius: 8,
       elevation: 12,
     },
@@ -77,12 +80,12 @@ const BottomNavBar = () => {
     },
     navText: {
       fontSize: n(8),
-      color: '#555',
+      color: isDarkMode ? '#cbd5e1' : '#555',
       marginTop: 2,
     },
     bump: {
       marginTop: -nV(18),
-      backgroundColor: BUMP_BG,
+      backgroundColor: bumpBg,
       borderRadius: n(32),
       width: n(64),
       height: n(64),
@@ -118,7 +121,7 @@ const BottomNavBar = () => {
       fontSize: 10,
       fontWeight: '700',
     },
-  }), [width, height]);
+  }), [width, height, isDarkMode, barBg, bumpBg, barBorder]);
 
   return (
     <View

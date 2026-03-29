@@ -4,12 +4,18 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import { Image as Compressor } from 'react-native-compressor';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import RNFS from 'react-native-fs'; // Import react-native-fs
-import styles from '../../../assets/css/AddProductForm.styles.js';
+import { useAddProductFormStyles } from '../useAddProductFormStyles';
+import { useTheme } from '../../../context/ThemeContext';
 
 const MAX_IMAGES = 5; // Maximum number of images allowed
 
 const ImagePickerComponent = ({ formData, setFormData }) => {
     const [isCompressing, setIsCompressing] = useState(false); // Track compression state
+    const styles = useAddProductFormStyles();
+    const { isDarkMode } = useTheme();
+    const uploadIconColor = isCompressing
+        ? (isDarkMode ? '#475569' : '#ccc')
+        : (isDarkMode ? '#60a5fa' : '#007BFF');
 
     const requestStoragePermission = async () => {
         if (Platform.OS !== 'android') {
@@ -159,7 +165,7 @@ const ImagePickerComponent = ({ formData, setFormData }) => {
                 onPress={handleImagePick}
                 disabled={isCompressing} // Disable while compressing
             >
-                <MaterialIcons name="cloud-upload" size={24} color={isCompressing ? '#ccc' : '#007BFF'} />
+                <MaterialIcons name="cloud-upload" size={24} color={uploadIconColor} />
                 <Text style={styles.uploadText}>
                     {isCompressing ? 'Compressing...' : 'Tap to upload'}
                 </Text>

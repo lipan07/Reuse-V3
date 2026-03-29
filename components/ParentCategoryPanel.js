@@ -1,4 +1,5 @@
 import React, { memo } from 'react';
+import { useTheme } from '../context/ThemeContext';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Dimensions } from 'react-native';
 import MCIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MIcon from 'react-native-vector-icons/MaterialIcons';
@@ -37,6 +38,8 @@ const iconMapping = {
 };
 
 const ParentCategoryPanel = memo(({ categories, onSelectCategory, isLoading, isError, isRefreshing, listBottomPadding = 0 }) => {
+  const { isDarkMode } = useTheme();
+
   const getIconComponent = (iconInfo) => {
     switch (iconInfo.type) {
       case 'M':
@@ -57,12 +60,12 @@ const ParentCategoryPanel = memo(({ categories, onSelectCategory, isLoading, isE
 
   if (isLoading && !isRefreshing) {
     return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerText}>All Categories</Text>
+      <View style={[styles.container, isDarkMode && darkStyles.container]}>
+        <View style={[styles.header, isDarkMode && darkStyles.header]}>
+          <Text style={[styles.headerText, isDarkMode && darkStyles.headerText]}>All Categories</Text>
         </View>
         <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#4A90E2" />
+          <ActivityIndicator size="large" color={isDarkMode ? '#60a5fa' : '#4A90E2'} />
         </View>
       </View>
     );
@@ -70,22 +73,22 @@ const ParentCategoryPanel = memo(({ categories, onSelectCategory, isLoading, isE
 
   if (isError && categories.length === 0) {
     return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerText}>All Categories</Text>
+      <View style={[styles.container, isDarkMode && darkStyles.container]}>
+        <View style={[styles.header, isDarkMode && darkStyles.header]}>
+          <Text style={[styles.headerText, isDarkMode && darkStyles.headerText]}>All Categories</Text>
         </View>
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>Failed to load categories.</Text>
+          <Text style={[styles.emptyText, isDarkMode && darkStyles.emptyText]}>Failed to load categories.</Text>
         </View>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Browse Categories</Text>
-        <Text style={styles.headerSubtext}>Select a category to continue</Text>
+    <View style={[styles.container, isDarkMode && darkStyles.container]}>
+      <View style={[styles.header, isDarkMode && darkStyles.header]}>
+        <Text style={[styles.headerText, isDarkMode && darkStyles.headerText]}>Browse Categories</Text>
+        <Text style={[styles.headerSubtext, isDarkMode && darkStyles.headerSubtext]}>Select a category to continue</Text>
       </View>
 
       <ScrollView 
@@ -104,7 +107,11 @@ const ParentCategoryPanel = memo(({ categories, onSelectCategory, isLoading, isE
             return (
               <TouchableOpacity
                 key={item.id.toString()}
-                style={[styles.optionCard, { borderColor: `${categoryColor}20` }]}
+                style={[
+                  styles.optionCard,
+                  { borderColor: `${categoryColor}20` },
+                  isDarkMode && darkStyles.optionCard,
+                ]}
                 onPress={() => onSelectCategory(item)}
                 activeOpacity={0.8}
               >
@@ -260,6 +267,27 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     fontSize: normalize(16),
     fontWeight: '500',
+  },
+});
+
+const darkStyles = StyleSheet.create({
+  container: {
+    backgroundColor: '#121212',
+  },
+  header: {
+    backgroundColor: '#0f172a',
+  },
+  headerText: {
+    color: '#f1f5f9',
+  },
+  headerSubtext: {
+    color: '#94a3b8',
+  },
+  optionCard: {
+    backgroundColor: '#1e293b',
+  },
+  emptyText: {
+    color: '#94a3b8',
   },
 });
 

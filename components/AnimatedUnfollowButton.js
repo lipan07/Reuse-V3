@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import * as Animatable from 'react-native-animatable';
+import { useTheme } from '../context/ThemeContext';
 
 // Optional haptic feedback - will work if available
 let ReactNativeHapticFeedback = null;
@@ -29,6 +30,7 @@ const AnimatedUnfollowButton = ({
     text = "Following",
     size = "medium"
 }) => {
+    const { isDarkMode } = useTheme();
     const [isAnimating, setIsAnimating] = useState(false);
     const [particles, setParticles] = useState([]);
     const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -172,6 +174,10 @@ const AnimatedUnfollowButton = ({
                 <TouchableOpacity
                     style={[
                         styles.unfollowButton,
+                        isDarkMode && {
+                            backgroundColor: '#334155',
+                            borderColor: 'rgba(148, 163, 184, 0.35)',
+                        },
                         {
                             paddingHorizontal: buttonSize.paddingHorizontal,
                             paddingVertical: buttonSize.paddingVertical,
@@ -189,6 +195,7 @@ const AnimatedUnfollowButton = ({
                     />
                     <Text style={[
                         styles.unfollowButtonText,
+                        isDarkMode && { color: '#e2e8f0' },
                         { fontSize: buttonSize.fontSize }
                     ]}>
                         {text}

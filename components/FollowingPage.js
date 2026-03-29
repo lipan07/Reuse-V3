@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     View,
     Text,
@@ -7,10 +7,10 @@ import {
     Image,
     Modal,
     Alert,
-    Dimensions,
     Platform,
     ActivityIndicator,
-    Animated
+    Animated,
+    useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -18,13 +18,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Header from './Screens/Header';
 import CustomStatusBar from './Screens/CustomStatusBar';
 import AnimatedFollowButton from './AnimatedFollowButton';
-import styles from '../assets/css/FollowingPage.styles';
-
-const { width } = Dimensions.get('window');
-const scale = width / 375;
-const normalize = (size) => Math.round(scale * size);
+import { buildFollowingPageStyles } from '../assets/css/FollowingPage.styles';
 
 const FollowingPage = ({ navigation }) => {
+    const { width: winW, height: winH } = useWindowDimensions();
+    const { styles, n, nf } = useMemo(
+        () => buildFollowingPageStyles(winW, winH),
+        [winW, winH]
+    );
     const insets = useSafeAreaInsets();
     const [followingFilter, setFollowingFilter] = useState('Post');
     const [data, setData] = useState([]);
@@ -320,7 +321,7 @@ const FollowingPage = ({ navigation }) => {
                         <View style={[styles.itemImage, styles.defaultIconContainer]}>
                             <Icon
                                 name={followingFilter === 'Post' ? 'image' : 'domain'}
-                                size={normalize(24)}
+                                size={nf(24)}
                                 color={darkMode ? "#666" : "#999"}
                             />
                         </View>
@@ -328,7 +329,7 @@ const FollowingPage = ({ navigation }) => {
                     <View style={[styles.statusIndicator, darkMode && styles.darkStatusIndicator]}>
                         <Icon
                             name={followingFilter === 'Post' ? 'post' : 'account'}
-                            size={normalize(8)}
+                            size={nf(8)}
                             color="#fff"
                         />
                     </View>
@@ -338,13 +339,13 @@ const FollowingPage = ({ navigation }) => {
                         {item.title || 'No Name'}
                     </Text>
                     <View style={styles.itemMeta}>
-                        <Icon name="map-marker" size={normalize(12)} color={darkMode ? "#aaa" : "#666"} />
+                        <Icon name="map-marker" size={nf(12)} color={darkMode ? "#aaa" : "#666"} />
                         <Text style={[styles.itemSubtitle, darkMode && styles.darkSubtitle]} numberOfLines={1}>
                             {item.address || 'No Address'}
                         </Text>
                     </View>
                     <View style={styles.itemMeta}>
-                        <Icon name="circle" size={normalize(8)} color={item.status === 'active' ? '#4CAF50' : '#FF9800'} />
+                        <Icon name="circle" size={nf(8)} color={item.status === 'active' ? '#4CAF50' : '#FF9800'} />
                         <Text style={[styles.itemDistance, darkMode && styles.darkSubtitle]}>
                             {item.status === 'active' ? 'Active' : 'Inactive'}
                         </Text>
@@ -415,7 +416,7 @@ const FollowingPage = ({ navigation }) => {
                             <View style={[styles.emptyIconContainer, darkMode && styles.darkEmptyIconContainer]}>
                                 <Icon
                                     name={followingFilter === 'Post' ? "post-outline" : "account-heart-outline"}
-                                    size={normalize(60)}
+                                    size={nf(60)}
                                     color={darkMode ? "#555" : "#ccc"}
                                 />
                             </View>
@@ -439,7 +440,7 @@ const FollowingPage = ({ navigation }) => {
                         data={data}
                         keyExtractor={(item) => item.id.toString()}
                         renderItem={renderItem}
-                        contentContainerStyle={[styles.listContent, { paddingBottom: (insets?.bottom ?? 0) + normalize(20) }]}
+                        contentContainerStyle={[styles.listContent, { paddingBottom: (insets?.bottom ?? 0) + n(20) }]}
                         showsVerticalScrollIndicator={false}
                         ItemSeparatorComponent={() => <View style={[styles.separator, darkMode && styles.darkSeparator]} />}
                                 ListHeaderComponent={() => (
@@ -465,7 +466,7 @@ const FollowingPage = ({ navigation }) => {
                         <View style={[styles.modalIconContainer, darkMode && styles.darkModalIconContainer]}>
                             <Icon
                                 name="heart-broken"
-                                size={normalize(32)}
+                                size={nf(32)}
                                 color="#FF4444"
                             />
                         </View>
@@ -494,9 +495,9 @@ const FollowingPage = ({ navigation }) => {
                                 <View style={styles.confirmButtonContent}>
                                     <Icon
                                         name={followingFilter === 'Post' ? 'heart-broken' : 'account-minus'}
-                                        size={normalize(16)}
+                                        size={nf(16)}
                                         color="#fff"
-                                        style={{ marginRight: normalize(6) }}
+                                        style={{ marginRight: n(6) }}
                                     />
                                     <Text style={styles.confirmButtonText}>
                                         {followingFilter === 'Post' ? 'Unlike' : 'Unfollow'}
@@ -524,7 +525,7 @@ const FollowingPage = ({ navigation }) => {
                         <View style={styles.sweetAlertContent}>
                             <Icon
                                 name="check-circle"
-                                size={normalize(32)}
+                                size={nf(32)}
                                 color="#4CAF50"
                                 style={styles.sweetAlertIcon}
                             />

@@ -1,10 +1,10 @@
-import { StyleSheet, Dimensions, Platform, StatusBar } from 'react-native';
+import { StyleSheet, Platform, StatusBar } from 'react-native';
+import { getAccountUiMetrics } from '../../utils/accountUiMetrics';
 
-const { width } = Dimensions.get('window');
-const scale = width / 375;
-export const normalize = (size) => Math.round(scale * size);
+export function buildSettingsStyles(width, height) {
+  const { n, nf, contentMaxWidth } = getAccountUiMetrics(width, height);
 
-export default StyleSheet.create({
+  const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#F5F5F5',
@@ -26,8 +26,8 @@ export default StyleSheet.create({
     },
     scrollContainer: {
         flexGrow: 1,
-        paddingTop: normalize(50),
-        paddingBottom: normalize(30),
+        paddingTop: n(50),
+        paddingBottom: n(30),
     },
     darkScrollContainer: {
         backgroundColor: '#121212',
@@ -35,8 +35,8 @@ export default StyleSheet.create({
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: normalize(18),
-        paddingBottom: normalize(12),
+        paddingHorizontal: n(18),
+        paddingBottom: n(12),
         borderBottomWidth: 1,
         borderBottomColor: '#eee',
     },
@@ -44,10 +44,10 @@ export default StyleSheet.create({
         borderBottomColor: '#333',
     },
     backButton: {
-        marginRight: normalize(15),
+        marginRight: n(15),
     },
     title: {
-        fontSize: normalize(20),
+        fontSize: nf(20),
         fontWeight: 'bold',
         color: '#333',
     },
@@ -55,14 +55,17 @@ export default StyleSheet.create({
         color: '#fff',
     },
     content: {
-        paddingHorizontal: normalize(16),
+        paddingHorizontal: n(16),
+        alignSelf: 'center',
+        width: '100%',
+        maxWidth: contentMaxWidth,
     },
     sectionTitle: {
-        fontSize: normalize(14),
+        fontSize: nf(14),
         color: '#666',
-        marginTop: normalize(20),
-        marginBottom: normalize(10),
-        marginLeft: normalize(8),
+        marginTop: n(20),
+        marginBottom: n(10),
+        marginLeft: n(8),
         fontWeight: '600',
         textTransform: 'uppercase',
         letterSpacing: 0.5,
@@ -74,11 +77,11 @@ export default StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#fff',
-        paddingVertical: normalize(16),
-        paddingHorizontal: normalize(16),
-        borderRadius: normalize(12),
+        paddingVertical: n(16),
+        paddingHorizontal: n(16),
+        borderRadius: n(12),
         width: '100%',
-        marginBottom: normalize(12),
+        marginBottom: n(12),
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.05,
@@ -89,16 +92,16 @@ export default StyleSheet.create({
         backgroundColor: '#1E1E1E',
     },
     iconCircle: {
-        width: normalize(40),
-        height: normalize(40),
-        borderRadius: normalize(20),
+        width: n(40),
+        height: n(40),
+        borderRadius: n(20),
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: normalize(14),
+        marginRight: n(14),
     },
     settingText: {
         flex: 1,
-        fontSize: normalize(16),
+        fontSize: nf(16),
         color: '#222',
         fontWeight: '500',
     },
@@ -110,26 +113,26 @@ export default StyleSheet.create({
         backgroundColor: 'rgba(0, 0, 0, 0.6)',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: normalize(20),
+        padding: n(20),
     },
     modalContainer: {
         backgroundColor: '#fff',
-        padding: normalize(24),
-        borderRadius: normalize(12),
+        padding: n(24),
+        borderRadius: n(12),
         width: '100%',
-        maxWidth: normalize(320),
+        maxWidth: n(320),
         alignItems: 'center',
     },
     darkModalContainer: {
         backgroundColor: '#1E1E1E',
     },
     modalIcon: {
-        marginBottom: normalize(12),
+        marginBottom: n(12),
     },
     modalTitle: {
-        fontSize: normalize(20),
+        fontSize: nf(20),
         fontWeight: 'bold',
-        marginBottom: normalize(8),
+        marginBottom: n(8),
         color: '#222',
         textAlign: 'center',
     },
@@ -137,11 +140,11 @@ export default StyleSheet.create({
         color: '#fff',
     },
     modalText: {
-        fontSize: normalize(15),
+        fontSize: nf(15),
         color: '#555',
         textAlign: 'center',
-        marginBottom: normalize(24),
-        lineHeight: normalize(22),
+        marginBottom: n(24),
+        lineHeight: nf(22),
     },
     darkModalText: {
         color: '#ccc',
@@ -154,10 +157,10 @@ export default StyleSheet.create({
     cancelButton: {
         flex: 1,
         backgroundColor: '#eee',
-        paddingVertical: normalize(14),
-        borderRadius: normalize(8),
+        paddingVertical: n(14),
+        borderRadius: n(8),
         alignItems: 'center',
-        marginRight: normalize(10),
+        marginRight: n(10),
     },
     darkCancelButton: {
         backgroundColor: '#333',
@@ -165,7 +168,7 @@ export default StyleSheet.create({
     cancelButtonText: {
         color: '#333',
         fontWeight: '600',
-        fontSize: normalize(15),
+        fontSize: nf(15),
     },
     darkButtonText: {
         color: '#fff',
@@ -173,13 +176,16 @@ export default StyleSheet.create({
     confirmButton: {
         flex: 1,
         backgroundColor: '#D9534F',
-        paddingVertical: normalize(14),
-        borderRadius: normalize(8),
+        paddingVertical: n(14),
+        borderRadius: n(8),
         alignItems: 'center',
     },
     confirmButtonText: {
         color: '#fff',
         fontWeight: '600',
-        fontSize: normalize(15),
+        fontSize: nf(15),
     },
-});
+  });
+
+  return { styles, n, nf, contentMaxWidth };
+}

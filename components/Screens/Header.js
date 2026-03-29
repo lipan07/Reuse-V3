@@ -1,14 +1,16 @@
 // components/Screens/Header.js – simple back + title header for secondary screens
-import React from 'react';
-import { View, Text, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, TouchableOpacity, useWindowDimensions } from 'react-native';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
-import styles from '../../assets/css/Header.styles';
-
-const { width } = Dimensions.get('window');
-const scale = width / 375;
-const normalize = (size) => Math.round(scale * size);
+import { buildHeaderStyles } from '../../assets/css/Header.styles';
 
 const Header = ({ title, navigation, darkMode = false }) => {
+    const { width, height } = useWindowDimensions();
+    const { styles, nf } = useMemo(
+        () => buildHeaderStyles(width, height),
+        [width, height]
+    );
+
     return (
         <View style={[styles.headerContainer, darkMode && styles.darkHeaderContainer]}>
             <View style={styles.header}>
@@ -19,7 +21,7 @@ const Header = ({ title, navigation, darkMode = false }) => {
                 >
                     <FontAwesome5
                         name="arrow-left"
-                        size={normalize(20)}
+                        size={nf(18)}
                         color={darkMode ? '#FFFFFF' : '#000000'}
                     />
                 </TouchableOpacity>

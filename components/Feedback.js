@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     View,
     Text,
@@ -7,11 +7,11 @@ import {
     ScrollView,
     Alert,
     ActivityIndicator,
-    Dimensions,
     StatusBar,
-    Platform
+    Platform,
+    useWindowDimensions,
 } from 'react-native';
-import styles from '../assets/css/Feedback.styles';
+import { buildFeedbackStyles } from '../assets/css/Feedback.styles';
 import { Rating } from 'react-native-ratings';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
@@ -19,11 +19,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Header from './Screens/Header';
 import CustomStatusBar from './Screens/CustomStatusBar';
 
-const { width } = Dimensions.get('window');
-const scale = width / 375;
-const normalize = (size) => Math.round(scale * size);
-
 const Feedback = ({ navigation }) => {
+    const { width, height } = useWindowDimensions();
+    const { styles, nf } = useMemo(
+        () => buildFeedbackStyles(width, height),
+        [width, height]
+    );
     const [rating, setRating] = useState(3);
     const [feedback, setFeedback] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -97,7 +98,7 @@ const Feedback = ({ navigation }) => {
                         <View style={styles.iconContainer}>
                             <MaterialIcons
                                 name="feedback"
-                                size={normalize(50)}
+                                size={nf(50)}
                                 color="#4CAF50"
                                 style={styles.feedbackIcon}
                             />
@@ -108,7 +109,7 @@ const Feedback = ({ navigation }) => {
                         <Rating
                             type="star"
                             ratingCount={5}
-                            imageSize={normalize(40)}
+                            imageSize={nf(40)}
                             showRating
                             startingValue={rating}
                             fractions={1}

@@ -1,10 +1,10 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import {
     View, Text, TextInput, TouchableOpacity, ScrollView,
     KeyboardAvoidingView, Platform, ActivityIndicator, StatusBar,
-    Dimensions
+    useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute } from '@react-navigation/native';
 import AddressAutocomplete from './AddressAutocomplete';
@@ -14,9 +14,7 @@ import FA5Icon from 'react-native-vector-icons/FontAwesome5';
 import FA6Icon from 'react-native-vector-icons/FontAwesome6';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import styles from '../assets/css/FilterScreen.styles.js';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+import { buildFilterScreenStyles } from '../assets/css/FilterScreen.styles.js';
 
 // Subcategory data for categories with children
 const CATEGORY_SUBCATEGORIES = {
@@ -173,6 +171,13 @@ const SUBCATEGORY_COLOR_MAPPING = {
 
 const FilterScreen = ({ navigation }) => {
     const route = useRoute();
+    const { width: winW, height: winH } = useWindowDimensions();
+    const { styles, n, nf, bottomBarMaxWidth, scrollBottomPadding } = useMemo(
+        () => buildFilterScreenStyles(winW, winH),
+        [winW, winH]
+    );
+    const insets = useSafeAreaInsets();
+    const scrollPadBottom = scrollBottomPadding + insets.bottom;
     const [loading, setLoading] = useState(false);
     const [showSubcategories, setShowSubcategories] = useState(false);
 
@@ -371,7 +376,7 @@ const FilterScreen = ({ navigation }) => {
                 ]}>
                     <IconComponent
                         name={category.icon}
-                        size={20}
+                        size={nf(20)}
                         color={isSelected ? category.color : category.color}
                     />
                 </View>
@@ -391,8 +396,9 @@ const FilterScreen = ({ navigation }) => {
         );
     };
 
+    // edges: no `top` — AppNavigator already shows Header under status bar; `top` added a double gap.
     return (
-        <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+        <SafeAreaView style={styles.container} edges={['left', 'right']}>
             <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
             <KeyboardAvoidingView
@@ -405,6 +411,7 @@ const FilterScreen = ({ navigation }) => {
                         <Text style={styles.panelTitle}>Categories</Text>
                         <ScrollView
                             style={styles.categoryScroll}
+                            contentContainerStyle={{ paddingBottom: scrollPadBottom }}
                             showsVerticalScrollIndicator={false}
                         >
                             {categories.map(renderCategoryItem)}
@@ -414,6 +421,7 @@ const FilterScreen = ({ navigation }) => {
                     {/* Right Panel - Subcategories or Filters */}
                     <ScrollView
                         style={styles.rightPanel}
+                        contentContainerStyle={{ paddingBottom: scrollPadBottom }}
                         showsVerticalScrollIndicator={false}
                         keyboardShouldPersistTaps="handled"
                     >
@@ -445,7 +453,7 @@ const FilterScreen = ({ navigation }) => {
                                                 ]}>
                                                     <MCIcon
                                                         name={sub.icon}
-                                                        size={18}
+                                                        size={nf(18)}
                                                         color={isSelected ? '#16a34a' : iconColor}
                                                     />
                                                 </View>
@@ -460,7 +468,7 @@ const FilterScreen = ({ navigation }) => {
                                                 </View>
                                                 {isSelected && (
                                                     <View style={[styles.subcategoryCheck, { backgroundColor: iconColor }]}>
-                                                        <Ionicons name="checkmark" size={12} color="#FFFFFF" />
+                                                        <Ionicons name="checkmark" size={nf(12)} color="#FFFFFF" />
                                                     </View>
                                                 )}
                                             </TouchableOpacity>
@@ -470,7 +478,7 @@ const FilterScreen = ({ navigation }) => {
                                 <View style={styles.skipButtonContainer}>
                                     <TouchableOpacity onPress={handleSkipSubcategories} style={styles.skipButton}>
                                         <Text style={styles.skipButtonText}>Skip & Show All</Text>
-                                        <Ionicons name="arrow-forward" size={16} color="#6B7280" />
+                                        <Ionicons name="arrow-forward" size={nf(16)} color="#6B7280" />
                                     </TouchableOpacity>
                                 </View>
                             </View>
@@ -480,7 +488,7 @@ const FilterScreen = ({ navigation }) => {
                                     <View style={styles.filterSection}>
                                         <Text style={styles.sectionTitle}>Search</Text>
                                         <View style={styles.searchInputWrapper}>
-                                            <Ionicons name="search" size={18} color="#9CA3AF" style={styles.searchIcon} />
+                                            <Ionicons name="search" size={nf(18)} color="#9CA3AF" style={styles.searchIcon} />
                                             <TextInput
                                                 style={styles.searchInput}
                                                 value={filters.search}
@@ -490,7 +498,7 @@ const FilterScreen = ({ navigation }) => {
                                             />
                                             {filters.search.length > 0 && (
                                                 <TouchableOpacity onPress={() => handleInputChange('search', '')}>
-                                                    <Ionicons name="close-circle" size={18} color="#9CA3AF" />
+                                                    <Ionicons name="close-circle" size={nf(18)} color="#9CA3AF" />
                                                 </TouchableOpacity>
                                             )}
                                         </View>
@@ -613,44 +621,46 @@ const FilterScreen = ({ navigation }) => {
                                             </View>
                                         </View>
                                     )}
-
-                                    {/* Spacer for bottom buttons */}
-                                    <View style={{ height: 100 }} />
                                 </>
                         )}
                     </ScrollView>
                 </View>
             </KeyboardAvoidingView>
 
-            {/* Bottom Action Buttons */}
-            <View style={styles.bottomActions}>
-                <TouchableOpacity
-                    style={[styles.clearButton, loading && styles.buttonDisabled]}
-                    onPress={handleClearFilters}
-                    disabled={loading}
-                    activeOpacity={0.7}
-                >
-                    <View style={styles.clearButtonContent}>
-                        <Ionicons name="refresh-outline" size={20} color="#6B7280" />
-                        <Text style={styles.clearButtonText}>Clear All</Text>
-                    </View>
-                </TouchableOpacity>
+            {/* Floats above scroll — no full-width bar; touches pass through except on buttons */}
+            <View
+                style={[styles.bottomActionsOuter, { paddingBottom: insets.bottom + n(8) }]}
+                pointerEvents="box-none"
+            >
+                <View style={[styles.bottomActionsRow, { maxWidth: bottomBarMaxWidth }]} pointerEvents="box-none">
+                    <TouchableOpacity
+                        style={[styles.clearButton, loading && styles.buttonDisabled]}
+                        onPress={handleClearFilters}
+                        disabled={loading}
+                        activeOpacity={0.7}
+                    >
+                        <View style={styles.clearButtonContent}>
+                            <Ionicons name="refresh-outline" size={nf(20)} color="#6B7280" />
+                            <Text style={styles.clearButtonText}>Clear All</Text>
+                        </View>
+                    </TouchableOpacity>
 
-                <TouchableOpacity
-                    style={[styles.applyButton, loading && styles.buttonDisabled]}
-                    onPress={handleSubmit}
-                    disabled={loading}
-                    activeOpacity={0.8}
-                >
-                    {loading ? (
-                        <ActivityIndicator color="#FFFFFF" size="small" />
-                    ) : (
+                    <TouchableOpacity
+                        style={[styles.applyButton, loading && styles.buttonDisabled]}
+                        onPress={handleSubmit}
+                        disabled={loading}
+                        activeOpacity={0.8}
+                    >
+                        {loading ? (
+                            <ActivityIndicator color="#FFFFFF" size="small" />
+                        ) : (
                             <View style={styles.applyButtonContent}>
-                                <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
-                            <Text style={styles.applyButtonText}>Apply Filters</Text>
+                                    <Ionicons name="checkmark-circle" size={nf(20)} color="#FFFFFF" />
+                                    <Text style={styles.applyButtonText}>Apply Filters</Text>
                             </View>
-                    )}
-                </TouchableOpacity>
+                        )}
+                    </TouchableOpacity>
+                </View>
             </View>
         </SafeAreaView>
     );

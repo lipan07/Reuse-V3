@@ -1,21 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   Image,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Dimensions,
   Modal,
   TouchableWithoutFeedback,
   Linking,
   Alert,
-  PermissionsAndroid
+  PermissionsAndroid,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { launchImageLibrary } from 'react-native-image-picker';
@@ -24,14 +23,14 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import AddressAutocomplete from './AddressAutocomplete';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CustomStatusBar from './Screens/CustomStatusBar';
-
-const { width, height } = Dimensions.get('window');
-const scale = width / 375;
-const verticalScale = height / 812;
-const normalize = (size) => Math.round(scale * size);
-const normalizeVertical = (size) => Math.round(verticalScale * size);
+import { buildEditProfileStyles } from '../assets/css/EditProfilePage.styles';
 
 const EditProfilePage = () => {
+  const { width, height } = useWindowDimensions();
+  const { styles, n, nf, nv } = useMemo(
+    () => buildEditProfileStyles(width, height),
+    [width, height]
+  );
   const insets = useSafeAreaInsets();
   const bottomInset = insets?.bottom ?? 0;
   const [userData, setUserData] = useState({
@@ -347,7 +346,7 @@ const EditProfilePage = () => {
                       modalType === 'success' ? 'checkmark' :
                         modalType === 'warning' ? 'warning' : 'close'
                     }
-                    size={24}
+                    size={nf(24)}
                     color="#fff"
                   />
                 </View>
@@ -369,7 +368,10 @@ const EditProfilePage = () => {
           style={styles.keyboardView}
         >
           <ScrollView
-            contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 + bottomInset }]}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: nv(100) + bottomInset },
+            ]}
             showsVerticalScrollIndicator={false}
           >
             {/* Header */}
@@ -385,11 +387,11 @@ const EditProfilePage = () => {
                   <Image source={{ uri: userData.profileImage }} style={styles.avatar} />
                 ) : (
                     <View style={styles.avatarPlaceholder}>
-                      <Ionicons name="person" size={32} color="#6366F1" />
+                      <Ionicons name="person" size={nf(32)} color="#6366F1" />
                     </View>
                 )}
                 <View style={styles.cameraIcon}>
-                  <Ionicons name="camera" size={16} color="#fff" />
+                  <Ionicons name="camera" size={nf(16)} color="#fff" />
                 </View>
               </TouchableOpacity>
             </View>
@@ -397,7 +399,7 @@ const EditProfilePage = () => {
             {/* Personal Information */}
             <View style={styles.card}>
               <View style={styles.cardHeader}>
-                <Ionicons name="person-outline" size={20} color="#6366F1" />
+                <Ionicons name="person-outline" size={nf(20)} color="#6366F1" />
                 <Text style={styles.cardTitle}>Personal Information</Text>
               </View>
 
@@ -451,7 +453,7 @@ const EditProfilePage = () => {
                   onAddressSelect={({ address }) => handleChange('businessAddress', address)}
                   styles={{
                     input: styles.input,
-                    predictionText: { fontSize: 14, color: '#333' }
+                    predictionText: { fontSize: nf(14), color: '#333' },
                   }}
                 />
               </View>
@@ -460,7 +462,7 @@ const EditProfilePage = () => {
             {/* About Section */}
             <View style={styles.card}>
               <View style={styles.cardHeader}>
-                <Ionicons name="information-circle-outline" size={20} color="#6366F1" />
+                <Ionicons name="information-circle-outline" size={nf(20)} color="#6366F1" />
                 <Text style={styles.cardTitle}>About</Text>
               </View>
               <View style={styles.inputContainer}>
@@ -483,11 +485,11 @@ const EditProfilePage = () => {
               activeOpacity={0.8}
             >
               <View style={styles.cardHeader}>
-                <Ionicons name="business-outline" size={20} color="#6366F1" />
+                <Ionicons name="business-outline" size={nf(20)} color="#6366F1" />
                 <Text style={styles.cardTitle}>Business Information</Text>
                 <MaterialIcons
                   name={businessExpanded ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
-                  size={24}
+                  size={nf(24)}
                   color="#6366F1"
                 />
               </View>
@@ -528,7 +530,7 @@ const EditProfilePage = () => {
 
                 <View style={styles.divider} />
 
-                <Text style={[styles.cardTitle, { marginBottom: 16 }]}>Primary Contact</Text>
+                <Text style={[styles.cardTitle, { marginBottom: n(16) }]}>Primary Contact</Text>
 
                 <View style={styles.inputContainer}>
                   <Text style={styles.inputLabel}>Contact Person Name</Text>
@@ -589,7 +591,7 @@ const EditProfilePage = () => {
                 <ActivityIndicator color="#fff" />
               ) : (
                   <>
-                    <Ionicons name="save-outline" size={20} color="#fff" />
+                    <Ionicons name="save-outline" size={nf(20)} color="#fff" />
                     <Text style={styles.saveButtonText}>Save Changes</Text>
                   </>
               )}
@@ -600,231 +602,5 @@ const EditProfilePage = () => {
     </>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 100,
-  },
-  loaderContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-  },
-  loaderText: {
-    marginTop: 16,
-    color: '#64748B',
-    fontSize: 16,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  headerTitle: {
-    fontSize: normalize(28),
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 8,
-    marginTop: normalizeVertical(35),
-  },
-  headerSubtitle: {
-    fontSize: normalize(14),
-    color: '#64748B',
-    textAlign: 'center',
-  },
-  avatarSection: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  avatarContainer: {
-    position: 'relative',
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 3,
-    borderColor: '#E5E7EB',
-  },
-  avatarPlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#F1F5F9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
-  },
-  cameraIcon: {
-    position: 'absolute',
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#6366F1',
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  businessCard: {
-    marginBottom: 16,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  cardTitle: {
-    fontSize: normalize(16),
-    fontWeight: '600',
-    color: '#1F2937',
-    marginLeft: 12,
-    flex: 1,
-  },
-  inputContainer: {
-    marginBottom: 16,
-  },
-  inputLabel: {
-    fontSize: normalize(14),
-    fontWeight: '500',
-    color: '#374151',
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: '#F9FAFB',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: normalize(15),
-    color: '#1F2937',
-  },
-  bioInput: {
-    height: 100,
-    textAlignVertical: 'top',
-  },
-  nameRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#E5E7EB',
-    marginVertical: 20,
-  },
-  spacer: {
-    height: 20,
-  },
-  buttonContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#fff',
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-  },
-  saveButton: {
-    backgroundColor: '#6366F1',
-    borderRadius: 12,
-    padding: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 8,
-  },
-  saveButtonDisabled: {
-    backgroundColor: '#9CA3AF',
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontSize: normalize(16),
-    fontWeight: '600',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  modalContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 24,
-    width: '100%',
-    maxWidth: 400,
-    alignItems: 'center',
-  },
-  modalIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  successIcon: {
-    backgroundColor: '#10B981',
-  },
-  warningIcon: {
-    backgroundColor: '#F59E0B',
-  },
-  dangerIcon: {
-    backgroundColor: '#EF4444',
-  },
-  modalTitle: {
-    fontSize: normalize(18),
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  modalMessage: {
-    fontSize: normalize(15),
-    color: '#64748B',
-    marginBottom: 24,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  modalButton: {
-    backgroundColor: '#6366F1',
-    borderRadius: 12,
-    padding: 16,
-    width: '100%',
-    alignItems: 'center',
-  },
-  modalButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: normalize(16),
-  },
-});
 
 export default EditProfilePage;

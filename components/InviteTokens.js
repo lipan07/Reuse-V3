@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
   Alert,
@@ -10,16 +9,23 @@ import {
   Share,
   ActivityIndicator,
   RefreshControl,
+  useWindowDimensions,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { BASE_URL } from '@env';
 import Header from './Header';
+import { buildInviteTokensStyles } from '../assets/css/InviteTokens.styles';
 
 const INVITE_BASE_URL = 'https://nearx.co';
 const getInviteUrl = (inviteToken) => `${INVITE_BASE_URL}/invite/${inviteToken}`;
 
 const InviteTokens = ({ navigation }) => {
+  const { width, height } = useWindowDimensions();
+  const { styles, nf } = useMemo(
+    () => buildInviteTokensStyles(width, height),
+    [width, height]
+  );
   const [tokens, setTokens] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -130,7 +136,7 @@ const InviteTokens = ({ navigation }) => {
         }
       >
         <View style={styles.infoBox}>
-          <MaterialIcons name="info-outline" size={20} color="#0984e3" />
+          <MaterialIcons name="info-outline" size={nf(20)} color="#0984e3" />
           <Text style={styles.infoText}>
             Share your invite tokens with friends! Each token is valid for 24 hours and can be used once.
           </Text>
@@ -138,7 +144,7 @@ const InviteTokens = ({ navigation }) => {
 
         {hasInactiveTokens ? (
           <View style={styles.inactiveBanner}>
-            <MaterialIcons name="info" size={20} color="#E65100" />
+            <MaterialIcons name="info" size={nf(20)} color="#E65100" />
             <Text style={styles.inactiveBannerText}>
               Complete a purchase and get payment confirmed by admin to activate your invite tokens. Until then, others cannot use your tokens for registration.
             </Text>
@@ -147,7 +153,7 @@ const InviteTokens = ({ navigation }) => {
 
         {tokens.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <MaterialIcons name="card-giftcard" size={64} color="#BDBDBD" />
+            <MaterialIcons name="card-giftcard" size={nf(64)} color="#BDBDBD" />
             <Text style={styles.emptyText}>No invite tokens found</Text>
           </View>
         ) : (
@@ -167,14 +173,14 @@ const InviteTokens = ({ navigation }) => {
 
                 <View style={styles.tokenDetails}>
                   <View style={styles.detailRow}>
-                    <MaterialIcons name="schedule" size={16} color="#666" />
+                    <MaterialIcons name="schedule" size={nf(16)} color="#666" />
                     <Text style={styles.detailText}>
                       Expires: {formatDate(token.expires_at)}
                     </Text>
                   </View>
                   {token.is_used && token.used_by && (
                     <View style={styles.detailRow}>
-                      <MaterialIcons name="person" size={16} color="#666" />
+                      <MaterialIcons name="person" size={nf(16)} color="#666" />
                       <Text style={styles.detailText}>
                         Used by: {token.used_by.name} ({token.used_by.email})
                       </Text>
@@ -182,7 +188,7 @@ const InviteTokens = ({ navigation }) => {
                   )}
                   {token.is_used && token.used_at && (
                     <View style={styles.detailRow}>
-                      <MaterialIcons name="check-circle" size={16} color="#666" />
+                      <MaterialIcons name="check-circle" size={nf(16)} color="#666" />
                       <Text style={styles.detailText}>
                         Used on: {formatDate(token.used_at)}
                       </Text>
@@ -196,21 +202,21 @@ const InviteTokens = ({ navigation }) => {
                       style={[styles.actionButton, styles.copyButton]}
                       onPress={() => copyToken(token.token)}
                     >
-                      <MaterialIcons name="content-copy" size={18} color="#0984e3" />
+                      <MaterialIcons name="content-copy" size={nf(18)} color="#0984e3" />
                       <Text style={styles.actionButtonText}>Copy Token</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.actionButton, styles.urlButton]}
                       onPress={() => copyInviteUrl(token.token)}
                     >
-                      <MaterialIcons name="link" size={18} color="#0984e3" />
+                      <MaterialIcons name="link" size={nf(18)} color="#0984e3" />
                       <Text style={styles.actionButtonText}>Copy URL</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.actionButton, styles.shareButton]}
                       onPress={() => shareInviteUrl(token.token)}
                     >
-                      <MaterialIcons name="share" size={18} color="#0984e3" />
+                      <MaterialIcons name="share" size={nf(18)} color="#0984e3" />
                       <Text style={styles.actionButtonText}>Share</Text>
                     </TouchableOpacity>
                   </View>
@@ -227,153 +233,5 @@ const InviteTokens = ({ navigation }) => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 16,
-  },
-  infoBox: {
-    flexDirection: 'row',
-    backgroundColor: '#E3F2FD',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-    alignItems: 'flex-start',
-  },
-  infoText: {
-    flex: 1,
-    marginLeft: 8,
-    fontSize: 14,
-    color: '#1976D2',
-    lineHeight: 20,
-  },
-  inactiveBanner: {
-    flexDirection: 'row',
-    backgroundColor: '#FFF3E0',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-    alignItems: 'flex-start',
-    borderLeftWidth: 4,
-    borderLeftColor: '#FF9800',
-  },
-  inactiveBannerText: {
-    flex: 1,
-    marginLeft: 8,
-    fontSize: 14,
-    color: '#E65100',
-    lineHeight: 20,
-  },
-  inactiveHint: {
-    marginTop: 12,
-    fontSize: 13,
-    color: '#FF9800',
-    fontStyle: 'italic',
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 64,
-  },
-  emptyText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#9E9E9E',
-  },
-  tokenCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  tokenHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  tokenInfo: {
-    flex: 1,
-  },
-  tokenLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 4,
-  },
-  tokenValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    letterSpacing: 2,
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  tokenDetails: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-  },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  detailText: {
-    marginLeft: 8,
-    fontSize: 14,
-    color: '#666',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    marginTop: 16,
-    gap: 8,
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    backgroundColor: '#F5F5F5',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  copyButton: {},
-  urlButton: {},
-  shareButton: {},
-  actionButtonText: {
-    marginLeft: 6,
-    fontSize: 14,
-    color: '#0984e3',
-    fontWeight: '600',
-  },
-});
 
 export default InviteTokens;

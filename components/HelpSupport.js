@@ -1,17 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     View,
     Text,
     TextInput,
     TouchableOpacity,
     ScrollView,
-    StyleSheet,
     Alert,
-    Dimensions,
-    StatusBar,
-    Platform,
     Linking,
-    ActivityIndicator
+    ActivityIndicator,
+    useWindowDimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
@@ -20,15 +17,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import Header from './Screens/Header';
 import CustomStatusBar from './Screens/CustomStatusBar';
-
-const { width, height } = Dimensions.get('window');
-const scale = width / 375;
-const verticalScale = height / 812;
-const normalize = (size) => Math.round(scale * size);
-const normalizeVertical = (size) => Math.round(verticalScale * size);
+import { buildHelpSupportStyles } from '../assets/css/HelpSupport.styles';
 
 const HelpSupport = () => {
     const navigation = useNavigation();
+    const { width, height } = useWindowDimensions();
+    const { styles, nf } = useMemo(
+        () => buildHelpSupportStyles(width, height),
+        [width, height]
+    );
     const [issue, setIssue] = useState('');
     const [message, setMessage] = useState('');
     const [modalVisible, setModalVisible] = useState(false);
@@ -139,7 +136,7 @@ const HelpSupport = () => {
                 >
                     {/* Welcome Section */}
                     <View style={styles.welcomeCard}>
-                        <Icon name="help-outline" size={normalize(30)} color="#007BFF" />
+                        <Icon name="help-outline" size={nf(30)} color="#007BFF" />
                         <Text style={styles.welcomeTitle}>How can we help you?</Text>
                         <Text style={styles.welcomeText}>
                             Whether you're buying or selling items on Reuse, our support team is here to assist you.
@@ -156,7 +153,7 @@ const HelpSupport = () => {
                             ]}>
                                 <Icon
                                     name={item.warning ? 'error-outline' : 'help-outline'}
-                                    size={normalize(20)}
+                                    size={nf(20)}
                                     color={item.warning ? '#FF3B30' : '#007BFF'}
                                     style={styles.questionIcon}
                                 />
@@ -212,7 +209,7 @@ const HelpSupport = () => {
                             ) : (
                                 <>
                                     <Text style={styles.submitButtonText}>Submit Request</Text>
-                                    <Icon name="send" size={normalize(16)} color="#fff" />
+                                    <Icon name="send" size={nf(16)} color="#fff" />
                                 </>
                             )}
                         </TouchableOpacity>
@@ -234,14 +231,14 @@ const HelpSupport = () => {
                             >
                                 <Icon
                                     name={item.icon}
-                                    size={normalize(20)}
+                                    size={nf(20)}
                                     color="#007BFF"
                                     style={styles.contactIcon}
                                 />
                                 <Text style={styles.contactText}>{item.text}</Text>
                                 <Icon
                                     name="chevron-right"
-                                    size={normalize(20)}
+                                    size={nf(20)}
                                     color="#999"
                                     style={styles.contactArrow}
                                 />
@@ -261,145 +258,5 @@ const HelpSupport = () => {
         </>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#F5F7FA',
-    },
-    scrollContainer: {
-        padding: normalize(16),
-        paddingBottom: normalize(32),
-    },
-    welcomeCard: {
-        backgroundColor: '#fff',
-        borderRadius: normalize(12),
-        padding: normalize(20),
-        marginBottom: normalize(16),
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 6,
-        elevation: 2,
-    },
-    welcomeTitle: {
-        fontSize: normalize(18),
-        fontWeight: '600',
-        color: '#333',
-        marginTop: normalize(8),
-        marginBottom: normalize(4),
-    },
-    welcomeText: {
-        fontSize: normalize(14),
-        color: '#666',
-        textAlign: 'center',
-        lineHeight: normalize(20),
-    },
-    sectionHeaderText: {
-        fontSize: normalize(16),
-        fontWeight: '600',
-        color: '#333',
-        marginBottom: normalize(12),
-        marginTop: normalize(8),
-    },
-    card: {
-        backgroundColor: '#fff',
-        borderRadius: normalize(12),
-        padding: normalize(16),
-        marginBottom: normalize(16),
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 6,
-        elevation: 2,
-    },
-    questionContainer: {
-        flexDirection: 'row',
-        paddingVertical: normalize(12),
-    },
-    questionBorder: {
-        borderBottomWidth: 1,
-        borderBottomColor: '#f0f0f0',
-    },
-    questionIcon: {
-        marginRight: normalize(12),
-        marginTop: normalize(2),
-    },
-    questionTextContainer: {
-        flex: 1,
-    },
-    questionText: {
-        fontWeight: '500',
-        fontSize: normalize(14),
-        color: '#333',
-        marginBottom: normalize(4),
-    },
-    warningText: {
-        color: '#FF3B30',
-    },
-    answerText: {
-        fontSize: normalize(13),
-        color: '#666',
-        lineHeight: normalize(18),
-    },
-    inputContainer: {
-        marginBottom: normalize(16),
-    },
-    inputLabel: {
-        fontSize: normalize(13),
-        color: '#666',
-        marginBottom: normalize(6),
-    },
-    input: {
-        backgroundColor: '#F5F7FA',
-        borderRadius: normalize(8),
-        padding: normalize(12),
-        fontSize: normalize(14),
-        borderWidth: 1,
-        borderColor: '#E0E0E0',
-        color: '#333',
-    },
-    messageInput: {
-        height: normalize(120),
-    },
-    charCounter: {
-        fontSize: normalize(11),
-        color: '#999',
-        textAlign: 'right',
-        marginTop: normalize(4),
-    },
-    submitButton: {
-        backgroundColor: '#007BFF',
-        borderRadius: normalize(8),
-        padding: normalize(14),
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'row',
-        marginTop: normalize(8),
-    },
-    submitButtonText: {
-        color: '#fff',
-        fontWeight: '600',
-        fontSize: normalize(14),
-        marginRight: normalize(8),
-    },
-    contactOption: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: normalize(12),
-    },
-    contactIcon: {
-        marginRight: normalize(12),
-    },
-    contactText: {
-        flex: 1,
-        fontSize: normalize(14),
-        color: '#333',
-    },
-    contactArrow: {
-        marginLeft: 'auto',
-    },
-});
 
 export default HelpSupport;

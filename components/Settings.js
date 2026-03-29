@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     View,
     Text,
@@ -8,16 +8,22 @@ import {
     StatusBar,
     ScrollView,
     Platform,
-    Switch
+    Switch,
+    useWindowDimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Header from './Screens/Header';
 import CustomStatusBar from './Screens/CustomStatusBar';
-import styles, { normalize } from '../assets/css/Settings.styles';
+import { buildSettingsStyles } from '../assets/css/Settings.styles';
 
 const SettingsPage = ({ navigation }) => {
+    const { width, height } = useWindowDimensions();
+    const { styles, nf } = useMemo(
+        () => buildSettingsStyles(width, height),
+        [width, height]
+    );
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
     const [is2FAEnabled, setIs2FAEnabled] = useState(false);
@@ -86,7 +92,7 @@ const SettingsPage = ({ navigation }) => {
             activeOpacity={0.8}
         >
             <View style={[styles.iconCircle, { backgroundColor: color + '22' }]}>
-                <Icon name={icon} size={normalize(22)} color={color} />
+                <Icon name={icon} size={nf(22)} color={color} />
             </View>
             <Text style={styles.settingText}>{text}</Text>
             {isSwitch ? (
@@ -97,7 +103,7 @@ const SettingsPage = ({ navigation }) => {
                     value={value}
                 />
             ) : (
-                <Icon name="chevron-right" size={normalize(20)} color="#bbb" />
+                <Icon name="chevron-right" size={nf(20)} color="#bbb" />
             )}
         </TouchableOpacity>
     );
@@ -159,7 +165,7 @@ const SettingsPage = ({ navigation }) => {
                 <Modal transparent animationType="fade" visible={isDeleteModalVisible}>
                     <View style={styles.modalOverlay}>
                         <View style={[styles.modalContainer, isDarkMode && styles.darkModalContainer]}>
-                            <Icon name="alert-circle-outline" size={normalize(40)} color="#D9534F" style={styles.modalIcon} />
+                            <Icon name="alert-circle-outline" size={nf(40)} color="#D9534F" style={styles.modalIcon} />
                             <Text style={[styles.modalTitle, isDarkMode && styles.darkModalTitle]}>Delete Account?</Text>
                             <Text style={[styles.modalText, isDarkMode && styles.darkModalText]}>
                                 This will permanently delete your account and all associated data. This action cannot be undone.
@@ -188,7 +194,7 @@ const SettingsPage = ({ navigation }) => {
                 <Modal transparent animationType="fade" visible={isLogoutModalVisible}>
                     <View style={styles.modalOverlay}>
                         <View style={[styles.modalContainer, isDarkMode && styles.darkModalContainer]}>
-                            <Icon name="logout-variant" size={normalize(40)} color="#F0AD4E" style={styles.modalIcon} />
+                            <Icon name="logout-variant" size={nf(40)} color="#F0AD4E" style={styles.modalIcon} />
                             <Text style={[styles.modalTitle, isDarkMode && styles.darkModalTitle]}>Logout Everywhere?</Text>
                             <Text style={[styles.modalText, isDarkMode && styles.darkModalText]}>
                                 This will log you out from all devices where you're currently signed in.

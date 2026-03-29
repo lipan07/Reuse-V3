@@ -1,10 +1,10 @@
-import { StyleSheet, Dimensions, Platform, StatusBar } from 'react-native';
+import { StyleSheet, Platform, StatusBar } from 'react-native';
+import { getAccountUiMetrics } from '../../utils/accountUiMetrics';
 
-const { width } = Dimensions.get('window');
-const scale = width / 375;
-const normalize = (size) => Math.round(scale * size);
+export function buildFollowingPageStyles(width, height) {
+  const { n, nf, contentMaxWidth } = getAccountUiMetrics(width, height);
 
-export default StyleSheet.create({
+  const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#F5F5F5',
@@ -26,9 +26,9 @@ export default StyleSheet.create({
     },
     tabContainer: {
         flexDirection: 'row',
-        marginHorizontal: normalize(16),
-        marginTop: normalize(12),
-        borderRadius: normalize(8),
+        marginHorizontal: n(16),
+        marginTop: n(12),
+        borderRadius: n(8),
         overflow: 'hidden',
         backgroundColor: '#f5f5f5',
     },
@@ -37,14 +37,14 @@ export default StyleSheet.create({
     },
     tabButton: {
         flex: 1,
-        paddingVertical: normalize(12),
+        paddingVertical: n(12),
         alignItems: 'center',
     },
     activeTabButton: {
         backgroundColor: '#007bff',
     },
     tabButtonText: {
-        fontSize: normalize(14),
+        fontSize: nf(14),
         fontWeight: '500',
         color: '#666',
     },
@@ -56,8 +56,8 @@ export default StyleSheet.create({
     },
     contentContainer: {
         flex: 1,
-        paddingHorizontal: normalize(16),
-        paddingTop: normalize(12),
+        paddingHorizontal: n(16),
+        paddingTop: n(12),
     },
     loadingContainer: {
         flex: 1,
@@ -65,48 +65,48 @@ export default StyleSheet.create({
         alignItems: 'center',
     },
     loadingText: {
-        fontSize: normalize(16),
+        fontSize: nf(16),
         color: '#666',
-        marginTop: normalize(12),
+        marginTop: n(12),
     },
     emptyContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        padding: normalize(20),
+        padding: n(20),
     },
     emptyIconContainer: {
-        width: normalize(120),
-        height: normalize(120),
-        borderRadius: normalize(60),
+        width: n(120),
+        height: n(120),
+        borderRadius: n(60),
         backgroundColor: '#f0f0f0',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: normalize(20),
+        marginBottom: n(20),
     },
     darkEmptyIconContainer: {
         backgroundColor: '#2A2A2A',
     },
     emptyText: {
-        fontSize: normalize(20),
+        fontSize: nf(20),
         fontWeight: '600',
         color: '#666',
-        marginBottom: normalize(8),
+        marginBottom: n(8),
         textAlign: 'center',
     },
     emptySubText: {
-        fontSize: normalize(14),
+        fontSize: nf(14),
         color: '#999',
         textAlign: 'center',
-        marginBottom: normalize(24),
+        marginBottom: n(24),
         maxWidth: '80%',
-        lineHeight: normalize(20),
+        lineHeight: nf(20),
     },
     exploreButton: {
         backgroundColor: '#007bff',
-        paddingHorizontal: normalize(24),
-        paddingVertical: normalize(12),
-        borderRadius: normalize(25),
+        paddingHorizontal: n(24),
+        paddingVertical: n(12),
+        borderRadius: n(25),
         shadowColor: '#007bff',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
@@ -118,24 +118,24 @@ export default StyleSheet.create({
     },
     exploreButtonText: {
         color: '#fff',
-        fontSize: normalize(16),
+        fontSize: nf(16),
         fontWeight: '600',
     },
     darkExploreButtonText: {
         color: '#fff',
     },
     listContent: {
-        paddingBottom: normalize(20),
+        paddingBottom: n(20),
     },
     listHeader: {
-        paddingVertical: normalize(12),
-        paddingHorizontal: normalize(4),
+        paddingVertical: n(12),
+        paddingHorizontal: n(4),
         borderBottomWidth: 1,
         borderBottomColor: '#f0f0f0',
-        marginBottom: normalize(8),
+        marginBottom: n(8),
     },
     listHeaderText: {
-        fontSize: normalize(14),
+        fontSize: nf(14),
         fontWeight: '600',
         color: '#666',
         textTransform: 'uppercase',
@@ -144,11 +144,11 @@ export default StyleSheet.create({
     itemContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: normalize(16),
+        paddingVertical: n(16),
         backgroundColor: '#fff',
-        borderRadius: normalize(16),
-        paddingHorizontal: normalize(16),
-        marginBottom: normalize(12),
+        borderRadius: n(16),
+        paddingHorizontal: n(16),
+        marginBottom: n(12),
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.08,
@@ -170,9 +170,9 @@ export default StyleSheet.create({
         position: 'relative',
     },
     itemImage: {
-        width: normalize(60),
-        height: normalize(60),
-        borderRadius: normalize(30),
+        width: n(60),
+        height: n(60),
+        borderRadius: n(30),
         backgroundColor: '#eee',
     },
     defaultIconContainer: {
@@ -184,9 +184,9 @@ export default StyleSheet.create({
         position: 'absolute',
         bottom: -2,
         right: -2,
-        width: normalize(20),
-        height: normalize(20),
-        borderRadius: normalize(10),
+        width: n(20),
+        height: n(20),
+        borderRadius: n(10),
         backgroundColor: '#007bff',
         justifyContent: 'center',
         alignItems: 'center',
@@ -198,30 +198,30 @@ export default StyleSheet.create({
     },
     itemInfo: {
         flex: 1,
-        marginLeft: normalize(16),
-        marginRight: normalize(12),
+        marginLeft: n(16),
+        marginRight: n(12),
     },
     itemTitle: {
-        fontSize: normalize(16),
+        fontSize: nf(16),
         fontWeight: '600',
         color: '#333',
-        marginBottom: normalize(6),
+        marginBottom: n(6),
     },
     itemMeta: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: normalize(4),
+        marginBottom: n(4),
     },
     itemSubtitle: {
-        fontSize: normalize(13),
+        fontSize: nf(13),
         color: '#666',
-        marginLeft: normalize(6),
+        marginLeft: n(6),
         flex: 1,
     },
     itemDistance: {
-        fontSize: normalize(12),
+        fontSize: nf(12),
         color: '#999',
-        marginLeft: normalize(6),
+        marginLeft: n(6),
     },
     animatedFollowButton: {
         alignSelf: 'flex-start',
@@ -247,10 +247,10 @@ export default StyleSheet.create({
     },
     modalContainer: {
         width: '85%',
-        maxWidth: normalize(320),
+        maxWidth: n(320),
         backgroundColor: '#fff',
-        borderRadius: normalize(20),
-        padding: normalize(28),
+        borderRadius: n(20),
+        padding: n(28),
         alignItems: 'center',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 10 },
@@ -262,21 +262,21 @@ export default StyleSheet.create({
         backgroundColor: '#1E1E1E',
     },
     modalIconContainer: {
-        width: normalize(64),
-        height: normalize(64),
-        borderRadius: normalize(32),
+        width: n(64),
+        height: n(64),
+        borderRadius: n(32),
         backgroundColor: '#FFE6E6',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: normalize(16),
+        marginBottom: n(16),
     },
     darkModalIconContainer: {
         backgroundColor: '#2A1A1A',
     },
     modalTitle: {
-        fontSize: normalize(22),
+        fontSize: nf(22),
         fontWeight: '700',
-        marginBottom: normalize(12),
+        marginBottom: n(12),
         color: '#222',
         textAlign: 'center',
     },
@@ -284,11 +284,11 @@ export default StyleSheet.create({
         color: '#fff',
     },
     modalText: {
-        fontSize: normalize(16),
+        fontSize: nf(16),
         color: '#555',
         textAlign: 'center',
-        marginBottom: normalize(28),
-        lineHeight: normalize(24),
+        marginBottom: n(28),
+        lineHeight: nf(24),
     },
     darkModalText: {
         color: '#ccc',
@@ -303,10 +303,10 @@ export default StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: normalize(20),
-        paddingVertical: normalize(12),
-        borderRadius: normalize(12),
-        marginHorizontal: normalize(6),
+        paddingHorizontal: n(20),
+        paddingVertical: n(12),
+        borderRadius: n(12),
+        marginHorizontal: n(6),
     },
     cancelButton: {
         backgroundColor: '#f0f0f0',
@@ -317,7 +317,7 @@ export default StyleSheet.create({
     cancelButtonText: {
         color: '#333',
         fontWeight: '600',
-        fontSize: normalize(16),
+        fontSize: nf(16),
     },
     darkButtonText: {
         color: '#fff',
@@ -333,7 +333,7 @@ export default StyleSheet.create({
     confirmButtonText: {
         color: '#fff',
         fontWeight: '600',
-        fontSize: normalize(16),
+        fontSize: nf(16),
     },
     confirmButtonContent: {
         flexDirection: 'row',
@@ -353,28 +353,31 @@ export default StyleSheet.create({
     },
     sweetAlertContainer: {
         backgroundColor: '#fff',
-        borderRadius: normalize(16),
-        padding: normalize(24),
-        marginHorizontal: normalize(40),
+        borderRadius: n(16),
+        padding: n(24),
+        marginHorizontal: n(40),
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
         elevation: 8,
-        maxWidth: normalize(280),
+        maxWidth: n(280),
     },
     sweetAlertContent: {
         alignItems: 'center',
         justifyContent: 'center',
     },
     sweetAlertIcon: {
-        marginBottom: normalize(12),
+        marginBottom: n(12),
     },
     sweetAlertText: {
-        fontSize: normalize(16),
+        fontSize: nf(16),
         fontWeight: '600',
         color: '#333',
         textAlign: 'center',
-        lineHeight: normalize(22),
+        lineHeight: nf(22),
     },
-});
+  });
+
+  return { styles, n, nf, contentMaxWidth };
+}

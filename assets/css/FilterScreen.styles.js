@@ -1,18 +1,32 @@
-import { StyleSheet, Dimensions, Platform } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 
-const { width, height } = Dimensions.get('window');
-const scale = width / 375;
-const verticalScale = height / 812;
-const normalize = (size) => Math.round(scale * size);
-const normalizeVertical = (size) => Math.round(verticalScale * size);
+/** Capped scaling for tablets / large windows — matches ChatBox responsive pattern. */
+function computeMetrics(width, height) {
+    const shortEdge = Math.min(width, height);
+    const isLargeScreen = shortEdge >= 560 || width >= 600;
+    const maxUiScale = isLargeScreen ? 1.12 : 1.34;
+    const layoutScale = Math.min(width / 375, maxUiScale);
+    const fontScale = Math.min(shortEdge / 375, maxUiScale);
+    const vertScale = Math.min(height / 812, maxUiScale);
+    const n = (size) => Math.round(layoutScale * size);
+    const nf = (size) => Math.round(fontScale * size);
+    const nv = (size) => Math.round(vertScale * size);
+    const leftPanelWidth = isLargeScreen ? Math.min(width * 0.35, 220) : width * 0.35;
+    /** Keeps Clear / Apply from stretching edge-to-edge on tablets; phones stay full width. */
+    const bottomBarMaxWidth = isLargeScreen ? Math.min(width, 520) : width;
+    /** Inset for scroll content: space above buttons + button row + buffer (safe area added in JS). */
+    const scrollBottomPadding = n(10) + n(50) + n(20);
+    return { n, nf, nv, leftPanelWidth, bottomBarMaxWidth, scrollBottomPadding };
+}
 
-const LEFT_PANEL_WIDTH = width * 0.35;
+export function buildFilterScreenStyles(width, height) {
+    const { n, nf, nv, leftPanelWidth, bottomBarMaxWidth, scrollBottomPadding } = computeMetrics(width, height);
 
-export default StyleSheet.create({
+    const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#FFFFFF',
-        paddingTop: Platform.OS === 'ios' ? normalizeVertical(50) : normalize(12),
+        // Top inset comes from SafeAreaView (edges include top); do not add paddingTop here or it doubles.
     },
 
     // Content
@@ -26,19 +40,19 @@ export default StyleSheet.create({
 
     // Left Panel - Categories
     leftPanel: {
-        width: LEFT_PANEL_WIDTH,
+        width: leftPanelWidth,
         backgroundColor: '#F8FAFC',
         borderRightWidth: 1,
         borderRightColor: '#E5E7EB',
     },
     panelTitle: {
-        fontSize: normalize(13),
+        fontSize: nf(13),
         fontWeight: '700',
         color: '#6B7280',
         textTransform: 'uppercase',
         letterSpacing: 0.5,
-        paddingHorizontal: normalize(12),
-        paddingVertical: normalize(14),
+        paddingHorizontal: n(12),
+        paddingVertical: n(14),
         backgroundColor: '#F1F5F9',
         borderBottomWidth: 1,
         borderBottomColor: '#E5E7EB',
@@ -49,47 +63,47 @@ export default StyleSheet.create({
     categoryItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: normalize(12),
-        paddingHorizontal: normalize(10),
+        paddingVertical: n(12),
+        paddingHorizontal: n(10),
         borderBottomWidth: 1,
         borderBottomColor: '#E5E7EB',
         backgroundColor: '#FFFFFF',
-        minHeight: normalize(48),
+        minHeight: n(48),
     },
     categoryItemSelected: {
         backgroundColor: '#2563eb',
         borderBottomColor: '#1D4ED8',
     },
     categoryIconWrapper: {
-        width: normalize(32),
-        height: normalize(32),
-        borderRadius: normalize(8),
+        width: n(32),
+        height: n(32),
+        borderRadius: n(8),
         backgroundColor: '#F3F4F6',
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: normalize(10),
+        marginRight: n(10),
         flexShrink: 0,
     },
     categoryTextContainer: {
         flex: 1,
         justifyContent: 'center',
         minWidth: 0,
-        paddingRight: normalize(4),
+        paddingRight: n(4),
     },
     categoryText: {
-        fontSize: normalize(11),
+        fontSize: nf(11),
         fontWeight: '500',
         color: '#374151',
-        lineHeight: normalize(16),
+        lineHeight: nf(16),
     },
     categoryTextSelected: {
         color: '#FFFFFF',
         fontWeight: '600',
     },
     selectedIndicator: {
-        width: normalize(18),
-        height: normalize(18),
-        borderRadius: normalize(9),
+        width: n(18),
+        height: n(18),
+        borderRadius: n(9),
         backgroundColor: 'rgba(255,255,255,0.3)',
         alignItems: 'center',
         justifyContent: 'center',
@@ -99,16 +113,16 @@ export default StyleSheet.create({
     rightPanel: {
         flex: 1,
         backgroundColor: '#FFFFFF',
-        paddingHorizontal: normalize(16),
+        paddingHorizontal: n(16),
     },
     filterSection: {
-        marginTop: normalize(18),
+        marginTop: n(18),
     },
     sectionTitle: {
-        fontSize: normalize(13),
+        fontSize: nf(13),
         fontWeight: '700',
         color: '#1F2937',
-        marginBottom: normalize(10),
+        marginBottom: n(10),
         letterSpacing: 0.2,
     },
 
@@ -117,16 +131,16 @@ export default StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#F3F4F6',
-        borderRadius: normalize(10),
-        paddingHorizontal: normalize(12),
-        height: normalize(44),
+        borderRadius: n(10),
+        paddingHorizontal: n(12),
+        height: n(44),
     },
     searchIcon: {
-        marginRight: normalize(8),
+        marginRight: n(8),
     },
     searchInput: {
         flex: 1,
-        fontSize: normalize(14),
+        fontSize: nf(14),
         color: '#1F2937',
         paddingVertical: 0,
     },
@@ -136,19 +150,19 @@ export default StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#F3F4F6',
-        borderRadius: normalize(10),
-        paddingLeft: normalize(12),
-        minHeight: normalize(44),
+        borderRadius: n(10),
+        paddingLeft: n(12),
+        minHeight: n(44),
     },
     locationIcon: {
-        marginRight: normalize(8),
+        marginRight: n(8),
     },
     addressInput: {
         flex: 1,
-        fontSize: normalize(14),
+        fontSize: nf(14),
         color: '#1F2937',
-        paddingVertical: normalize(12),
-        paddingRight: normalize(12),
+        paddingVertical: n(12),
+        paddingRight: n(12),
     },
 
     // Location Input
@@ -163,14 +177,14 @@ export default StyleSheet.create({
     },
     locationPredictions: {
         position: 'absolute',
-        top: normalize(48),
+        top: n(48),
         left: 0,
         right: 0,
         backgroundColor: '#FFFFFF',
-        borderRadius: normalize(10),
+        borderRadius: n(10),
         borderWidth: 1,
         borderColor: '#E5E7EB',
-        maxHeight: normalize(180),
+        maxHeight: n(180),
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.15,
@@ -179,29 +193,29 @@ export default StyleSheet.create({
         zIndex: 1000,
     },
     locationPredictionItem: {
-        paddingVertical: normalize(12),
-        paddingHorizontal: normalize(14),
+        paddingVertical: n(12),
+        paddingHorizontal: n(14),
         borderBottomWidth: 1,
         borderBottomColor: '#F3F4F6',
     },
     locationPredictionText: {
-        fontSize: normalize(13),
+        fontSize: nf(13),
         color: '#374151',
-        lineHeight: normalize(18),
+        lineHeight: nf(18),
     },
 
     // Chips
     chipContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        marginHorizontal: -normalize(4),
+        marginHorizontal: -n(4),
     },
     chip: {
         backgroundColor: '#F3F4F6',
-        borderRadius: normalize(20),
-        paddingVertical: normalize(8),
-        paddingHorizontal: normalize(14),
-        margin: normalize(4),
+        borderRadius: n(20),
+        paddingVertical: n(8),
+        paddingHorizontal: n(14),
+        margin: n(4),
         borderWidth: 1.5,
         borderColor: '#E5E7EB',
     },
@@ -210,7 +224,7 @@ export default StyleSheet.create({
         borderColor: '#2563eb',
     },
     chipText: {
-        fontSize: normalize(12),
+        fontSize: nf(12),
         fontWeight: '500',
         color: '#6B7280',
     },
@@ -221,39 +235,39 @@ export default StyleSheet.create({
 
     // Price Range Inputs
     priceInputContainer: {
-        marginTop: normalize(8),
+        marginTop: n(8),
         flexDirection: 'row',
-        gap: normalize(12),
+        gap: n(12),
     },
     priceInputRow: {
-        marginBottom: normalize(16),
+        marginBottom: n(16),
     },
     priceInputLabel: {
-        fontSize: normalize(13),
+        fontSize: nf(13),
         fontWeight: '600',
         color: '#374151',
-        marginBottom: normalize(8),
+        marginBottom: n(8),
     },
     priceInputWrapper: {
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#F9FAFB',
-        borderRadius: normalize(12),
+        borderRadius: n(12),
         borderWidth: 1,
         borderColor: '#E5E7EB',
-        paddingHorizontal: normalize(14),
-        height: normalize(48),
+        paddingHorizontal: n(14),
+        height: n(48),
     },
     priceInputPrefix: {
-        fontSize: normalize(16),
+        fontSize: nf(16),
         fontWeight: '600',
         color: '#374151',
-        marginRight: normalize(8),
+        marginRight: n(8),
     },
     priceInput: {
         flex: 1,
-        fontSize: normalize(15),
+        fontSize: nf(15),
         color: '#1F2937',
         padding: 0,
     },
@@ -266,52 +280,55 @@ export default StyleSheet.create({
     priceInputWrapper: {
         flex: 1,
         backgroundColor: '#F3F4F6',
-        borderRadius: normalize(10),
-        paddingHorizontal: normalize(12),
-        paddingVertical: normalize(8),
+        borderRadius: n(10),
+        paddingHorizontal: n(12),
+        paddingVertical: n(8),
     },
     priceLabel: {
-        fontSize: normalize(10),
+        fontSize: nf(10),
         fontWeight: '600',
         color: '#9CA3AF',
         textTransform: 'uppercase',
         letterSpacing: 0.5,
-        marginBottom: normalize(4),
+        marginBottom: n(4),
     },
     priceInput: {
-        fontSize: normalize(15),
+        fontSize: nf(15),
         fontWeight: '600',
         color: '#1F2937',
         paddingVertical: 0,
     },
     priceDivider: {
-        paddingHorizontal: normalize(10),
+        paddingHorizontal: n(10),
     },
     priceDividerText: {
-        fontSize: normalize(16),
+        fontSize: nf(16),
         color: '#9CA3AF',
     },
 
-    // Bottom Actions
-    bottomActions: {
+        // Bottom Actions — absolutely positioned so no white strip blocks the scroll; only buttons paint
+        bottomActionsOuter: {
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            alignItems: 'center',
+            backgroundColor: 'transparent',
+            paddingTop: n(10),
+            zIndex: 20,
+        },
+        bottomActionsRow: {
         flexDirection: 'row',
-        paddingHorizontal: normalize(20),
-        paddingTop: normalize(12),
-        paddingBottom: Platform.OS === 'ios' ? normalizeVertical(30) : normalize(16),
-        backgroundColor: '#FFFFFF',
-        borderTopWidth: 1,
-        borderTopColor: '#E5E7EB',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        elevation: 12,
-        gap: normalize(12),
+            alignItems: 'stretch',
+            alignSelf: 'center',
+            width: '100%',
+            paddingHorizontal: n(16),
+            gap: n(12),
     },
     clearButton: {
         flex: 1,
         backgroundColor: '#F9FAFB',
-        borderRadius: normalize(14),
+        borderRadius: n(14),
         borderWidth: 1.5,
         borderColor: '#E5E7EB',
         overflow: 'hidden',
@@ -320,38 +337,41 @@ export default StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: normalize(12),
-        gap: normalize(8),
+        paddingVertical: n(13),
+        paddingHorizontal: n(10),
+        gap: n(8),
     },
     clearButtonText: {
-        fontSize: normalize(15),
+        fontSize: nf(15),
         fontWeight: '600',
         color: '#374151',
         letterSpacing: 0.2,
     },
     applyButton: {
-        flex: 1.5,
+        flex: 1.55,
+        flexBasis: 0,
+        minHeight: n(50),
+        justifyContent: 'center',
+        alignItems: 'center',
         backgroundColor: '#16a34a',
-        borderRadius: normalize(14),
+        borderRadius: n(12),
         overflow: 'hidden',
-        shadowColor: '#16a34a',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.35,
-        shadowRadius: 12,
-        elevation: 8,
+        borderWidth: 1,
+        borderColor: '#15803d',
     },
     applyButtonContent: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: normalize(12),
-        gap: normalize(8),
+        paddingVertical: n(13),
+        paddingHorizontal: n(12),
+        gap: n(8),
     },
     applyButtonText: {
-        fontSize: normalize(15),
+        fontSize: nf(15),
         fontWeight: '700',
         color: '#FFFFFF',
-        letterSpacing: 0.4,
+        letterSpacing: 0.3,
     },
     buttonDisabled: {
         opacity: 0.6,
@@ -359,24 +379,24 @@ export default StyleSheet.create({
 
     // Legacy styles (kept for compatibility)
     scrollContainer: {
-        padding: normalize(20),
-        paddingBottom: normalizeVertical(80),
+        padding: n(20),
+        paddingBottom: nv(80),
         backgroundColor: '#fff',
     },
     filterListContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        marginBottom: normalizeVertical(14),
+        marginBottom: nv(14),
     },
     filterItem: {
         backgroundColor: '#F5F7FA',
-        borderRadius: normalize(14),
-        paddingVertical: normalize(7),
-        paddingHorizontal: normalize(15),
+        borderRadius: n(14),
+        paddingVertical: n(7),
+        paddingHorizontal: n(15),
         borderWidth: 1,
         borderColor: '#E5E7EB',
-        marginRight: normalize(10),
-        marginBottom: normalize(10),
+        marginRight: n(10),
+        marginBottom: n(10),
         minWidth: 90,
         alignItems: 'center',
     },
@@ -385,7 +405,7 @@ export default StyleSheet.create({
         borderColor: '#2563eb',
     },
     filterText: {
-        fontSize: normalize(12),
+        fontSize: nf(12),
         color: '#6B7280',
         fontWeight: '500',
     },
@@ -396,7 +416,7 @@ export default StyleSheet.create({
     categoryListContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        marginBottom: normalizeVertical(14),
+        marginBottom: nv(14),
     },
     iconContainer: {
         marginRight: 8,
@@ -404,14 +424,14 @@ export default StyleSheet.create({
     budgetInputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: normalizeVertical(16),
+        marginBottom: nv(16),
     },
     budgetInput: {
         flex: 1,
         backgroundColor: '#F5F7FA',
-        borderRadius: normalize(14),
-        padding: normalize(12),
-        fontSize: normalize(12),
+        borderRadius: n(14),
+        padding: n(12),
+        fontSize: nf(12),
         color: '#222',
         borderWidth: 0,
         shadowColor: '#000',
@@ -419,13 +439,13 @@ export default StyleSheet.create({
         shadowOpacity: 0.04,
         shadowRadius: 2,
         elevation: 1,
-        marginRight: normalize(8),
+        marginRight: n(8),
     },
     toText: {
-        fontSize: normalize(14),
+        fontSize: nf(14),
         color: '#6c757d',
         fontWeight: '500',
-        marginHorizontal: normalize(4),
+        marginHorizontal: n(4),
     },
     fixedButtonContainer: {
         position: 'absolute',
@@ -434,8 +454,8 @@ export default StyleSheet.create({
         right: 0,
         flexDirection: 'row',
         backgroundColor: '#fff',
-        paddingHorizontal: normalize(16),
-        paddingVertical: normalize(12),
+        paddingHorizontal: n(16),
+        paddingVertical: n(12),
         borderTopWidth: 1,
         borderTopColor: '#F3F4F6',
         shadowColor: '#000',
@@ -443,13 +463,13 @@ export default StyleSheet.create({
         shadowOpacity: 0.08,
         shadowRadius: 8,
         elevation: 4,
-        gap: normalize(12),
+        gap: n(12),
     },
     submitButton: {
         flex: 1,
         backgroundColor: '#2563eb',
-        borderRadius: normalize(12),
-        padding: normalize(14),
+        borderRadius: n(12),
+        padding: n(14),
         alignItems: 'center',
         justifyContent: 'center',
         shadowColor: '#2563eb',
@@ -460,29 +480,29 @@ export default StyleSheet.create({
     },
     submitButtonText: {
         color: '#fff',
-        fontSize: normalize(14),
+        fontSize: nf(14),
         fontWeight: 'bold',
         letterSpacing: 0.3,
     },
     predictionsList: {
         position: 'absolute',
-        top: normalize(56),
+        top: n(56),
         width: '100%',
         maxHeight: 200,
         backgroundColor: '#fff',
-        borderRadius: normalize(14),
+        borderRadius: n(14),
         borderWidth: 1,
         borderColor: '#eee',
         zIndex: 100,
         elevation: 3,
     },
     predictionItem: {
-        padding: normalize(14),
+        padding: n(14),
         borderBottomWidth: 1,
         borderBottomColor: '#f1f3f5',
     },
     predictionText: {
-        fontSize: normalize(12),
+        fontSize: nf(12),
         color: '#222',
     },
 
@@ -491,31 +511,31 @@ export default StyleSheet.create({
         flex: 1,
     },
     subcategoryHeader: {
-        paddingHorizontal: normalize(16),
-        paddingTop: normalize(16),
-        paddingBottom: normalize(12),
+        paddingHorizontal: n(16),
+        paddingTop: n(16),
+        paddingBottom: n(12),
     },
     subcategoryTitle: {
-        fontSize: normalize(15),
+        fontSize: nf(15),
         fontWeight: '700',
         color: '#1F2937',
-        marginBottom: normalize(4),
+        marginBottom: n(4),
     },
     subcategorySubtitle: {
-        fontSize: normalize(12),
+        fontSize: nf(12),
         color: '#6B7280',
     },
     subcategoryList: {
-        paddingHorizontal: normalize(12),
+        paddingHorizontal: n(12),
     },
     subcategoryItem: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#FFFFFF',
-        borderRadius: normalize(10),
-        paddingVertical: normalize(12),
-        paddingHorizontal: normalize(14),
-        marginBottom: normalize(8),
+        borderRadius: n(10),
+        paddingVertical: n(12),
+        paddingHorizontal: n(14),
+        marginBottom: n(8),
         borderWidth: 1,
         borderColor: '#E5E7EB',
     },
@@ -524,13 +544,13 @@ export default StyleSheet.create({
         borderColor: '#16a34a',
     },
     subcategoryIconWrapper: {
-        width: normalize(36),
-        height: normalize(36),
-        borderRadius: normalize(10),
+        width: n(36),
+        height: n(36),
+        borderRadius: n(10),
         backgroundColor: '#F3F4F6',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: normalize(12),
+        marginRight: n(12),
         flexShrink: 0,
     },
     subcategoryIconWrapperSelected: {
@@ -542,46 +562,49 @@ export default StyleSheet.create({
         justifyContent: 'center',
     },
     subcategoryText: {
-        fontSize: normalize(13),
+        fontSize: nf(13),
         fontWeight: '500',
         color: '#374151',
-        lineHeight: normalize(18),
+        lineHeight: nf(18),
     },
     subcategoryTextSelected: {
         color: '#16a34a',
         fontWeight: '600',
     },
     subcategoryCheck: {
-        width: normalize(20),
-        height: normalize(20),
-        borderRadius: normalize(10),
+        width: n(20),
+        height: n(20),
+        borderRadius: n(10),
         backgroundColor: '#16a34a',
         justifyContent: 'center',
         alignItems: 'center',
         flexShrink: 0,
-        marginLeft: normalize(8),
+        marginLeft: n(8),
     },
     skipButtonContainer: {
-        paddingHorizontal: normalize(16),
-        paddingVertical: normalize(12),
+        paddingHorizontal: n(16),
+        paddingVertical: n(12),
         borderTopWidth: 1,
         borderTopColor: '#E5E7EB',
-        marginTop: normalize(8),
+        marginTop: n(8),
     },
     skipButton: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: normalize(12),
+        paddingVertical: n(12),
         backgroundColor: '#F8FAFC',
-        borderRadius: normalize(10),
+        borderRadius: n(10),
         borderWidth: 1,
         borderColor: '#E5E7EB',
     },
     skipButtonText: {
         color: '#6B7280',
-        fontSize: normalize(13),
+        fontSize: nf(13),
         fontWeight: '500',
-        marginRight: normalize(4),
+        marginRight: n(4),
     },
-});
+    });
+
+    return { styles, n, nf, nv, bottomBarMaxWidth, scrollBottomPadding };
+}

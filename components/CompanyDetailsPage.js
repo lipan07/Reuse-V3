@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
     View,
     Text,
@@ -77,7 +77,7 @@ const formatMemberSince = (dateString) => {
 };
 
 // Function to render star rating
-const renderStars = (rating) => {
+const renderStars = (rating, emptyStarColor) => {
     const stars = [];
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 !== 0;
@@ -97,7 +97,7 @@ const renderStars = (rating) => {
     const emptyStars = 5 - Math.ceil(rating);
     for (let i = 0; i < emptyStars; i++) {
         stars.push(
-            <Icon key={`empty-${i}`} name="star-outline" size={normalize(14)} color="#E5E7EB" />
+            <Icon key={`empty-${i}`} name="star-outline" size={normalize(14)} color={emptyStarColor} />
         );
     }
 
@@ -127,8 +127,56 @@ const getActivityColor = (timestamp) => {
     }
 };
 
+const getCompanyDetailsPalette = (isDarkMode) => {
+    if (isDarkMode) {
+        return {
+            bg: "#0B1220",
+            card: "#111827",
+            mutedBg: "#0F172A",
+            placeholderBg: "#0F172A",
+            activeTabBg: "#1E293B",
+            textPrimary: "#E5E7EB",
+            textMuted: "#94A3B8",
+            textSubtle: "#64748B",
+            textFaint: "#94A3B8",
+            iconStrong: "#E5E7EB",
+            iconMuted: "#94A3B8",
+            border: "#334155",
+            borderSoft: "#1F2937",
+            divider: "#334155",
+            placeholderBorder: "#334155",
+            contactIconBg: "#0F172A",
+            contactIconBorder: "#334155",
+            starEmptyColor: "#334155",
+        };
+    }
+
+    return {
+        bg: "#F5F7FA",
+        card: "#FFFFFF",
+        mutedBg: "#F8F9FA",
+        placeholderBg: "#F5F5F5",
+        activeTabBg: "#FFFFFF",
+        textPrimary: "#1A1A1A",
+        textMuted: "#666666",
+        textSubtle: "#6B7280",
+        textFaint: "#4A4A4A",
+        iconStrong: "#1A1A1A",
+        iconMuted: "#9CA3AF",
+        border: "#F1F3F4",
+        borderSoft: "#F3F4F6",
+        divider: "#E9ECEF",
+        placeholderBorder: "#E5E7EB",
+        contactIconBg: "#F8F9FA",
+        contactIconBorder: "#E9ECEF",
+        starEmptyColor: "#E5E7EB",
+    };
+};
+
 const CompanyDetailsPage = ({ route }) => {
     const { isDarkMode } = useTheme();
+    const palette = getCompanyDetailsPalette(isDarkMode);
+    const styles = useMemo(() => getCompanyDetailsStyles(isDarkMode), [isDarkMode]);
     const navigation = useNavigation();
     const [buyerId, setBuyerId] = useState(null);
     const [isFollowing, setIsFollowing] = useState(false);
@@ -378,7 +426,7 @@ const CompanyDetailsPage = ({ route }) => {
                 <CustomStatusBar darkMode={isDarkMode} />
                 <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
                     <ActivityIndicator size="large" color="#007BFF" />
-                    <Text style={{ marginTop: 16, fontSize: normalize(16), color: '#666' }}>
+                    <Text style={{ marginTop: 16, fontSize: normalize(16), color: palette.textMuted }}>
                         Loading company details...
                     </Text>
                 </View>
@@ -393,7 +441,7 @@ const CompanyDetailsPage = ({ route }) => {
                 <CustomStatusBar darkMode={isDarkMode} />
                 <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 20 }]}>
                     <Icon name="alert-circle" size={normalize(48)} color="#FF6B6B" />
-                    <Text style={{ marginTop: 16, fontSize: normalize(16), color: '#666', textAlign: 'center' }}>
+                    <Text style={{ marginTop: 16, fontSize: normalize(16), color: palette.textMuted, textAlign: 'center' }}>
                         {error}
                     </Text>
                     <TouchableOpacity
@@ -413,7 +461,7 @@ const CompanyDetailsPage = ({ route }) => {
             <>
                 <CustomStatusBar darkMode={isDarkMode} />
                 <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                    <Text style={{ fontSize: normalize(16), color: '#666' }}>
+                    <Text style={{ fontSize: normalize(16), color: palette.textMuted }}>
                         No company data available
                     </Text>
                 </View>
@@ -435,7 +483,7 @@ const CompanyDetailsPage = ({ route }) => {
                     <Image source={{ uri: item.images[0] }} style={styles.productImage} />
                 ) : (
                     <View style={styles.productImagePlaceholder}>
-                            <Icon name="image" size={normalize(20)} color="#9CA3AF" />
+                            <Icon name="image" size={normalize(20)} color={palette.iconMuted} />
                     </View>
                 )}
             </View>
@@ -444,10 +492,14 @@ const CompanyDetailsPage = ({ route }) => {
                 <View style={styles.titleRow}>
                     <Text style={styles.productTitle} numberOfLines={1}>{item.title}</Text>
                     <View style={[styles.typeBadge, {
-                        backgroundColor: item.type === 'sell' ? '#E8F5E8' : '#FFF3E0'
+                        backgroundColor: item.type === 'sell'
+                            ? (isDarkMode ? '#064E3B' : '#E8F5E8')
+                            : (isDarkMode ? '#7C2D12' : '#FFF3E0')
                     }]}>
                         <Text style={[styles.typeBadgeText, {
-                            color: item.type === 'sell' ? '#2E7D32' : '#F57C00'
+                            color: item.type === 'sell'
+                                ? (isDarkMode ? '#34D399' : '#2E7D32')
+                                : (isDarkMode ? '#FB923C' : '#F57C00')
                         }]}>
                             {item.type === 'sell' ? 'Sell' : 'Rent'}
                         </Text>
@@ -469,7 +521,7 @@ const CompanyDetailsPage = ({ route }) => {
             </View>
 
             <View style={styles.arrowContainer}>
-                <Icon name="chevron-right" size={normalize(16)} color="#9CA3AF" />
+                <Icon name="chevron-right" size={normalize(16)} color={palette.iconMuted} />
             </View>
         </TouchableOpacity>
     );
@@ -490,7 +542,7 @@ const CompanyDetailsPage = ({ route }) => {
                                 <Image source={{ uri: company.profileImage }} style={styles.profileImage} />
                             ) : (
                                 <View style={styles.profilePlaceholder}>
-                                    <Icon name="office-building" size={normalize(34)} color="#1A1A1A" />
+                                    <Icon name="office-building" size={normalize(34)} color={palette.iconStrong} />
                                 </View>
                             )}
                             <View style={styles.headerTextContainer}>
@@ -507,14 +559,14 @@ const CompanyDetailsPage = ({ route }) => {
                                     )}
                                 </View>
                                 <View style={styles.locationContainer}>
-                                    <Icon name="map-marker" size={normalize(14)} color="#1A1A1A" />
+                                    <Icon name="map-marker" size={normalize(14)} color={palette.iconStrong} />
                                     <Text style={styles.locationText}>{company.location}</Text>
                                 </View>
 
                                 {/* Rating and Member Since */}
                                 <View style={styles.ratingContainer}>
                                     <View style={styles.ratingStars}>
-                                        {renderStars(company.rating)}
+                                        {renderStars(company.rating, palette.starEmptyColor)}
                                         <Text style={styles.ratingText}>{company.rating}</Text>
                                         {company.totalReviews > 0 && (
                                             <Text style={styles.reviewsText}>({company.totalReviews} reviews)</Text>
@@ -529,13 +581,13 @@ const CompanyDetailsPage = ({ route }) => {
                     {/* Stats */}
                     <View style={styles.statsContainer}>
                         <View style={styles.statItem}>
-                            <Icon name="cube-send" size={normalize(20)} color="#1A1A1A" />
+                            <Icon name="cube-send" size={normalize(20)} color={palette.iconStrong} />
                             <Text style={styles.statNumber}>{company.postsActive}</Text>
                             <Text style={styles.statLabel}>Active</Text>
                         </View>
                         <View style={styles.statDivider} />
                         <View style={styles.statItem}>
-                            <Icon name="check-circle" size={normalize(20)} color="#1A1A1A" />
+                            <Icon name="check-circle" size={normalize(20)} color={palette.iconStrong} />
                             <Text style={styles.statNumber}>{company.postsSold}</Text>
                             <Text style={styles.statLabel}>Sold</Text>
                         </View>
@@ -591,7 +643,7 @@ const CompanyDetailsPage = ({ route }) => {
                                 ))
                             ) : (
                                 <View style={styles.emptyContainer}>
-                                    <Icon name="package-variant" size={normalize(48)} color="#ccc" />
+                                    <Icon name="package-variant" size={normalize(48)} color={palette.iconMuted} />
                                     <Text style={styles.emptyText}>No products found</Text>
                                     <Text style={styles.emptySubText}>This company hasn't posted any products yet</Text>
                                 </View>
@@ -623,7 +675,7 @@ const CompanyDetailsPage = ({ route }) => {
                             {/* Company Type */}
                             <View style={styles.contactItem}>
                                 <View style={styles.contactIcon}>
-                                    <Icon name="domain" size={normalize(18)} color="#1A1A1A" />
+                                    <Icon name="domain" size={normalize(18)} color={palette.iconStrong} />
                                 </View>
                                 <View style={styles.contactInfo}>
                                     <Text style={styles.contactLabel}>Company Type</Text>
@@ -634,7 +686,7 @@ const CompanyDetailsPage = ({ route }) => {
                             {/* Contact Person */}
                             <View style={styles.contactItem}>
                                 <View style={styles.contactIcon}>
-                                    <Icon name="account" size={normalize(18)} color="#1A1A1A" />
+                                    <Icon name="account" size={normalize(18)} color={palette.iconStrong} />
                                 </View>
                                 <View style={styles.contactInfo}>
                                     <Text style={styles.contactLabel}>Contact Person</Text>
@@ -645,7 +697,7 @@ const CompanyDetailsPage = ({ route }) => {
                             {/* Contact Person Role */}
                             <View style={styles.contactItem}>
                                 <View style={styles.contactIcon}>
-                                    <Icon name="briefcase" size={normalize(18)} color="#1A1A1A" />
+                                    <Icon name="briefcase" size={normalize(18)} color={palette.iconStrong} />
                                 </View>
                                 <View style={styles.contactInfo}>
                                     <Text style={styles.contactLabel}>Role</Text>
@@ -657,7 +709,7 @@ const CompanyDetailsPage = ({ route }) => {
                             {company.email !== 'Email not provided' && (
                                 <TouchableOpacity style={styles.contactItem} onPress={handleEmail}>
                                     <View style={styles.contactIcon}>
-                                        <Icon name="email" size={normalize(18)} color="#1A1A1A" />
+                                        <Icon name="email" size={normalize(18)} color={palette.iconStrong} />
                                     </View>
                                     <View style={styles.contactInfo}>
                                         <Text style={styles.contactLabel}>Email</Text>
@@ -670,7 +722,7 @@ const CompanyDetailsPage = ({ route }) => {
                             {company.phone !== 'Phone not provided' && (
                                 <TouchableOpacity style={styles.contactItem} onPress={handleCall}>
                                     <View style={styles.contactIcon}>
-                                        <Icon name="phone" size={normalize(18)} color="#1A1A1A" />
+                                        <Icon name="phone" size={normalize(18)} color={palette.iconStrong} />
                                     </View>
                                     <View style={styles.contactInfo}>
                                         <Text style={styles.contactLabel}>Phone</Text>
@@ -683,7 +735,7 @@ const CompanyDetailsPage = ({ route }) => {
                             {company.website !== 'Website not provided' && (
                                 <TouchableOpacity style={styles.contactItem} onPress={handleWebsite}>
                                     <View style={styles.contactIcon}>
-                                        <Icon name="web" size={normalize(18)} color="#1A1A1A" />
+                                        <Icon name="web" size={normalize(18)} color={palette.iconStrong} />
                                     </View>
                                     <View style={styles.contactInfo}>
                                         <Text style={styles.contactLabel}>Website</Text>
@@ -695,7 +747,7 @@ const CompanyDetailsPage = ({ route }) => {
                             {/* Location */}
                             <View style={styles.contactItem}>
                                 <View style={styles.contactIcon}>
-                                    <Icon name="map-marker" size={normalize(18)} color="#1A1A1A" />
+                                    <Icon name="map-marker" size={normalize(18)} color={palette.iconStrong} />
                                 </View>
                                 <View style={styles.contactInfo}>
                                     <Text style={styles.contactLabel}>Location</Text>
@@ -729,14 +781,16 @@ const CompanyDetailsPage = ({ route }) => {
     );
 };
 
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#F5F7FA", paddingTop: 35 },
+const getCompanyDetailsStyles = (isDarkMode) => {
+    const palette = getCompanyDetailsPalette(isDarkMode);
+    return StyleSheet.create({
+    container: { flex: 1, backgroundColor: palette.bg, paddingTop: 35 },
     scrollContent: {
         padding: normalize(12),
         paddingBottom: normalize(80),
     },
     header: {
-        backgroundColor: '#FFFFFF',
+        backgroundColor: palette.card,
         flexDirection: "row",
         alignItems: "center",
         marginBottom: normalize(12),
@@ -754,7 +808,7 @@ const styles = StyleSheet.create({
         width: normalize(50),
         height: normalize(50),
         borderRadius: normalize(25),
-        backgroundColor: "#F5F5F5",
+        backgroundColor: palette.placeholderBg,
         justifyContent: "center",
         alignItems: "center",
     },
@@ -764,12 +818,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
     },
-    companyName: { fontSize: normalize(18), fontWeight: "600", color: "#1A1A1A", flex: 1 },
+    companyName: { fontSize: normalize(18), fontWeight: "600", color: palette.textPrimary, flex: 1 },
     followButtonContainer: {
         marginLeft: normalize(6),
     },
     locationContainer: { flexDirection: "row", alignItems: "center", marginBottom: normalize(6) },
-    locationText: { fontSize: normalize(12), marginLeft: normalize(4), color: "#666666" },
+    locationText: { fontSize: normalize(12), marginLeft: normalize(4), color: palette.textMuted },
 
     ratingContainer: {
         flexDirection: "row",
@@ -784,23 +838,23 @@ const styles = StyleSheet.create({
     ratingText: {
         fontSize: normalize(12),
         fontWeight: "600",
-        color: "#1A1A1A",
+        color: palette.textPrimary,
         marginLeft: normalize(4),
     },
     reviewsText: {
         fontSize: normalize(10),
-        color: "#6B7280",
+        color: palette.textSubtle,
         marginLeft: normalize(2),
     },
     memberSinceText: {
         fontSize: normalize(10),
-        color: "#6B7280",
+        color: palette.textSubtle,
         fontWeight: "500",
     },
 
     statsContainer: {
         flexDirection: "row",
-        backgroundColor: '#FFFFFF',
+        backgroundColor: palette.card,
         borderRadius: normalize(8),
         padding: normalize(12),
         marginBottom: normalize(12),
@@ -812,15 +866,15 @@ const styles = StyleSheet.create({
     },
     statItem: { flex: 1, alignItems: "center" },
     statNumber: { fontSize: normalize(16), fontWeight: "600", color: "#007BFF" },
-    statLabel: { fontSize: normalize(11), color: '#6B7280', fontWeight: '500', marginTop: normalize(2) },
+    statLabel: { fontSize: normalize(11), color: palette.textSubtle, fontWeight: '500', marginTop: normalize(2) },
     lastActivityText: {
         fontSize: normalize(16),
         fontWeight: "600",
     },
-    statDivider: { width: 1, backgroundColor: "#E9ECEF", marginHorizontal: normalize(12) },
+    statDivider: { width: 1, backgroundColor: palette.divider, marginHorizontal: normalize(12) },
 
     section: {
-        backgroundColor: '#FFFFFF',
+        backgroundColor: palette.card,
         borderRadius: normalize(8),
         padding: normalize(12),
         marginBottom: normalize(12),
@@ -830,20 +884,20 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 2,
     },
-    sectionTitle: { fontSize: normalize(15), fontWeight: "600", color: "#1A1A1A", marginBottom: normalize(8) },
-    aboutText: { fontSize: normalize(12), lineHeight: normalize(18), color: '#4A4A4A' },
+    sectionTitle: { fontSize: normalize(15), fontWeight: "600", color: palette.textPrimary, marginBottom: normalize(8) },
+    aboutText: { fontSize: normalize(12), lineHeight: normalize(18), color: palette.textFaint },
 
     tabContainer: {
         flexDirection: "row",
-        backgroundColor: '#F8F9FA',
+        backgroundColor: palette.mutedBg,
         borderRadius: normalize(8),
         marginBottom: normalize(12),
         padding: normalize(3),
     },
     tab: { flex: 1, paddingVertical: normalize(8), alignItems: "center", borderRadius: normalize(6) },
-    activeTab: { backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 },
-    tabText: { fontSize: normalize(12), fontWeight: "500", color: "#6B7280" },
-    activeTabText: { fontWeight: "600", color: '#1A1A1A' },
+    activeTab: { backgroundColor: palette.activeTabBg, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 },
+    tabText: { fontSize: normalize(12), fontWeight: "500", color: palette.textSubtle },
+    activeTabText: { fontWeight: "600", color: palette.textPrimary },
 
     sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: normalize(8) },
     viewAllText: { fontSize: normalize(11), color: '#007BFF', fontWeight: '500' },
@@ -854,9 +908,9 @@ const styles = StyleSheet.create({
         padding: normalize(10),
         borderRadius: normalize(8),
         marginBottom: normalize(8),
-        backgroundColor: '#FFFFFF',
+        backgroundColor: palette.card,
         borderWidth: 1,
-        borderColor: '#F1F3F4',
+        borderColor: palette.border,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.05,
@@ -875,11 +929,11 @@ const styles = StyleSheet.create({
         width: normalize(50),
         height: normalize(50),
         borderRadius: normalize(6),
-        backgroundColor: '#F8F9FA',
+        backgroundColor: palette.mutedBg,
         justifyContent: "center",
         alignItems: "center",
         borderWidth: 1,
-        borderColor: '#E5E7EB',
+        borderColor: palette.placeholderBorder,
     },
     productDetails: {
         flex: 1,
@@ -894,13 +948,13 @@ const styles = StyleSheet.create({
     productTitle: {
         fontSize: normalize(14),
         fontWeight: "600",
-        color: "#1A1A1A",
+        color: palette.textPrimary,
         flex: 1,
         marginRight: normalize(8)
     },
     productDescription: {
         fontSize: normalize(12),
-        color: '#6B7280',
+        color: palette.textSubtle,
         marginBottom: normalize(6),
         lineHeight: normalize(16)
     },
@@ -916,7 +970,7 @@ const styles = StyleSheet.create({
     },
     postedTime: {
         fontSize: normalize(10),
-        color: '#9CA3AF',
+        color: palette.iconMuted,
         fontWeight: '500'
     },
     arrowContainer: {
@@ -940,22 +994,22 @@ const styles = StyleSheet.create({
         alignItems: "center",
         paddingVertical: normalize(10),
         borderBottomWidth: 1,
-        borderBottomColor: '#F3F4F6',
+        borderBottomColor: palette.borderSoft,
     },
     contactIcon: {
         width: normalize(32),
         height: normalize(32),
         borderRadius: normalize(16),
-        backgroundColor: '#F8F9FA',
+        backgroundColor: palette.contactIconBg,
         justifyContent: "center",
         alignItems: "center",
         marginRight: normalize(10),
         borderWidth: 1,
-        borderColor: '#E9ECEF',
+        borderColor: palette.contactIconBorder,
     },
     contactInfo: { flex: 1 },
-    contactLabel: { fontSize: normalize(10), color: '#6B7280', fontWeight: '500', marginBottom: normalize(2) },
-    contactValue: { fontSize: normalize(12), color: '#1A1A1A', fontWeight: '500' },
+    contactLabel: { fontSize: normalize(10), color: palette.textSubtle, fontWeight: '500', marginBottom: normalize(2) },
+    contactValue: { fontSize: normalize(12), color: palette.textPrimary, fontWeight: '500' },
 
     floatingButtonContainer: {
         position: 'absolute',
@@ -1002,7 +1056,7 @@ const styles = StyleSheet.create({
     loadingText: {
         marginLeft: normalize(8),
         fontSize: normalize(14),
-        color: '#6B7280',
+        color: palette.textSubtle,
     },
     loadMoreButton: {
         backgroundColor: '#007BFF',
@@ -1025,16 +1079,17 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: normalize(14),
         fontWeight: '600',
-        color: '#6B7280',
+        color: palette.textSubtle,
         marginTop: normalize(8),
         textAlign: 'center',
     },
     emptySubText: {
         fontSize: normalize(12),
-        color: '#9CA3AF',
+        color: palette.iconMuted,
         marginTop: normalize(4),
         textAlign: 'center',
     },
-});
+    });
+};
 
 export default CompanyDetailsPage;

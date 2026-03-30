@@ -71,7 +71,8 @@ export function buildSettingsStyles(width, height) {
         letterSpacing: 0.5,
     },
     darkSectionTitle: {
-        color: '#999',
+        // Match Account darkSectionLabel
+        color: '#64748b',
     },
     settingItem: {
         flexDirection: 'row',
@@ -82,6 +83,8 @@ export function buildSettingsStyles(width, height) {
         borderRadius: n(12),
         width: '100%',
         marginBottom: n(12),
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: '#E8E8E8',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.05,
@@ -89,7 +92,10 @@ export function buildSettingsStyles(width, height) {
         elevation: 2,
     },
     darkSettingItem: {
+        // Match Account darkMenuItem
         backgroundColor: '#1E1E1E',
+        borderColor: '#333333',
+        shadowOpacity: 0.25,
     },
     iconCircle: {
         width: n(40),
@@ -106,7 +112,8 @@ export function buildSettingsStyles(width, height) {
         fontWeight: '500',
     },
     darkSettingText: {
-        color: '#fff',
+        // Match Account darkMenuText
+        color: '#e2e8f0',
     },
     modalOverlay: {
         flex: 1,
@@ -125,6 +132,8 @@ export function buildSettingsStyles(width, height) {
     },
     darkModalContainer: {
         backgroundColor: '#1E1E1E',
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: '#333333',
     },
     modalIcon: {
         marginBottom: n(12),
@@ -147,7 +156,7 @@ export function buildSettingsStyles(width, height) {
         lineHeight: nf(22),
     },
     darkModalText: {
-        color: '#ccc',
+        color: '#94a3b8',
     },
     modalButtons: {
         flexDirection: 'row',

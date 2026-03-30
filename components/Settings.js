@@ -86,23 +86,30 @@ const SettingsPage = ({ navigation }) => {
 
     const renderSettingItem = (text, icon, color, onPress, isSwitch = false, value = false) => (
         <TouchableOpacity
-            style={styles.settingItem}
+            style={[styles.settingItem, isDarkMode && styles.darkSettingItem]}
             onPress={!isSwitch ? onPress : null}
             activeOpacity={0.8}
         >
             <View style={[styles.iconCircle, { backgroundColor: color + '22' }]}>
                 <Icon name={icon} size={nf(22)} color={color} />
             </View>
-            <Text style={styles.settingText}>{text}</Text>
+            <Text style={[styles.settingText, isDarkMode && styles.darkSettingText]}>{text}</Text>
             {isSwitch ? (
                 <Switch
-                    trackColor={{ false: "#767577", true: color }}
-                    thumbColor={value ? "#fff" : "#f4f3f4"}
+                    trackColor={{
+                        false: isDarkMode ? '#334155' : '#767577',
+                        true: color,
+                    }}
+                    thumbColor={value ? '#fff' : isDarkMode ? '#cbd5e1' : '#f4f3f4'}
                     onValueChange={onPress}
                     value={value}
                 />
             ) : (
-                <Icon name="chevron-right" size={nf(20)} color="#bbb" />
+                <Icon
+                    name="chevron-right"
+                    size={nf(20)}
+                    color={isDarkMode ? '#64748b' : '#bbb'}
+                />
             )}
         </TouchableOpacity>
     );

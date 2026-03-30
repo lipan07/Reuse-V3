@@ -12,6 +12,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import { buildAccountPageStyles } from '../assets/css/AccountPage.styles';
 import CustomStatusBar from './Screens/CustomStatusBar';
+import Header from './Screens/Header';
 import { useTheme } from '../context/ThemeContext';
 
 const AccountPage = ({ navigation }) => {
@@ -70,7 +71,7 @@ const AccountPage = ({ navigation }) => {
         <TouchableOpacity
             style={[styles.menuItem, isDarkMode && styles.darkMenuItem]}
             onPress={onPress}
-            activeOpacity={0.6}
+            activeOpacity={0.72}
         >
             <View style={styles.menuLeft}>
                 <View style={[styles.iconWrapper, { backgroundColor: color + '10' }]}>
@@ -84,67 +85,79 @@ const AccountPage = ({ navigation }) => {
 
     return (
         <>
-            <CustomStatusBar
-                backgroundColor="#FFFFFF"
-                barStyle="dark-content"
-                translucent={false}
-                darkMode={isDarkMode}
-            />
-            <SafeAreaView
-                style={[styles.safeArea, isDarkMode && styles.darkSafeArea]}
-                edges={['top', 'left', 'right', 'bottom']}
-            >
-                <ScrollView
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={styles.scrollContent}
-                    keyboardShouldPersistTaps="handled"
+            <CustomStatusBar darkMode={isDarkMode} />
+            <View style={[styles.container, isDarkMode && styles.darkContainer]}>
+                <Header
+                    title="Account"
+                    navigation={navigation}
+                    darkMode={isDarkMode}
+                />
+                <SafeAreaView
+                    style={[styles.safeArea, isDarkMode && styles.darkSafeArea]}
+                    edges={['bottom', 'left', 'right']}
                 >
-                    <View style={styles.mainContainer}>
-                        <View style={styles.header}>
-                            <View style={styles.imageContainer}>
-                                <Image source={{ uri: userImage }} style={styles.avatar} />
-                                <TouchableOpacity
-                                    style={styles.badgeEdit}
-                                    onPress={() => navigation.navigate('EditProfilePage')}
-                                >
-                                    <FontAwesome5 name="pen" size={nf(10)} color="#FFF" />
-                                </TouchableOpacity>
+                    <ScrollView
+                        style={styles.scrollView}
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={[
+                            styles.scrollContent,
+                            isDarkMode && styles.darkScrollContent,
+                        ]}
+                        keyboardShouldPersistTaps="handled"
+                    >
+                        <View style={styles.scrollBody}>
+                            <View style={styles.mainContainer}>
+                                <View style={styles.header}>
+                                    <View style={styles.imageContainer}>
+                                        <Image source={{ uri: userImage }} style={styles.avatar} />
+                                        <TouchableOpacity
+                                            style={styles.badgeEdit}
+                                            onPress={() => navigation.navigate('EditProfilePage')}
+                                            activeOpacity={0.75}
+                                        >
+                                            <FontAwesome5 name="pen" size={nf(10)} color="#FFF" />
+                                        </TouchableOpacity>
+                                    </View>
+                                    <Text style={[styles.greeting, isDarkMode && styles.darkGreeting]}>
+                                        Hello, {userName}!
+                                    </Text>
+                                    <Text style={[styles.subGreeting, isDarkMode && styles.darkSubGreeting]}>
+                                        Manage your profile and settings
+                                    </Text>
+                                </View>
+
+                                <View style={styles.section}>
+                                    <Text style={[styles.sectionLabel, isDarkMode && styles.darkSectionLabel]}>
+                                        Account Activity
+                                    </Text>
+                                    {renderLink('Following', 'users', () => navigation.navigate('FollowingPage'), '#6366f1')}
+                                    {joinedViaInvite &&
+                                        renderLink('Invite Tokens', 'ticket-alt', () => navigation.navigate('InviteTokens'), '#a855f7')}
+                                </View>
+
+                                <View style={styles.section}>
+                                    <Text style={[styles.sectionLabel, isDarkMode && styles.darkSectionLabel]}>
+                                        Preferences
+                                    </Text>
+                                    {renderLink('Settings', 'cog', () => navigation.navigate('Settings'), '#64748b')}
+                                    {renderLink('Help & Support', 'info-circle', () => navigation.navigate('HelpSupport'), '#ef4444')}
+                                    {renderLink('Feedback', 'comment-alt', () => navigation.navigate('Feedback'), '#22c55e')}
+                                </View>
                             </View>
-                            <Text style={[styles.greeting, isDarkMode && styles.darkGreeting]}>
-                                Hello, {userName}!
-                            </Text>
-                            <Text style={[styles.subGreeting, isDarkMode && styles.darkSubGreeting]}>
-                                Manage your profile and settings
-                            </Text>
-                        </View>
 
-                        <View style={styles.section}>
-                            <Text style={[styles.sectionLabel, isDarkMode && styles.darkSectionLabel]}>
-                                Account Activity
-                            </Text>
-                            {renderLink('Following', 'users', () => navigation.navigate('FollowingPage'), '#6366f1')}
-                            {joinedViaInvite &&
-                                renderLink('Invite Tokens', 'ticket-alt', () => navigation.navigate('InviteTokens'), '#a855f7')}
-                        </View>
+                            <View style={styles.logoutSpacer} />
 
-                        <View style={styles.section}>
-                            <Text style={[styles.sectionLabel, isDarkMode && styles.darkSectionLabel]}>
-                                Preferences
-                            </Text>
-                            {renderLink('Settings', 'cog', () => navigation.navigate('Settings'), '#64748b')}
-                            {renderLink('Help & Support', 'info-circle', () => navigation.navigate('HelpSupport'), '#ef4444')}
-                            {renderLink('Feedback', 'comment-alt', () => navigation.navigate('Feedback'), '#22c55e')}
+                            <TouchableOpacity
+                                style={[styles.logoutBtn, isDarkMode && styles.darkLogoutBtn]}
+                                onPress={handleLogout}
+                                activeOpacity={0.75}
+                            >
+                                <Text style={styles.logoutText}>Log Out</Text>
+                            </TouchableOpacity>
                         </View>
-
-                        <TouchableOpacity
-                            style={[styles.logoutBtn, isDarkMode && styles.darkLogoutBtn]}
-                            onPress={handleLogout}
-                        >
-                            <Text style={styles.logoutText}>Log Out</Text>
-                        </TouchableOpacity>
-                    </View>
-                </ScrollView>
-            </SafeAreaView>
+                    </ScrollView>
+                </SafeAreaView>
+            </View>
         </>
     );
 };

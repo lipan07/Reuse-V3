@@ -5,20 +5,43 @@ export function buildAccountPageStyles(width, height) {
   const { n, nf, nv, contentMaxWidth } = getAccountUiMetrics(width, height);
 
   const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      // Match Settings / Help / Feedback: gray body so white header bar reads as separate
+      backgroundColor: '#F5F5F5',
+    },
+    darkContainer: {
+      backgroundColor: '#121212',
+    },
     safeArea: {
       flex: 1,
-      backgroundColor: '#FFFFFF',
+      backgroundColor: '#F5F5F5',
+    },
+    scrollView: {
+      flex: 1,
     },
     scrollContent: {
-      paddingTop: n(4),
+      paddingTop: n(8),
       paddingBottom: n(28),
       flexGrow: 1,
+      backgroundColor: '#F5F5F5',
     },
-    mainContainer: {
-      paddingHorizontal: n(24),
-      alignSelf: 'center',
+    scrollBody: {
+      flex: 1,
       width: '100%',
       maxWidth: contentMaxWidth,
+      alignSelf: 'center',
+      paddingHorizontal: n(24),
+    },
+    logoutSpacer: {
+      flexGrow: 1,
+      minHeight: n(20),
+    },
+    darkScrollContent: {
+      backgroundColor: '#121212',
+    },
+    mainContainer: {
+      width: '100%',
     },
     header: {
       alignItems: 'center',
@@ -81,8 +104,17 @@ export function buildAccountPageStyles(width, height) {
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingVertical: n(14),
-      borderBottomWidth: 1,
-      borderBottomColor: '#f8fafc',
+      paddingHorizontal: n(14),
+      marginBottom: n(10),
+      backgroundColor: '#FFFFFF',
+      borderRadius: n(12),
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: '#E8E8E8',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.06,
+      shadowRadius: 3,
+      elevation: 2,
     },
     menuLeft: {
       flexDirection: 'row',
@@ -102,7 +134,8 @@ export function buildAccountPageStyles(width, height) {
       color: '#334155',
     },
     logoutBtn: {
-      marginTop: n(18),
+      marginTop: n(8),
+      marginBottom: n(8),
       paddingVertical: n(16),
       alignItems: 'center',
       borderRadius: n(14),
@@ -128,7 +161,9 @@ export function buildAccountPageStyles(width, height) {
       color: '#64748b',
     },
     darkMenuItem: {
-      borderBottomColor: '#334155',
+      backgroundColor: '#1E1E1E',
+      borderColor: '#333333',
+      shadowOpacity: 0.25,
     },
     darkMenuText: {
       color: '#e2e8f0',

@@ -380,6 +380,8 @@ const ChatBox = ({ route }) => {
   const existingChatId = p.chatId != null ? p.chatId : null;
   const postTitle = p.postTitle || '';
   const postImage = p.postImage || '';
+  /** Resolved from route or chat API — notifications often omit post_id until messages load */
+  const [effectivePostId, setEffectivePostId] = useState(postId);
   const [chatId, setChatId] = useState(existingChatId ?? null);
   const [allMessages, setAllMessages] = useState([]);
   const [inputText, setInputText] = useState('');
@@ -532,13 +534,13 @@ const ChatBox = ({ route }) => {
     }
   }, [chatId, sellerId, buyerId, postId]);
 
-  // Fetch product details
+  // Fetch product details (uses id from route and/or post_id returned with chat messages)
   useEffect(() => {
     const fetchProductInfo = async () => {
-      if (!postId) return;
+      if (!effectivePostId?.trim()) return;
       try {
         const token = await AsyncStorage.getItem('authToken');
-        const response = await fetch(`${process.env.BASE_URL}/posts/${postId}`, {
+        const response = await fetch(`${process.env.BASE_URL}/posts/${effectivePostId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await response.json();
@@ -550,7 +552,7 @@ const ChatBox = ({ route }) => {
       }
     };
     fetchProductInfo();
-  }, [postId]);
+  }, [effectivePostId]);
 
   const fetchChatMessages = async (id, page = 1, isInitialLoad = false) => {
     try {
@@ -583,6 +585,10 @@ const ChatBox = ({ route }) => {
       if (!chatsPayload || typeof chatsPayload !== 'object') {
         console.warn('Unexpected chat messages response:', data);
         return;
+      }
+
+      if (data.post_id != null && String(data.post_id) !== '') {
+        setEffectivePostId(String(data.post_id));
       }
 
       if (isInitialLoad) {
@@ -679,7 +685,9 @@ const ChatBox = ({ route }) => {
         : {
           receiver_id: receiverId,
           message,
-          ...(postId && postId.trim() !== '' && { post_id: postId }),
+          ...((effectivePostId || postId)?.trim() && {
+            post_id: (effectivePostId || postId).trim(),
+          }),
         };
 
       // Add the temporary message to the list immediately
@@ -1049,13 +1057,22 @@ const ChatBox = ({ route }) => {
           style={[styles.headerContainer, isDarkMode && styles.darkHeaderContainer]}
           activeOpacity={0.8}
           onPress={() => {
+            const pid = (effectivePostId || postId || '').trim();
+            if (!pid) return;
             navigation.navigate('ProductDetails', {
-              productDetails: { id: postId }
+              productDetails: { id: pid },
             });
           }}
         >
           <Image
-            source={{ uri: postImage || productInfo?.images?.[0] }}
+            source={{
+              uri:
+                postImage ||
+                (typeof productInfo?.images?.[0] === 'string'
+                  ? productInfo.images[0]
+                  : productInfo?.images?.[0]?.url) ||
+                '',
+            }}
             style={styles.headerImage}
           />
           <View style={styles.headerContent}>

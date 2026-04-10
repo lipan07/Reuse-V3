@@ -24,6 +24,18 @@ import { createEcho } from '../service/echo';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { isMessageSeen, sameMessageId } from '../utils/chatUtils';
 import { useTheme } from '../context/ThemeContext';
+import { useAdSettings } from '../context/AdSettingsContext';
+import { AD_SETTING_SLUGS } from '../constants/adSettingSlugs';
+import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
+
+/** Small inline banner in thread — classic 320×50; env optional, safe fallback for release */
+const chatBoxInlineBannerUnitId = __DEV__
+  ? TestIds.BANNER
+  : (typeof process.env.G_CHAT_BOX_BANNER_AD_UNIT_ID === 'string' && process.env.G_CHAT_BOX_BANNER_AD_UNIT_ID.length > 0
+    ? process.env.G_CHAT_BOX_BANNER_AD_UNIT_ID
+    : (typeof process.env.G_BANNER_AD_UNIT_ID === 'string' && process.env.G_BANNER_AD_UNIT_ID.length > 0
+      ? process.env.G_BANNER_AD_UNIT_ID
+      : TestIds.BANNER));
 
 /** Keeps first occurrence per message id — API pages can overlap or requests can race when loading older messages. */
 function dedupeMessagesById(messages) {
@@ -63,6 +75,7 @@ function prependOlderMessagesUnique(olderBatch, existing) {
 
 const ChatBox = ({ route }) => {
   const navigation = useNavigation();
+  const { isAdEnabled } = useAdSettings();
   const { isDarkMode } = useTheme();
   const insets = useSafeAreaInsets();
   const { width: winW, height: winH } = useWindowDimensions();
@@ -367,6 +380,29 @@ const ChatBox = ({ route }) => {
       },
       darkInputContainer: { backgroundColor: '#334155' },
       darkInput: { color: '#f1f5f9' },
+      /** Fixed below product header — not inside FlatList; does not scroll with messages */
+      chatFixedTopBannerWrap: {
+        alignItems: 'center',
+        alignSelf: 'stretch',
+        flexShrink: 0,
+        paddingVertical: nv(6),
+        paddingHorizontal: n(8),
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: '#E5E7EB',
+        backgroundColor: '#FAFAFA',
+      },
+      composerBannerInner: {
+        borderRadius: n(8),
+        overflow: 'hidden',
+        backgroundColor: '#F3F4F6',
+      },
+      darkChatFixedTopBannerWrap: {
+        borderBottomColor: '#334155',
+        backgroundColor: '#0f172a',
+      },
+      darkComposerBannerInner: {
+        backgroundColor: '#1e293b',
+      },
     });
 
     return { styles, contentMaxWidth, n, nf, nv };
@@ -1137,6 +1173,31 @@ const ChatBox = ({ route }) => {
           <MaterialIcons name="chevron-right" size={n(26)} color={isDarkMode ? '#94a3b8' : '#888'} style={{ marginLeft: n(8) }} />
         </TouchableOpacity>
 
+      {!(loading && isInitialLoad) && isAdEnabled(AD_SETTING_SLUGS.CHAT_BOX_BANNER) && (
+        <View
+          style={[
+            styles.chatFixedTopBannerWrap,
+            isDarkMode && styles.darkChatFixedTopBannerWrap,
+            { maxWidth: contentMaxWidth, alignSelf: 'center', width: '100%' },
+          ]}
+          accessibilityLabel="Advertisement"
+          collapsable={false}
+        >
+          <View style={[styles.composerBannerInner, isDarkMode && styles.darkComposerBannerInner]}>
+            <BannerAd
+              unitId={chatBoxInlineBannerUnitId}
+              size={BannerAdSize.BANNER}
+              style={{
+                width: Math.min(320, Math.max(200, winW - n(32))),
+                height: 50,
+                alignSelf: 'center',
+              }}
+              onAdFailedToLoad={(e) => console.warn('[ChatBox] Banner failed to load:', e?.message || e)}
+            />
+          </View>
+        </View>
+      )}
+
       {loading && isInitialLoad ? (
         <View style={[styles.loadingContainer, isDarkMode && styles.darkLoadingContainer]}>
           <ActivityIndicator size="large" color="#007AFF" />
@@ -1165,8 +1226,9 @@ const ChatBox = ({ route }) => {
             }}
             refreshing={refreshing}
             onRefresh={onRefresh}
+            removeClippedSubviews={false}
           />
-      )}
+        )}
 
       {/* Message input - only add bottom padding when keyboard is closed to avoid extra margin when focused */}
       <View style={[

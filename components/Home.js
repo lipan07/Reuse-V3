@@ -7,25 +7,52 @@ import { useFocusEffect, useNavigation, useRoute, useIsFocused } from '@react-na
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { getHomeStyles } from '../assets/css/Home.styles';
-import { getNumColumns, normalize } from '../utils/responsive';
+import { getNumColumns, normalize, normalizeVertical } from '../utils/responsive';
 import { useTheme } from '../context/ThemeContext';
+import { useAdSettings } from '../context/AdSettingsContext';
+import { AD_SETTING_SLUGS } from '../constants/adSettingSlugs';
 
 import {
-  BannerAd,
-  BannerAdSize,
   TestIds,
   AppOpenAd,
   AdEventType,
+  NativeAd,
+  NativeAdView,
+  NativeAsset,
+  NativeAssetType,
+  NativeMediaView,
 } from 'react-native-google-mobile-ads';
 
-const adUnitIdAppOpen = __DEV__ ? TestIds.APP_OPEN : process.env.G_APP_OPEN_AD_UNIT_ID;
-const adUnitId = __DEV__ ? TestIds.ADAPTIVE_BANNER : process.env.G_BANNER_AD_UNIT_ID;
+/** Release builds: env vars must be strings or AppOpenAd.createForAdRequest throws at load time. */
+const adUnitIdAppOpen = __DEV__
+  ? TestIds.APP_OPEN
+  : (typeof process.env.G_APP_OPEN_AD_UNIT_ID === 'string' && process.env.G_APP_OPEN_AD_UNIT_ID.length > 0
+    ? process.env.G_APP_OPEN_AD_UNIT_ID
+    : TestIds.APP_OPEN);
+
+/** Native Advanced inline ads in product grid — optional G_HOME_FEED_NATIVE_AD_UNIT_ID */
+const homeFeedNativeAdUnitId = __DEV__
+  ? TestIds.NATIVE
+  : (process.env.G_HOME_FEED_NATIVE_AD_UNIT_ID || process.env.G_MY_ADS_FEED_NATIVE_AD_UNIT_ID || TestIds.NATIVE);
+
+/** Insert a native ad row after this many product cells */
+const HOME_FEED_NATIVE_AD_EVERY_N = 6;
 
 const appOpenAd = AppOpenAd.createForAdRequest(adUnitIdAppOpen, {
   keywords: ['education', 'shipping', 'travel'],
 });
 
 const PAGE_SIZE = 15;
+const DEFAULT_FILTERS = {
+  search: '',
+  category: null,
+  priceRange: [],
+  sortBy: null,
+  distance: 5,
+  listingType: null,
+  latitude: null,
+  longitude: null,
+};
 
 const PLACEHOLDER_TEXTS = [
   'What are you looking for?',
@@ -34,13 +61,82 @@ const PLACEHOLDER_TEXTS = [
   'Browse categories & filters',
 ];
 
+/** One Native Advanced row for the home product grid */
+const HomeFeedNativeAd = ({ styles, isDarkMode }) => {
+  const [nativeAd, setNativeAd] = useState(null);
+  const adRef = useRef(null);
+
+  useEffect(() => {
+    let mounted = true;
+    NativeAd.createForAdRequest(homeFeedNativeAdUnitId)
+      .then((ad) => {
+        adRef.current = ad;
+        if (!mounted) {
+          try {
+            ad.destroy();
+          } catch (_) {}
+          return;
+        }
+        setNativeAd(ad);
+      })
+      .catch((e) => {
+        console.warn('Home native ad load failed:', e);
+      });
+    return () => {
+      mounted = false;
+      try {
+        adRef.current?.destroy?.();
+      } catch (_) {}
+      adRef.current = null;
+    };
+  }, []);
+
+  if (!nativeAd) {
+    return (
+      <View style={styles.nativeAdListRow}>
+        <ActivityIndicator size="small" color={isDarkMode ? '#60a5fa' : '#007bff'} style={{ paddingVertical: 24 }} />
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.nativeAdListRow}>
+      <View style={[styles.nativeAdContainer, isDarkMode && styles.darkNativeAdContainer]}>
+        <NativeAdView nativeAd={nativeAd}>
+          <NativeAsset assetType={NativeAssetType.IMAGE}>
+            <NativeMediaView
+              style={[styles.nativeMedia, isDarkMode && styles.darkNativeMedia]}
+              resizeMode="cover"
+            />
+          </NativeAsset>
+          <NativeAsset assetType={NativeAssetType.HEADLINE}>
+            <Text style={[styles.nativeHeadline, isDarkMode && styles.darkNativeHeadline]} numberOfLines={2} />
+          </NativeAsset>
+          <NativeAsset assetType={NativeAssetType.BODY}>
+            <Text style={[styles.nativeBody, isDarkMode && styles.darkNativeBody]} numberOfLines={2} />
+          </NativeAsset>
+          <NativeAsset assetType={NativeAssetType.CALL_TO_ACTION}>
+            <Text style={styles.nativeCtaText} />
+          </NativeAsset>
+        </NativeAdView>
+      </View>
+    </View>
+  );
+};
+
 const Home = () => {
+  const { isAdEnabled } = useAdSettings();
   const { isDarkMode } = useTheme();
   const { width: rawWidth, height: rawHeight } = useWindowDimensions();
   const width = Math.max(rawWidth || 375, 200);
   const height = Math.max(rawHeight || 812, 400);
   const numColumns = getNumColumns(width);
   const styles = useMemo(() => StyleSheet.create(getHomeStyles(width, height)), [width, height]);
+  /** Matches `searchBarSpacer` in Home.styles (search row only) */
+  const topChromeInset = useMemo(() => {
+    const nv = (s) => normalizeVertical(s, height);
+    return Math.max(56, nv(54));
+  }, [height]);
 
   const navigation = useNavigation();
   const route = useRoute();
@@ -74,20 +170,32 @@ const Home = () => {
 
   const lastScrollY = useRef(0);
 
-  const [activeFilters, setActiveFilters] = useState({
-    search: route.params?.filters?.search || '',
-    category: route.params?.filters?.category || null,
-    priceRange: route.params?.filters?.priceRange || [],
-    sortBy: route.params?.filters?.sortBy || null,
-    distance: route.params?.filters?.distance || 5,
-    listingType: route.params?.filters?.listingType || null,
-    latitude: route.params?.filters?.latitude || null,
-    longitude: route.params?.filters?.longitude || null,
-  });
+  const normalizeFilters = useCallback((filters = {}) => ({
+    ...DEFAULT_FILTERS,
+    ...(filters || {}),
+    priceRange: Array.isArray(filters?.priceRange) ? filters.priceRange : [],
+  }), []);
+
+  const [activeFilters, setActiveFilters] = useState(
+    normalizeFilters(route.params?.filters)
+  );
 
   // State for storing user location and product distances
   const [userLocation, setUserLocation] = useState(null);
   const [productDistances, setProductDistances] = useState({});
+
+  /** Products interleaved with full-width native ad rows (multi-column FlatList uses flexBasis 100%) */
+  const listData = useMemo(() => {
+    const rows = [];
+    const showNative = isAdEnabled(AD_SETTING_SLUGS.HOME_FEED_NATIVE);
+    products.forEach((product, index) => {
+      rows.push({ kind: 'product', product, key: `p-${product.id}-${index}` });
+      if (showNative && (index + 1) % HOME_FEED_NATIVE_AD_EVERY_N === 0) {
+        rows.push({ kind: 'ad', key: `ad-${index}` });
+      }
+    });
+    return rows;
+  }, [products, isAdEnabled]);
 
 
   // Categories data - same as CategoryMenu.js
@@ -118,7 +226,7 @@ const Home = () => {
 
   useEffect(() => {
     if (route.params?.filters) {
-      setActiveFilters(route.params.filters);
+      setActiveFilters(normalizeFilters(route.params.filters));
       setFilters(route.params.filters);
       setSearch(route.params.filters.search || '');
       setSelectedCategory(route.params.filters.category || null);
@@ -128,7 +236,7 @@ const Home = () => {
       setHasMore(false);
       setHasInitialLoad(true); // Mark as loaded when products are passed from route
     }
-  }, [route.params]);
+  }, [route.params, normalizeFilters]);
 
   useFocusEffect(
     useCallback(() => {
@@ -566,6 +674,13 @@ const Home = () => {
     );
   };
 
+  const renderListItem = ({ item }) => {
+    if (item.kind === 'ad') {
+      return <HomeFeedNativeAd styles={styles} isDarkMode={isDarkMode} />;
+    }
+    return renderProductItem({ item: item.product });
+  };
+
   const handleOutsidePress = () => {
     setShowRecentSearches(false);
     Keyboard.dismiss();
@@ -654,7 +769,7 @@ const Home = () => {
     if (activeFilters.category) count++;
     if (activeFilters.distance !== 5) count++;
     if (activeFilters.listingType !== null) count++;
-    if (activeFilters.priceRange[0] || activeFilters.priceRange[1]) count++;
+    if (activeFilters.priceRange?.[0] || activeFilters.priceRange?.[1]) count++;
     if (activeFilters.sortBy) count++;
     setActiveFilterCount(count);
   }, [activeFilters]);
@@ -742,14 +857,14 @@ const Home = () => {
               <Icon name="close" size={normalize(10, width)} color="#fff" />
             </TouchableOpacity>
           )}
-          {(activeFilters.priceRange[0] || activeFilters.priceRange[1]) && (
+          {(activeFilters.priceRange?.[0] || activeFilters.priceRange?.[1]) && (
             <TouchableOpacity
               style={styles.filterPill}
               onPress={() => handleRemoveFilter('priceRange')}
             >
               <Text style={styles.filterPillText}>
-                Price: {activeFilters.priceRange[0] ? `₹${activeFilters.priceRange[0]}` : 'Any'} -
-                {activeFilters.priceRange[1] ? `₹${activeFilters.priceRange[1]}` : 'Any'}
+                Price: {activeFilters.priceRange?.[0] ? `₹${activeFilters.priceRange[0]}` : 'Any'} -
+                {activeFilters.priceRange?.[1] ? `₹${activeFilters.priceRange[1]}` : 'Any'}
               </Text>
               <Icon name="close" size={normalize(10, width)} color="#fff" />
             </TouchableOpacity>
@@ -795,19 +910,12 @@ const Home = () => {
 
   return (
     <View style={[styles.container, isDarkMode && styles.darkContainer]} pointerEvents="box-none">
-      {/* Banner Ad */}
-      {/* <View style={styles.bannerAdContainer}>
-          <BannerAd
-            unitId={adUnitId}
-            size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-            style={styles.bannerAd}
-          />
-      </View> */}
       <FlatList
         key={numColumns}
-        data={products}
-        renderItem={renderProductItem}
-        keyExtractor={(item) => `${item.id}_${currentPage}`}
+        data={listData}
+        renderItem={renderListItem}
+        keyExtractor={(item) =>
+          item.kind === 'ad' ? item.key : `${item.product.id}_${currentPage}`}
         numColumns={numColumns}
         style={styles.flex1}
         contentContainerStyle={styles.productList}
@@ -838,7 +946,7 @@ const Home = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            progressViewOffset={56}
+            progressViewOffset={topChromeInset}
             tintColor={isDarkMode ? '#60a5fa' : '#007bff'}
             // Android: never pass undefined/empty colors — native SwipeRefreshLayout crashes (length=0; index=0).
             colors={isDarkMode ? ['#60a5fa'] : ['#007bff']}
@@ -854,47 +962,34 @@ const Home = () => {
         maxToRenderPerBatch={10}
         windowSize={21}
       />
-      {/* Search + filter row: opens FilterScreen (search terms & filters). Matches stack header + safe strip. */}
+      {/* Search row (fixed under status bar); list scrolls under with spacer */}
       <View
         style={[styles.searchContainer, isDarkMode && styles.darkSearchContainer]}
         pointerEvents="box-none"
       >
-        <TouchableOpacity
-          style={[styles.searchInputWrapper, isDarkMode && styles.darkSearchInputWrapper]}
-          onPress={() => navigation.navigate('FilterScreen', {
-            initialFilters: { ...activeFilters, search, category: selectedCategory }
-          })}
-          activeOpacity={0.7}
-        >
-          <Icon name="search" size={normalize(18, width)} color={isDarkMode ? '#94a3b8' : '#888'} style={styles.searchIcon} />
-          {search ? (
-            <Text style={[styles.searchDisplayText, isDarkMode && styles.darkSearchDisplayText]} numberOfLines={1}>
-              {search}
-            </Text>
-          ) : (
-            <Animated.Text
-              style={[styles.searchDisplayText, styles.searchPlaceholder, isDarkMode && styles.darkSearchDisplayText, { opacity: placeholderOpacity }]}
-              numberOfLines={1}
-            >
-              {PLACEHOLDER_TEXTS[placeholderIndex]}
-            </Animated.Text>
-          )}
-        </TouchableOpacity>
-        {/* <TouchableOpacity
-          style={[styles.filterButton, { marginLeft: normalize(8, width) }]}
-          onPress={() => navigation.navigate('FilterScreen', {
-            initialFilters: { ...activeFilters, search, category: selectedCategory }
-          })}
-          activeOpacity={0.85}
-          accessibilityLabel="Open filters"
-        >
-          <Icon name="filter-list" size={normalize(20, width)} color="#fff" />
-                {activeFilterCount > 0 && (
-                  <View style={styles.filterBadge}>
-                    <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
-                  </View>
-                )}
-              </TouchableOpacity> */}
+        <View style={styles.searchRow}>
+          <TouchableOpacity
+            style={[styles.searchInputWrapper, isDarkMode && styles.darkSearchInputWrapper]}
+            onPress={() => navigation.navigate('FilterScreen', {
+              initialFilters: { ...activeFilters, search, category: selectedCategory }
+            })}
+            activeOpacity={0.7}
+          >
+            <Icon name="search" size={normalize(18, width)} color={isDarkMode ? '#94a3b8' : '#888'} style={styles.searchIcon} />
+            {search ? (
+              <Text style={[styles.searchDisplayText, isDarkMode && styles.darkSearchDisplayText]} numberOfLines={1}>
+                {search}
+              </Text>
+            ) : (
+              <Animated.Text
+                style={[styles.searchDisplayText, styles.searchPlaceholder, isDarkMode && styles.darkSearchDisplayText, { opacity: placeholderOpacity }]}
+                numberOfLines={1}
+              >
+                {PLACEHOLDER_TEXTS[placeholderIndex]}
+              </Animated.Text>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
       <BottomNavBar navigation={navigation} />
       {showLocationPopup && (

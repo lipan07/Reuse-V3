@@ -1,9 +1,82 @@
 // components/SubCategoryPanel.js
-import React, { memo } from 'react';
+import React, { memo, useEffect, useRef, useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
+import { useAdSettings } from '../context/AdSettingsContext';
+import { AD_SETTING_SLUGS } from '../constants/adSettingSlugs';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import MCIcon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {
+    NativeAd,
+    NativeAdView,
+    NativeAsset,
+    NativeAssetType,
+    NativeMediaView,
+    TestIds,
+} from 'react-native-google-mobile-ads';
+
+/** Native Advanced at end of subcategory list (add post flow). Optional: G_SUBCATEGORY_NATIVE_AD_UNIT_ID in .env */
+const subCategoryNativeAdUnitId = __DEV__
+    ? TestIds.NATIVE
+    : (typeof process.env.G_SUBCATEGORY_NATIVE_AD_UNIT_ID === 'string' && process.env.G_SUBCATEGORY_NATIVE_AD_UNIT_ID.length > 0
+        ? process.env.G_SUBCATEGORY_NATIVE_AD_UNIT_ID
+        : (typeof process.env.G_MY_ADS_FEED_NATIVE_AD_UNIT_ID === 'string' && process.env.G_MY_ADS_FEED_NATIVE_AD_UNIT_ID.length > 0
+            ? process.env.G_MY_ADS_FEED_NATIVE_AD_UNIT_ID
+            : TestIds.NATIVE));
+
+const SubCategoryNativeAdvancedAd = memo(({ isDarkMode }) => {
+    const [nativeAd, setNativeAd] = useState(null);
+    const adRef = useRef(null);
+
+    useEffect(() => {
+        let mounted = true;
+        NativeAd.createForAdRequest(subCategoryNativeAdUnitId)
+            .then((ad) => {
+                adRef.current = ad;
+                if (!mounted) {
+                    try {
+                        ad.destroy();
+                    } catch (_) { /* ignore */ }
+                    return;
+                }
+                setNativeAd(ad);
+            })
+            .catch((e) => console.warn('SubCategory NativeAd load failed:', e));
+        return () => {
+            mounted = false;
+            try {
+                adRef.current?.destroy?.();
+            } catch (_) { /* ignore */ }
+            adRef.current = null;
+        };
+    }, []);
+
+    if (!nativeAd) {
+        return null;
+    }
+
+    return (
+        <View style={[styles.nativeAdCard, isDarkMode && darkStyles.nativeAdCard]}>
+            <NativeAdView nativeAd={nativeAd}>
+                <NativeAsset assetType={NativeAssetType.IMAGE}>
+                    <NativeMediaView
+                        style={[styles.nativeMedia, isDarkMode && darkStyles.nativeMedia]}
+                        resizeMode="cover"
+                    />
+                </NativeAsset>
+                <NativeAsset assetType={NativeAssetType.HEADLINE}>
+                    <Text style={[styles.nativeHeadline, isDarkMode && darkStyles.nativeHeadline]} numberOfLines={2} />
+                </NativeAsset>
+                <NativeAsset assetType={NativeAssetType.BODY}>
+                    <Text style={[styles.nativeBody, isDarkMode && darkStyles.nativeBody]} numberOfLines={2} />
+                </NativeAsset>
+                <NativeAsset assetType={NativeAssetType.CALL_TO_ACTION}>
+                    <Text style={styles.nativeCtaText} />
+                </NativeAsset>
+            </NativeAdView>
+        </View>
+    );
+});
 
 const { width, height } = Dimensions.get('window');
 const shortSide = Math.min(width, height);
@@ -170,6 +243,7 @@ const subcategoryColorMapping = {
 };
 
 const SubCategoryPanel = memo(({ subcategories, onSelectSubcategory, parentCategoryName, parentCategoryColor, listBottomPadding = 0 }) => {
+    const { isAdEnabled } = useAdSettings();
     const { isDarkMode } = useTheme();
 
     const getIconName = (guardName) => {
@@ -234,6 +308,12 @@ const SubCategoryPanel = memo(({ subcategories, onSelectSubcategory, parentCateg
                         );
                     })}
                 </View>
+
+                {isAdEnabled(AD_SETTING_SLUGS.SUBCATEGORY_NATIVE) ? (
+                <View style={styles.nativeAdWrap}>
+                    <SubCategoryNativeAdvancedAd isDarkMode={isDarkMode} />
+                </View>
+                ) : null}
             </ScrollView>
         </View>
     );
@@ -328,6 +408,54 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+    nativeAdWrap: {
+        width: '100%',
+        marginTop: normalizeVertical(8),
+        paddingHorizontal: normalize(4),
+    },
+    nativeAdCard: {
+        width: '100%',
+        backgroundColor: '#FFFFFF',
+        borderRadius: normalize(14),
+        padding: normalize(12),
+        borderWidth: 1,
+        borderColor: '#E8E8E8',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.06,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    nativeMedia: {
+        width: '100%',
+        height: normalizeVertical(110),
+        borderRadius: normalize(12),
+        backgroundColor: '#f1f5f9',
+        marginBottom: normalizeVertical(8),
+        overflow: 'hidden',
+    },
+    nativeHeadline: {
+        fontSize: normalize(14),
+        fontWeight: '800',
+        color: '#0F172A',
+        marginBottom: normalizeVertical(4),
+    },
+    nativeBody: {
+        fontSize: normalize(12),
+        color: '#6B7280',
+        marginBottom: normalizeVertical(8),
+        lineHeight: normalize(15),
+    },
+    nativeCtaText: {
+        alignSelf: 'flex-start',
+        color: '#FFFFFF',
+        fontWeight: '800',
+        fontSize: normalize(12),
+        paddingVertical: normalizeVertical(8),
+        paddingHorizontal: normalize(12),
+        borderRadius: normalize(10),
+        backgroundColor: '#007BFF',
+    },
 });
 
 const darkStyles = StyleSheet.create({
@@ -345,6 +473,19 @@ const darkStyles = StyleSheet.create({
     },
     optionCard: {
         backgroundColor: '#1e293b',
+    },
+    nativeAdCard: {
+        backgroundColor: '#1e293b',
+        borderColor: '#334155',
+    },
+    nativeMedia: {
+        backgroundColor: '#0f172a',
+    },
+    nativeHeadline: {
+        color: '#F8FAFC',
+    },
+    nativeBody: {
+        color: '#94a3b8',
     },
 });
 

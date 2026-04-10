@@ -1,11 +1,30 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Modal, TouchableWithoutFeedback, ActivityIndicator, Dimensions, Animated, Platform, ScrollView, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BottomNavBar from './BottomNavBar';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useTheme } from '../context/ThemeContext';
+import { useAdSettings } from '../context/AdSettingsContext';
+import { AD_SETTING_SLUGS } from '../constants/adSettingSlugs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
+import { BannerAd, BannerAdSize, TestIds, RewardedAd, AdEventType } from 'react-native-google-mobile-ads';
+
+/** Same family as Home banner; optional dedicated feed unit in .env — must be a string or native view can crash */
+const myAdsFeedAdUnitId = __DEV__
+  ? TestIds.ADAPTIVE_BANNER
+  : (process.env.G_MY_ADS_FEED_BANNER_AD_UNIT_ID
+    || process.env.G_BANNER_AD_UNIT_ID
+    || TestIds.ADAPTIVE_BANNER);
+
+/** Rewarded after boost celebration — optional G_MY_ADS_BOOST_REWARDED_AD_UNIT_ID, else G_REWARDED_AD_UNIT_ID */
+const myAdsBoostRewardedUnitId = __DEV__
+  ? TestIds.REWARDED
+  : (typeof process.env.G_MY_ADS_BOOST_REWARDED_AD_UNIT_ID === 'string' && process.env.G_MY_ADS_BOOST_REWARDED_AD_UNIT_ID.length > 0
+    ? process.env.G_MY_ADS_BOOST_REWARDED_AD_UNIT_ID
+    : (typeof process.env.G_REWARDED_AD_UNIT_ID === 'string' && process.env.G_REWARDED_AD_UNIT_ID.length > 0
+      ? process.env.G_REWARDED_AD_UNIT_ID
+      : null));
 
 // Responsive scaling functions
 const { width, height } = Dimensions.get('window');
@@ -21,6 +40,7 @@ const isIphoneX = Platform.OS === 'ios' && longSide >= 812;
 const bottomSafeArea = isIphoneX ? 34 : 0;
 
 const MyAdsPage = ({ navigation }) => {
+  const { isAdEnabled } = useAdSettings();
   const { isDarkMode } = useTheme();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const isCompactModalScreen = windowHeight < 760 || windowWidth > windowHeight;
@@ -39,6 +59,88 @@ const MyAdsPage = ({ navigation }) => {
   const [showBoostSuccess, setShowBoostSuccess] = useState(false);
   const [confettiParticles, setConfettiParticles] = useState([]);
   const confettiRef = useRef(null);
+  const boostRewardTimerRef = useRef(null);
+  const boostRewardUnsubsRef = useRef([]);
+  const boostRewardedAdRef = useRef(null);
+  const boostRewardFinalizedRef = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      if (boostRewardTimerRef.current) {
+        clearTimeout(boostRewardTimerRef.current);
+        boostRewardTimerRef.current = null;
+      }
+      boostRewardUnsubsRef.current.forEach((u) => u?.());
+      boostRewardUnsubsRef.current = [];
+    };
+  }, []);
+
+  const clearBoostRewardListeners = () => {
+    boostRewardUnsubsRef.current.forEach((u) => u?.());
+    boostRewardUnsubsRef.current = [];
+  };
+
+  const dismissBoostCelebration = () => {
+    setShowConfetti(false);
+    setConfettiParticles([]);
+    setShowBoostSuccess(false);
+  };
+
+  const finalizeBoostAfterRewarded = () => {
+    if (boostRewardFinalizedRef.current) return;
+    boostRewardFinalizedRef.current = true;
+    clearBoostRewardListeners();
+    const ad = boostRewardedAdRef.current;
+    if (ad) {
+      try {
+        ad.load();
+      } catch (_) {}
+    }
+    dismissBoostCelebration();
+  };
+
+  const tryShowBoostRewarded = () => {
+    if (!myAdsBoostRewardedUnitId) {
+      setTimeout(() => {
+        finalizeBoostAfterRewarded();
+      }, 800);
+      return;
+    }
+    if (!boostRewardedAdRef.current) {
+      boostRewardedAdRef.current = RewardedAd.createForAdRequest(myAdsBoostRewardedUnitId);
+    }
+    const ad = boostRewardedAdRef.current;
+    const done = () => finalizeBoostAfterRewarded();
+
+    boostRewardUnsubsRef.current.push(
+      ad.addAdEventListener(AdEventType.CLOSED, done),
+      ad.addAdEventListener(AdEventType.ERROR, done),
+    );
+
+    const tryShow = () => {
+      try {
+        if (ad.loaded) {
+          ad.show();
+        } else {
+          const unsubLoaded = ad.addAdEventListener(AdEventType.LOADED, () => {
+            unsubLoaded();
+            try {
+              ad.show();
+            } catch (e) {
+              console.warn('[MyAds] Boost rewarded show failed:', e?.message || e);
+              done();
+            }
+          });
+          boostRewardUnsubsRef.current.push(unsubLoaded);
+          ad.load();
+        }
+      } catch (e) {
+        console.warn('[MyAds] Boost rewarded error:', e?.message || e);
+        done();
+      }
+    };
+    tryShow();
+  };
 
   useEffect(() => {
     fetchProducts(1, true); // Fetch the first page on component mount
@@ -184,6 +286,34 @@ const MyAdsPage = ({ navigation }) => {
         <Icon name="angle-right" size={24} color={isDarkMode ? '#60a5fa' : '#007BFF'} style={styles.arrowIcon} />
       </TouchableOpacity>
     );
+  };
+
+  /** Products plus a banner row after every 3 listings (AdMob Banner / INLINE_ADAPTIVE_BANNER) */
+  const listData = useMemo(() => {
+    const rows = [];
+    const showBanners = isAdEnabled(AD_SETTING_SLUGS.MY_ADS_FEED_BANNER);
+    products.forEach((product, index) => {
+      rows.push({ kind: 'product', product });
+      if (showBanners && (index + 1) % 3 === 0) {
+        rows.push({ kind: 'ad', adKey: `ad-${product.id}-${index}` });
+      }
+    });
+    return rows;
+  }, [products, isAdEnabled]);
+
+  const renderListItem = ({ item }) => {
+    if (item.kind === 'ad') {
+      return (
+        <View style={[styles.inlineAdContainer, isDarkMode && styles.darkInlineAdContainer]}>
+          <BannerAd
+            unitId={myAdsFeedAdUnitId}
+            size={BannerAdSize.INLINE_ADAPTIVE_BANNER}
+            style={styles.inlineBannerAd}
+          />
+        </View>
+      );
+    }
+    return renderProductItem({ item: item.product });
   };
 
   const renderFooter = () => {
@@ -365,25 +495,40 @@ const MyAdsPage = ({ navigation }) => {
   };
 
   const handleBoost = () => {
+    if (boostRewardTimerRef.current) {
+      clearTimeout(boostRewardTimerRef.current);
+      boostRewardTimerRef.current = null;
+    }
+    clearBoostRewardListeners();
+    boostRewardFinalizedRef.current = false;
+
+    if (myAdsBoostRewardedUnitId) {
+      if (!boostRewardedAdRef.current) {
+        boostRewardedAdRef.current = RewardedAd.createForAdRequest(myAdsBoostRewardedUnitId);
+      }
+      try {
+        boostRewardedAdRef.current.load();
+      } catch (_) {}
+    }
+
     const particles = createConfettiParticles();
     setConfettiParticles(particles);
     setShowConfetti(true);
     setShowBoostSuccess(true);
     hidePopup();
 
-    setTimeout(() => {
-      setShowConfetti(false);
-      setConfettiParticles([]);
-      setShowBoostSuccess(false);
-    }, 3000);
+    boostRewardTimerRef.current = setTimeout(() => {
+      boostRewardTimerRef.current = null;
+      tryShowBoostRewarded();
+    }, 1500);
   };
 
   return (
     <View style={[styles.container, isDarkMode && styles.darkContainer]}>
       <FlatList
-        data={products}
-        renderItem={renderProductItem}
-        keyExtractor={(item) => item.id.toString()}
+        data={listData}
+        renderItem={renderListItem}
+        keyExtractor={(item) => (item.kind === 'ad' ? item.adKey : item.product.id.toString())}
         contentContainerStyle={styles.productList}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
@@ -616,7 +761,14 @@ const MyAdsPage = ({ navigation }) => {
           visible={showBoostSuccess}
           transparent={true}
           animationType="fade"
-          onRequestClose={() => setShowBoostSuccess(false)}
+          onRequestClose={() => {
+            if (boostRewardTimerRef.current) {
+              clearTimeout(boostRewardTimerRef.current);
+              boostRewardTimerRef.current = null;
+            }
+            clearBoostRewardListeners();
+            dismissBoostCelebration();
+          }}
         >
           <View style={styles.boostSuccessOverlay}>
             <Animated.View style={styles.boostSuccessContainer}>
@@ -660,7 +812,14 @@ const MyAdsPage = ({ navigation }) => {
 
               <TouchableOpacity
                 style={styles.boostSuccessButton}
-                onPress={() => setShowBoostSuccess(false)}
+                onPress={() => {
+                  if (boostRewardTimerRef.current) {
+                    clearTimeout(boostRewardTimerRef.current);
+                    boostRewardTimerRef.current = null;
+                  }
+                  clearBoostRewardListeners();
+                  dismissBoostCelebration();
+                }}
               >
                 <Text style={styles.boostSuccessButtonText}>Awesome!</Text>
               </TouchableOpacity>
@@ -682,6 +841,23 @@ const styles = StyleSheet.create({
   },
   productList: {
     paddingBottom: 60,
+  },
+  inlineAdContainer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: normalizeVertical(8),
+    paddingHorizontal: normalize(4),
+    backgroundColor: '#f8fafc',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#e2e8f0',
+  },
+  darkInlineAdContainer: {
+    backgroundColor: '#1e293b',
+    borderBottomColor: '#334155',
+  },
+  inlineBannerAd: {
+    width: '100%',
+    alignSelf: 'center',
   },
   productItem: {
     flexDirection: 'row',

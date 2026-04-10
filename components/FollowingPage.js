@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
     View,
     Text,
@@ -20,8 +20,23 @@ import CustomStatusBar from './Screens/CustomStatusBar';
 import AnimatedFollowButton from './AnimatedFollowButton';
 import { buildFollowingPageStyles } from '../assets/css/FollowingPage.styles';
 import { useTheme } from '../context/ThemeContext';
+import { useAdSettings } from '../context/AdSettingsContext';
+import { AD_SETTING_SLUGS } from '../constants/adSettingSlugs';
+import {
+    NativeAd,
+    NativeAdView,
+    NativeAsset,
+    NativeAssetType,
+    NativeMediaView,
+    TestIds,
+} from 'react-native-google-mobile-ads';
+
+const followingFeedNativeAdUnitId = __DEV__
+    ? TestIds.NATIVE
+    : (process.env.G_FOLLOWING_FEED_NATIVE_AD_UNIT_ID || process.env.G_MY_ADS_FEED_NATIVE_AD_UNIT_ID || TestIds.NATIVE);
 
 const FollowingPage = ({ navigation }) => {
+    const { isAdEnabled } = useAdSettings();
     const { width: winW, height: winH } = useWindowDimensions();
     const { styles, n, nf } = useMemo(
         () => buildFollowingPageStyles(winW, winH),
@@ -37,6 +52,52 @@ const FollowingPage = ({ navigation }) => {
     const [showSweetAlert, setShowSweetAlert] = useState(false);
     const [sweetAlertMessage, setSweetAlertMessage] = useState('');
     const [sweetAlertOpacity] = useState(new Animated.Value(0));
+
+    const FollowingNativeAd = () => {
+        const [nativeAd, setNativeAd] = useState(null);
+        const adRef = useRef(null);
+
+        useEffect(() => {
+            let mounted = true;
+            NativeAd.createForAdRequest(followingFeedNativeAdUnitId)
+                .then((ad) => {
+                    adRef.current = ad;
+                    if (!mounted) {
+                        try { ad.destroy(); } catch (_) {}
+                        return;
+                    }
+                    setNativeAd(ad);
+                })
+                .catch((e) => console.warn('Following native ad load failed:', e));
+
+            return () => {
+                mounted = false;
+                try { adRef.current?.destroy?.(); } catch (_) {}
+                adRef.current = null;
+            };
+        }, []);
+
+        if (!nativeAd) return null;
+
+        return (
+            <View style={[styles.nativeAdWrap, darkMode && styles.darkNativeAdWrap]}>
+                <NativeAdView nativeAd={nativeAd}>
+                    <NativeAsset assetType={NativeAssetType.IMAGE}>
+                        <NativeMediaView style={styles.nativeMedia} resizeMode="cover" />
+                    </NativeAsset>
+                    <NativeAsset assetType={NativeAssetType.HEADLINE}>
+                        <Text style={[styles.nativeHeadline, darkMode && styles.darkNativeHeadline]} numberOfLines={2} />
+                    </NativeAsset>
+                    <NativeAsset assetType={NativeAssetType.BODY}>
+                        <Text style={[styles.nativeBody, darkMode && styles.darkNativeBody]} numberOfLines={2} />
+                    </NativeAsset>
+                    <NativeAsset assetType={NativeAssetType.CALL_TO_ACTION}>
+                        <Text style={styles.nativeCtaText} />
+                    </NativeAsset>
+                </NativeAdView>
+            </View>
+        );
+    };
 
     // Sweet Alert functions
     const showSweetAlertMessage = (message) => {
@@ -363,6 +424,30 @@ const FollowingPage = ({ navigation }) => {
         </View>
     );
 
+    const listData = useMemo(() => {
+        const rows = [];
+        let adInserted = false;
+        const showNative = isAdEnabled(AD_SETTING_SLUGS.FOLLOWING_FEED_NATIVE);
+        data.forEach((item, index) => {
+            rows.push({ kind: 'data', item });
+            if (showNative && (index + 1) % 5 === 0) {
+                rows.push({ kind: 'ad', key: `following-ad-${followingFilter}-${index}` });
+                adInserted = true;
+            }
+        });
+        if (showNative && data.length > 0 && !adInserted) {
+            rows.push({ kind: 'ad', key: `following-ad-fallback-${followingFilter}` });
+        }
+        return rows;
+    }, [data, followingFilter, isAdEnabled]);
+
+    const renderListItem = ({ item }) => {
+        if (item.kind === 'ad') {
+            return <FollowingNativeAd />;
+        }
+        return renderItem({ item: item.item });
+    };
+
     return (
         <SafeAreaView style={[styles.container, darkMode && styles.darkContainer]} edges={['bottom', 'left', 'right']}>
             <CustomStatusBar darkMode={darkMode} />
@@ -438,9 +523,9 @@ const FollowingPage = ({ navigation }) => {
                     </View>
                 ) : (
                     <FlatList
-                        data={data}
-                        keyExtractor={(item) => item.id.toString()}
-                        renderItem={renderItem}
+                        data={listData}
+                        keyExtractor={(item) => (item.kind === 'ad' ? item.key : item.item.id.toString())}
+                        renderItem={renderListItem}
                         contentContainerStyle={[styles.listContent, { paddingBottom: (insets?.bottom ?? 0) + n(20) }]}
                         showsVerticalScrollIndicator={false}
                         ItemSeparatorComponent={() => <View style={[styles.separator, darkMode && styles.darkSeparator]} />}

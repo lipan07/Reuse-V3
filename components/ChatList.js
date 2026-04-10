@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { 
   View, Text, FlatList, StyleSheet, TouchableOpacity, Dimensions,
   ActivityIndicator, Image, Animated, Alert, Modal,
@@ -13,10 +13,26 @@ import { createEcho } from '../service/echo';
 import { isMessageSeen, sameMessageId } from '../utils/chatUtils';
 import { useNotification } from '../context/NotificationContext';
 import { useTheme } from '../context/ThemeContext';
+import { useAdSettings } from '../context/AdSettingsContext';
+import { AD_SETTING_SLUGS } from '../constants/adSettingSlugs';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import ModalScreen from './SupportElement/ModalScreen.js';
+import {
+  NativeAd,
+  NativeAdView,
+  NativeAsset,
+  NativeAssetType,
+  NativeMediaView,
+  TestIds,
+} from 'react-native-google-mobile-ads';
+
+/** Native Advanced in-feed ad for ChatList */
+const chatListFeedAdUnitId = __DEV__
+  ? TestIds.NATIVE
+  : (process.env.G_CHAT_LIST_FEED_NATIVE_AD_UNIT_ID || process.env.G_MY_ADS_FEED_NATIVE_AD_UNIT_ID || TestIds.NATIVE);
 
 const ChatList = ({ navigation }) => {
+  const { isAdEnabled } = useAdSettings();
   const { isDarkMode } = useTheme();
   const { width, height } = useWindowDimensions();
   const [chats, setChats] = useState([]);
@@ -287,6 +303,80 @@ const ChatList = ({ navigation }) => {
     );
   };
 
+  const ChatListNativeAd = () => {
+    const [nativeAd, setNativeAd] = useState(null);
+    const adRef = useRef(null);
+
+    useEffect(() => {
+      let mounted = true;
+      NativeAd.createForAdRequest(chatListFeedAdUnitId)
+        .then((ad) => {
+          adRef.current = ad;
+          if (!mounted) {
+            try { ad.destroy(); } catch (_) {}
+            return;
+          }
+          setNativeAd(ad);
+        })
+        .catch((e) => {
+          console.warn('ChatList native ad load failed:', e);
+        });
+      return () => {
+        mounted = false;
+        try { adRef.current?.destroy?.(); } catch (_) {}
+        adRef.current = null;
+      };
+    }, []);
+
+    if (!nativeAd) return null;
+
+    return (
+      <View style={[styles.inlineAdContainer, isDarkMode && styles.darkInlineAdContainer]}>
+        <View style={[styles.nativeAdCard, isDarkMode && styles.darkNativeAdCard]}>
+          <NativeAdView nativeAd={nativeAd}>
+            <NativeAsset assetType={NativeAssetType.IMAGE}>
+              <NativeMediaView style={[styles.nativeMedia, isDarkMode && styles.darkNativeMedia]} resizeMode="cover" />
+            </NativeAsset>
+            <NativeAsset assetType={NativeAssetType.HEADLINE}>
+              <Text style={[styles.nativeHeadline, isDarkMode && styles.darkNativeHeadline]} numberOfLines={2} />
+            </NativeAsset>
+            <NativeAsset assetType={NativeAssetType.BODY}>
+              <Text style={[styles.nativeBody, isDarkMode && styles.darkNativeBody]} numberOfLines={2} />
+            </NativeAsset>
+            <NativeAsset assetType={NativeAssetType.CALL_TO_ACTION}>
+              <Text style={styles.nativeCtaText} />
+            </NativeAsset>
+          </NativeAdView>
+        </View>
+      </View>
+    );
+  };
+
+  /** Insert a native ad after every 5 chat items */
+  const listData = useMemo(() => {
+    const rows = [];
+    let adInserted = false;
+    const showNative = isAdEnabled(AD_SETTING_SLUGS.CHAT_LIST_NATIVE);
+    chats.forEach((chat, index) => {
+      rows.push({ kind: 'chat', chat });
+      if (showNative && (index + 1) % 5 === 0) {
+        rows.push({ kind: 'ad', adKey: `chat-ad-${chat.id}-${index}` });
+        adInserted = true;
+      }
+    });
+    if (showNative && chats.length > 0 && !adInserted) {
+      rows.push({ kind: 'ad', adKey: 'chat-ad-fallback' });
+    }
+    return rows;
+  }, [chats, isAdEnabled]);
+
+  const renderListItem = ({ item }) => {
+    if (item.kind === 'ad') {
+      return <ChatListNativeAd />;
+    }
+    return renderChatItem({ item: item.chat });
+  };
+
   return (
     <SafeAreaView style={[styles.container, isDarkMode && styles.darkContainer]}>
       <StatusBar
@@ -297,9 +387,9 @@ const ChatList = ({ navigation }) => {
         <Text style={[styles.headerTitle, isDarkMode && styles.darkHeaderTitle]}>Messages</Text>
       </View>
       <FlatList
-        data={chats}
-        renderItem={renderChatItem}
-        keyExtractor={(item) => item.id.toString()}
+        data={listData}
+        renderItem={renderListItem}
+        keyExtractor={(item) => (item.kind === 'ad' ? item.adKey : item.chat.id.toString())}
         contentContainerStyle={[styles.listContainer, { width: contentWidth, alignSelf: 'center', paddingBottom: bottomSpacing + 100 }]}
         showsVerticalScrollIndicator={false}
         ListFooterComponent={isLoading && <ActivityIndicator color="#6366f1" style={{ marginVertical: 20 }} />}
@@ -328,6 +418,48 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: 24, paddingVertical: 15 },
   headerTitle: { fontSize: 24, fontWeight: '800', color: '#1e293b' },
   listContainer: { paddingHorizontal: 20 },
+  inlineAdContainer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  nativeAdCard: {
+    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#E5E7EB',
+  },
+  nativeMedia: {
+    width: '100%',
+    height: 100,
+    borderRadius: 8,
+    marginBottom: 8,
+    backgroundColor: '#f1f5f9',
+  },
+  nativeHeadline: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0f172a',
+    marginBottom: 4,
+  },
+  nativeBody: {
+    fontSize: 11,
+    color: '#64748b',
+    lineHeight: 15,
+    marginBottom: 8,
+  },
+  nativeCtaText: {
+    alignSelf: 'flex-start',
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#FFF',
+    backgroundColor: '#6366f1',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
   chatCard: { flexDirection: 'row', paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#f1f5f9', alignItems: 'center' },
   avatarWrapper: { position: 'relative', marginRight: 16 },
   avatar: { width: 54, height: 54, borderRadius: 16, backgroundColor: '#f1f5f9' },
@@ -366,10 +498,18 @@ const styles = StyleSheet.create({
   darkTimeText: { color: '#64748b' },
   darkUserName: { color: '#a5b4fc' },
   darkOfflineText: { color: '#64748b' },
+  darkNativeAdCard: {
+    backgroundColor: '#0f172a',
+    borderColor: '#334155',
+  },
+  darkNativeMedia: { backgroundColor: '#1e293b' },
+  darkNativeHeadline: { color: '#f8fafc' },
+  darkNativeBody: { color: '#94a3b8' },
   darkConfirmBox: { backgroundColor: '#1e293b' },
   darkConfirmTitle: { color: '#f1f5f9' },
   darkCBtn: { backgroundColor: '#334155' },
   darkCBtnTxt: { color: '#e2e8f0' },
+  darkInlineAdContainer: { backgroundColor: '#121212' },
 });
 
 export default ChatList;

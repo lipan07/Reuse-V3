@@ -1,4 +1,56 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { InterstitialAd, AdEventType, TestIds } from 'react-native-google-mobile-ads';
+import { AD_SETTING_SLUGS } from '../constants/adSettingSlugs';
+import { isAdTypeEnabled } from './adSettingsService';
+
+/** Interstitial shown after successful new post creation */
+const postCreateInterstitialUnitId = __DEV__
+    ? TestIds.INTERSTITIAL
+    : process.env.G_POST_CREATE_INTERSTITIAL_AD_UNIT_ID;
+
+let isInterstitialFlowRunning = false;
+
+const showPostCreateInterstitial = () => {
+    if (!isAdTypeEnabled(AD_SETTING_SLUGS.POST_CREATE_INTERSTITIAL)) return;
+    // In release, skip if no dedicated interstitial unit configured.
+    if (!postCreateInterstitialUnitId) return;
+    if (isInterstitialFlowRunning) return;
+
+    isInterstitialFlowRunning = true;
+    const interstitial = InterstitialAd.createForAdRequest(postCreateInterstitialUnitId);
+
+    const unsubscribeLoaded = interstitial.addAdEventListener(AdEventType.LOADED, () => {
+        try {
+            interstitial.show();
+        } catch (e) {
+            console.warn('Interstitial show error:', e);
+            cleanup();
+        }
+    });
+
+    const unsubscribeError = interstitial.addAdEventListener(AdEventType.ERROR, (e) => {
+        console.warn('Interstitial load error:', e);
+        cleanup();
+    });
+
+    const unsubscribeClosed = interstitial.addAdEventListener(AdEventType.CLOSED, () => {
+        cleanup();
+    });
+
+    const cleanup = () => {
+        unsubscribeLoaded?.();
+        unsubscribeError?.();
+        unsubscribeClosed?.();
+        isInterstitialFlowRunning = false;
+    };
+
+    try {
+        interstitial.load();
+    } catch (e) {
+        console.warn('Interstitial load call failed:', e);
+        cleanup();
+    }
+};
 
 export const submitForm = async (formData, subcategory) => {
     const token = await AsyncStorage.getItem('authToken');
@@ -80,6 +132,10 @@ export const submitForm = async (formData, subcategory) => {
         });
 
         if (response.ok) {
+            // Show ad only after successful new post creation (not on edit/update).
+            if (!isUpdate) {
+                showPostCreateInterstitial();
+            }
             return {
                 success: true,
                 alert: {

@@ -31,11 +31,26 @@ import ModalScreen from './SupportElement/ModalScreen';
 import CustomStatusBar from './Screens/CustomStatusBar';
 import { getProductDetailsStyles } from '../assets/css/ProductDetailsPage.styles';
 import { useTheme } from '../context/ThemeContext';
+import { useAdSettings } from '../context/AdSettingsContext';
+import { AD_SETTING_SLUGS } from '../constants/adSettingSlugs';
 import { normalize } from '../utils/responsive';
 import useFollowPost from '../hooks/useFollowPost'; // Import the hook
 import AnimatedFollowButton from './AnimatedFollowButton';
+import {
+    NativeAd,
+    NativeAdView,
+    NativeAsset,
+    NativeAssetType,
+    NativeMediaView,
+    TestIds,
+} from 'react-native-google-mobile-ads';
+
+const productDetailsNativeAdUnitId = __DEV__
+    ? TestIds.NATIVE
+    : (process.env.G_PRODUCT_DETAILS_NATIVE_AD_UNIT_ID || process.env.G_MY_ADS_FEED_NATIVE_AD_UNIT_ID || TestIds.NATIVE);
 
 const ProductDetails = () => {
+    const { isAdEnabled } = useAdSettings();
     const { isDarkMode } = useTheme();
     const { width: rawWidth, height: rawHeight } = useWindowDimensions();
     const width = Math.max(rawWidth || 375, 200);
@@ -633,6 +648,56 @@ const ProductDetails = () => {
         }
     };
 
+    const ProductDetailsNativeAd = () => {
+        const [nativeAd, setNativeAd] = useState(null);
+        const adRef = useRef(null);
+
+        useEffect(() => {
+            let mounted = true;
+            NativeAd.createForAdRequest(productDetailsNativeAdUnitId)
+                .then((ad) => {
+                    adRef.current = ad;
+                    if (!mounted) {
+                        try { ad.destroy(); } catch (_) {}
+                        return;
+                    }
+                    setNativeAd(ad);
+                })
+                .catch((e) => {
+                    console.warn('ProductDetails native ad load failed:', e);
+                });
+
+            return () => {
+                mounted = false;
+                try { adRef.current?.destroy?.(); } catch (_) {}
+                adRef.current = null;
+            };
+        }, []);
+
+        if (!nativeAd) return null;
+
+        return (
+            <View style={styles.nativeAdWrap}>
+                <View style={styles.nativeAdContainer}>
+                    <NativeAdView nativeAd={nativeAd}>
+                        <NativeAsset assetType={NativeAssetType.IMAGE}>
+                            <NativeMediaView style={styles.nativeMedia} resizeMode="cover" />
+                        </NativeAsset>
+                        <NativeAsset assetType={NativeAssetType.HEADLINE}>
+                            <Text style={styles.nativeHeadline} numberOfLines={2} />
+                        </NativeAsset>
+                        <NativeAsset assetType={NativeAssetType.BODY}>
+                            <Text style={styles.nativeBody} numberOfLines={2} />
+                        </NativeAsset>
+                        <NativeAsset assetType={NativeAssetType.CALL_TO_ACTION}>
+                            <Text style={styles.nativeCtaText} />
+                        </NativeAsset>
+                    </NativeAdView>
+                </View>
+            </View>
+        );
+    };
+
     if (isLoading || !product) {
         return (
             <View style={styles.loaderContainer}>
@@ -924,6 +989,7 @@ const ProductDetails = () => {
                         </Text>
                     </View>
                 )}
+                {isAdEnabled(AD_SETTING_SLUGS.PRODUCT_DETAILS_NATIVE) ? <ProductDetailsNativeAd /> : null}
 
                 {/* Seller Section */}
                 <View style={styles.section}>
@@ -1026,6 +1092,7 @@ const ProductDetails = () => {
                         <Text style={styles.reportButtonText}>Report this post</Text>
                     </TouchableOpacity>
                 )}
+                {isAdEnabled(AD_SETTING_SLUGS.PRODUCT_DETAILS_NATIVE) ? <ProductDetailsNativeAd /> : null}
             </ScrollView>
 
             {/* Action Buttons - Right Side */}

@@ -9,7 +9,19 @@ import { getApp } from '@react-native-firebase/app';
 import AppNavigator from './components/AppNavigator';
 import { NotificationProvider, useNotification } from './context/NotificationContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { AdSettingsProvider } from './context/AdSettingsContext';
 import notifee, { AndroidImportance, EventType } from '@notifee/react-native';
+import mobileAds from 'react-native-google-mobile-ads';
+
+/** Avoids crashing the app if @react-native-firebase native module or default app isn't ready. */
+function getMessagingSafe() {
+    try {
+        return getMessaging(getApp());
+    } catch (e) {
+        console.warn('[RNFB] getMessaging unavailable:', e?.message || e);
+        return null;
+    }
+}
 
 // Create a navigation reference
 export const navigationRef = React.createRef();
@@ -22,6 +34,17 @@ export function navigate(name, params) {
 const AppInner = () => {
     const heartbeatRef = useRef(null);
     const { incrementNotificationCount } = useNotification();
+
+    useEffect(() => {
+        mobileAds()
+            .initialize()
+            .then((adapterStatuses) => {
+                console.log('[AdMob] Initialized', adapterStatuses);
+            })
+            .catch((e) => {
+                console.warn('[AdMob] initialize failed:', e?.message || e);
+            });
+    }, []);
 
     // Function to handle notification press and navigate to ChatBox
     const handleNotificationPress = useCallback((notification) => {
@@ -64,7 +87,10 @@ const AppInner = () => {
     }, []);
 
     useEffect(() => {
-        const messaging = getMessaging(getApp());
+        const messaging = getMessagingSafe();
+        if (!messaging) {
+            return undefined;
+        }
         const unsubscribe = onMessage(messaging, async remoteMessage => {
             console.log('📬 [FCM] Foreground message received:', remoteMessage);
             console.log('📬 [FCM] Message data:', JSON.stringify(remoteMessage.data, null, 2));
@@ -76,7 +102,10 @@ const AppInner = () => {
 
     // Handle FCM notification opened when app is in background
     useEffect(() => {
-        const messaging = getMessaging(getApp());
+        const messaging = getMessagingSafe();
+        if (!messaging) {
+            return undefined;
+        }
         const unsubscribe = onNotificationOpenedApp(messaging, remoteMessage => {
             console.log('📱 [FCM] Notification opened app from background:', remoteMessage);
             if (remoteMessage?.data) {
@@ -89,7 +118,10 @@ const AppInner = () => {
 
     // Check if app was opened from a notification (killed state)
     useEffect(() => {
-        const messaging = getMessaging(getApp());
+        const messaging = getMessagingSafe();
+        if (!messaging) {
+            return;
+        }
         getInitialNotification(messaging)
             .then(remoteMessage => {
                 if (remoteMessage) {
@@ -100,6 +132,9 @@ const AppInner = () => {
                         }, 1000);
                     }
                 }
+            })
+            .catch((e) => {
+                console.warn('[RNFB] getInitialNotification failed:', e?.message || e);
             });
     }, [handleNotificationPress]);
 
@@ -291,7 +326,9 @@ const App = () => {
         <SafeAreaProvider>
             <NotificationProvider>
                 <ThemeProvider>
-                    <AppInner />
+                    <AdSettingsProvider>
+                        <AppInner />
+                    </AdSettingsProvider>
                 </ThemeProvider>
             </NotificationProvider>
         </SafeAreaProvider>

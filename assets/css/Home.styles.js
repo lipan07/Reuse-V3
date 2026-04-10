@@ -34,8 +34,19 @@ export function getHomeStyles(width, height) {
     marginHorizontal: -normalize(8),
     marginBottom: normalize(8),
   },
+  /** Banner sits under search bar; negative horizontal margin aligns with full-bleed ad */
+  bannerAdContainerBelowSearch: {
+    marginHorizontal: -normalize(12),
+    marginTop: normalize(4),
+    marginBottom: 0,
+  },
   bannerAd: {
     alignSelf: 'center',
+  },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
   },
   searchBar: {
     flexDirection: 'row',
@@ -109,6 +120,65 @@ export function getHomeStyles(width, height) {
   },
   loaderTop: { marginBottom: normalize(8) },
   loaderBottom: { marginTop: normalize(8) },
+  /** Full-width row inside multi-column FlatList (native ad between product cells) */
+  nativeAdListRow: {
+    flexBasis: '100%',
+    maxWidth: '100%',
+    width: '100%',
+    paddingVertical: normalizeVertical(4),
+  },
+  nativeAdContainer: {
+    width: '100%',
+    borderRadius: normalize(10),
+    padding: normalize(10),
+    backgroundColor: '#ffffff',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#E8E8E8',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  darkNativeAdContainer: {
+    backgroundColor: '#0f172a',
+    borderColor: '#334155',
+  },
+  nativeMedia: {
+    width: '100%',
+    height: normalizeVertical(110),
+    borderRadius: normalize(8),
+    backgroundColor: '#f1f5f9',
+    marginBottom: normalizeVertical(6),
+    overflow: 'hidden',
+  },
+  darkNativeMedia: {
+    backgroundColor: '#1e293b',
+  },
+  nativeHeadline: {
+    fontSize: normalize(13),
+    fontWeight: '700',
+    color: '#0f172a',
+    marginBottom: normalizeVertical(3),
+  },
+  nativeBody: {
+    fontSize: normalize(11),
+    color: '#64748b',
+    marginBottom: normalizeVertical(6),
+    lineHeight: normalize(14),
+  },
+  nativeCtaText: {
+    alignSelf: 'flex-start',
+    fontSize: normalize(11),
+    fontWeight: '800',
+    color: '#FFF',
+    paddingVertical: normalizeVertical(6),
+    paddingHorizontal: normalize(10),
+    borderRadius: normalize(8),
+    backgroundColor: '#007bff',
+  },
+  darkNativeHeadline: { color: '#f8fafc' },
+  darkNativeBody: { color: '#94a3b8' },
   filterBadgeContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -440,6 +510,7 @@ export function getHomeStyles(width, height) {
     marginLeft: normalize(4),
   },
 
+  /** Space for fixed search row only */
   searchBarSpacer: {
     height: Math.max(56, normalizeVertical(54)),
   },
@@ -449,10 +520,11 @@ export function getHomeStyles(width, height) {
     left: 0,
     right: 0,
     zIndex: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'stretch',
     paddingHorizontal: normalize(12),
-    paddingVertical: normalize(8),
+    paddingTop: normalize(8),
+    paddingBottom: normalize(8),
     backgroundColor: 'rgba(255, 255, 255, 0.75)',
   },
   searchInputWrapper: {

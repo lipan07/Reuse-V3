@@ -36,11 +36,12 @@ const BottomNavBar = () => {
     navigation.navigate(screen);
   };
 
+  /** Order: Home, Chat (was My Ads slot), Add, Video reels (was Chat slot), Account */
   const navItems = useMemo(() => [
     { key: 'Home', route: 'Home', icon: 'home-outline', color: '#4CAF50', size: n(30) },
-    { key: 'My Ads', route: 'MyAdsPage', icon: 'briefcase-outline', color: '#FF9800', size: n(30) },
-    { key: 'Add Product', route: 'ListingTypeSelection', icon: 'add-circle', color: '#E91E63', size: n(50), bump: true, showText: false },
     { key: 'Chat', route: 'ChatList', icon: 'chatbubble-ellipses-outline', color: '#2196F3', size: n(30) },
+    { key: 'Add Product', route: 'ListingTypeSelection', icon: 'add-circle', color: '#E91E63', size: n(50), bump: true, showText: false },
+    { key: 'Videos', route: 'VideoReels', icon: 'play-circle-outline', color: '#FF9800', size: n(30) },
     { key: 'Account', route: 'AccountPage', icon: 'person-outline', color: '#9C27B0', size: n(30) },
   ], [width]);
 

@@ -5,6 +5,7 @@ import Header from './Header';
 
 // Import all necessary components
 import Home from './Home';
+import VideoReelsScreen from './VideoReelsScreen';
 import FilterScreen from './FilterScreen';
 import ProductDetails from './ProductDetailsPage';
 import FullScreenMap from './FullScreenMap';
@@ -164,6 +165,11 @@ const AppNavigator = () => {
 
         {/* <Stack.Screen name="Login" component={Login} /> */}
         <Stack.Screen name="Home" component={Home} />
+        <Stack.Screen
+          name="VideoReels"
+          component={VideoReelsScreen}
+          options={{ headerShown: false }}
+        />
         <Stack.Screen name="FilterScreen" component={FilterScreen} />
         <Stack.Screen name="FullScreenMap" component={FullScreenMap} />
         {/* <Stack.Screen name="ImageViewer" component={ImageViewer} /> */}

@@ -139,6 +139,7 @@ const AccountPage = ({ navigation }) => {
                                     <Text style={[styles.sectionLabel, isDarkMode && styles.darkSectionLabel]}>
                                         Preferences
                                     </Text>
+                                    {renderLink('My Ads', 'briefcase', () => navigation.navigate('MyAdsPage'), '#FF9800')}
                                     {renderLink('Settings', 'cog', () => navigation.navigate('Settings'), '#64748b')}
                                     {renderLink('Help & Support', 'info-circle', () => navigation.navigate('HelpSupport'), '#ef4444')}
                                     {renderLink('Feedback', 'comment-alt', () => navigation.navigate('Feedback'), '#22c55e')}

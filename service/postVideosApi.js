@@ -1,30 +1,74 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+/** Aligns with `SORT_MAPPING` in `Home.js` (display label → API value). */
+const SORT_MAPPING = {
+  Relevance: null,
+  'Recently Added': 'createdAt_desc',
+  'Price: Low to High': 'price_asc',
+  'Price: High to Low': 'price_desc',
+};
+
+function appendPair(pairs, key, value) {
+  if (value === null || value === undefined || value === '') return;
+  pairs.push([key, String(value)]);
+}
+
 /**
- * Build query string without URLSearchParams.set — Hermes/RN often lacks full URLSearchParams.
+ * Build query string (no URLSearchParams#set — Hermes-friendly).
  */
-function buildVideosQueryString({ category, page, limit, search }) {
+export function buildVideosQueryString(params = {}) {
+  const {
+    category,
+    page = 1,
+    limit = 15,
+    search,
+    latitude,
+    longitude,
+    distance,
+    listingType,
+    priceRange,
+    sortBy,
+  } = params;
+
+  let sortParam = sortBy;
+  if (sortParam != null && typeof sortParam === 'string') {
+    sortParam = Object.prototype.hasOwnProperty.call(SORT_MAPPING, sortParam)
+      ? SORT_MAPPING[sortParam]
+      : sortParam;
+  }
+
   const pairs = [
     ['limit', String(limit)],
     ['page', String(page)],
   ];
-  if (category != null && category !== '') {
-    pairs.push(['category', String(category)]);
+
+  appendPair(pairs, 'category', category);
+  appendPair(pairs, 'search', search != null ? String(search).trim() : '');
+  appendPair(pairs, 'latitude', latitude);
+  appendPair(pairs, 'longitude', longitude);
+  appendPair(pairs, 'distance', distance);
+  appendPair(pairs, 'listingType', listingType);
+  appendPair(pairs, 'sortBy', sortParam);
+
+  if (Array.isArray(priceRange)) {
+    priceRange.forEach((item) => {
+      if (item !== null && item !== undefined && item !== '') {
+        pairs.push(['priceRange[]', String(item)]);
+      }
+    });
   }
-  if (search != null && String(search).trim() !== '') {
-    pairs.push(['search', String(search).trim()]);
-  }
+
   return pairs
     .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
     .join('&');
 }
 
 /**
- * GET /posts/videos — Laravel paginate (data, next_page_url, etc.)
+ * GET /posts/videos — Laravel simplePaginate (data, next_page_url, etc.)
  */
-export async function fetchPostVideosPage({ category, page = 1, limit = 15, search } = {}) {
+export async function fetchPostVideosPage(params = {}) {
   const token = await AsyncStorage.getItem('authToken');
-  const qs = buildVideosQueryString({ category, page, limit, search });
+  const qs = buildVideosQueryString(params);
   const url = `${process.env.BASE_URL}/posts/videos?${qs}`;
   const response = await fetch(url, {
     method: 'GET',

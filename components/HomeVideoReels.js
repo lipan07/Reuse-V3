@@ -9,7 +9,6 @@ import {
   useWindowDimensions,
   RefreshControl,
   ScrollView,
-  TextInput,
   Pressable,
   Share,
   Alert,
@@ -21,7 +20,14 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import MIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { fetchPostVideosPage } from '../service/postVideosApi';
+import {
+  loadSharedListingFilters,
+  saveSharedListingFilters,
+  normalizeSharedFilters,
+  getDefaultStoredLocation,
+} from '../service/sharedListingFilters';
 import { normalize } from '../utils/responsive';
 import AnimatedFollowButton from './AnimatedFollowButton';
 
@@ -52,6 +58,13 @@ function isChipSelected(selectedCategory, chipId) {
     return selectedCategory === null || selectedCategory === undefined || selectedCategory === '';
   }
   return String(selectedCategory) === String(chipId);
+}
+
+function reelsCategoryDisplayName(categoryId) {
+  if (categoryId == null || categoryId === '') return 'Unknown';
+  if (String(categoryId) === 'donate') return 'Donate';
+  const chip = REELS_CATEGORY_CHIPS.find((c) => c.id != null && String(c.id) === String(categoryId));
+  return chip?.label || 'Unknown';
 }
 
 async function togglePostLikeApi(postId) {
@@ -413,14 +426,13 @@ function ReelSlide({
 }
 
 const HomeVideoReels = ({ isActive, navigation, topInset = 0 }) => {
+  const route = useRoute();
   const insets = useSafeAreaInsets();
   const { width: rawW, height: rawH } = useWindowDimensions();
   const width = Math.max(rawW || 375, 200);
   const height = Math.max(rawH || 812, 400);
 
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [searchText, setSearchText] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [listingFilters, setListingFilters] = useState(() => normalizeSharedFilters({}));
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -439,10 +451,20 @@ const HomeVideoReels = ({ isActive, navigation, topInset = 0 }) => {
     }
   }).current;
 
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(searchText.trim()), 400);
-    return () => clearTimeout(t);
-  }, [searchText]);
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      (async () => {
+        const stored = await loadSharedListingFilters();
+        if (!cancelled) {
+          setListingFilters(normalizeSharedFilters(stored || {}));
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [route.params?.filters])
+  );
 
   useEffect(() => {
     (async () => {
@@ -609,6 +631,56 @@ const HomeVideoReels = ({ isActive, navigation, topInset = 0 }) => {
         chipLabelSelected: {
           color: '#000000',
         },
+        /** Same glass treatment as `searchBar` / chips — no solid white card on video */
+        filterBarContainer: {
+          marginBottom: normalize(8, width),
+          paddingHorizontal: normalize(10, width),
+          paddingVertical: normalize(8, width),
+          borderRadius: normalize(12, width),
+          backgroundColor: 'rgba(255,255,255,0.12)',
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: 'rgba(255,255,255,0.2)',
+        },
+        activeFiltersContainer: {
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+        },
+        activeFiltersText: {
+          fontSize: normalize(12, width),
+          color: 'rgba(255,255,255,0.72)',
+          fontWeight: '600',
+          marginRight: normalize(6, width),
+        },
+        filterPill: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: 'rgba(255,255,255,0.16)',
+          borderRadius: normalize(12, width),
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: 'rgba(255,255,255,0.32)',
+          paddingVertical: normalize(4, width),
+          paddingHorizontal: normalize(8, width),
+          margin: normalize(3, width),
+        },
+        filterPillText: {
+          color: 'rgba(255,255,255,0.95)',
+          fontSize: normalize(10, width),
+          fontWeight: '600',
+          marginRight: normalize(4, width),
+          flexShrink: 1,
+        },
+        quickFilterButton: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          padding: normalize(6, width),
+        },
+        quickFilterText: {
+          color: 'rgba(255,255,255,0.92)',
+          fontSize: normalize(12, width),
+          fontWeight: '600',
+          marginLeft: normalize(4, width),
+        },
         centerMsg: {
           flex: 1,
           alignItems: 'center',
@@ -633,14 +705,36 @@ const HomeVideoReels = ({ isActive, navigation, topInset = 0 }) => {
     );
   }, []);
 
+  const buildVideoRequestBase = useCallback(async () => {
+    const f = normalizeSharedFilters(listingFilters);
+    if (!f.latitude || !f.longitude) {
+      const loc = await getDefaultStoredLocation();
+      if (loc) {
+        f.latitude = loc.latitude;
+        f.longitude = loc.longitude;
+        f.distance = f.distance ?? 5;
+      }
+    }
+    return {
+      category: f.category,
+      search: f.search,
+      latitude: f.latitude,
+      longitude: f.longitude,
+      distance: f.distance,
+      listingType: f.listingType,
+      priceRange: f.priceRange,
+      sortBy: f.sortBy,
+    };
+  }, [listingFilters]);
+
   const loadInitial = useCallback(async () => {
     setLoading(true);
     try {
+      const req = await buildVideoRequestBase();
       const json = await fetchPostVideosPage({
-        category: selectedCategory,
+        ...req,
         page: 1,
         limit: PAGE_SIZE,
-        search: debouncedSearch || undefined,
       });
       const batch = Array.isArray(json.data) ? json.data : [];
       setItems(batch);
@@ -655,7 +749,7 @@ const HomeVideoReels = ({ isActive, navigation, topInset = 0 }) => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [selectedCategory, debouncedSearch]);
+  }, [buildVideoRequestBase]);
 
   useEffect(() => {
     if (!isActive) return;
@@ -667,11 +761,11 @@ const HomeVideoReels = ({ isActive, navigation, topInset = 0 }) => {
     loadingMoreRef.current = true;
     const next = page + 1;
     try {
+      const req = await buildVideoRequestBase();
       const json = await fetchPostVideosPage({
-        category: selectedCategory,
+        ...req,
         page: next,
         limit: PAGE_SIZE,
-        search: debouncedSearch || undefined,
       });
       const batch = Array.isArray(json.data) ? json.data : [];
       setItems((prev) => [...prev, ...batch]);
@@ -683,13 +777,72 @@ const HomeVideoReels = ({ isActive, navigation, topInset = 0 }) => {
     } finally {
       loadingMoreRef.current = false;
     }
-  }, [isActive, hasMore, loading, page, selectedCategory, debouncedSearch]);
+  }, [isActive, hasMore, loading, page, buildVideoRequestBase]);
 
   const onRefresh = useCallback(() => {
     if (!isActive || loading) return;
     setRefreshing(true);
     loadInitial();
   }, [isActive, loading, loadInitial]);
+
+  const reelsActiveFilterCount = useMemo(() => {
+    const f = listingFilters;
+    let c = 0;
+    if (f.search?.trim()) c++;
+    if (f.category) c++;
+    if (f.distance != null && Number(f.distance) !== 5) c++;
+    if (f.listingType != null) c++;
+    if (f.priceRange?.[0] || f.priceRange?.[1]) c++;
+    if (f.sortBy) c++;
+    return c;
+  }, [listingFilters]);
+
+  const handleRemoveReelFilter = useCallback((filterType) => {
+    setListingFilters((prev) => {
+      const next = { ...prev };
+      switch (filterType) {
+        case 'search':
+          next.search = '';
+          break;
+        case 'category':
+          next.category = null;
+          break;
+        case 'distance':
+          next.distance = 5;
+          break;
+        case 'listingType':
+          next.listingType = null;
+          break;
+        case 'priceRange':
+          next.priceRange = [];
+          break;
+        case 'sortBy':
+          next.sortBy = null;
+          break;
+        default:
+          break;
+      }
+      const normalized = normalizeSharedFilters(next);
+      saveSharedListingFilters(normalized);
+      return normalized;
+    });
+  }, []);
+
+  const resetAllReelFilters = useCallback(() => {
+    const reset = normalizeSharedFilters({
+      search: '',
+      category: null,
+      priceRange: [],
+      sortBy: null,
+      distance: 5,
+      listingType: null,
+      latitude: null,
+      longitude: null,
+      address: '',
+    });
+    setListingFilters(reset);
+    saveSharedListingFilters(reset);
+  }, []);
 
   const renderItem = useCallback(
     ({ item, index }) => {
@@ -787,24 +940,104 @@ const HomeVideoReels = ({ isActive, navigation, topInset = 0 }) => {
         onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
       >
         <View style={styles.searchBar}>
-          <Icon name="search" size={normalize(20, width)} color="rgba(255,255,255,0.75)" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search by title…"
-            placeholderTextColor="rgba(255,255,255,0.45)"
-            value={searchText}
-            onChangeText={setSearchText}
-            returnKeyType="search"
-            clearButtonMode="never"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-          {searchText.length > 0 ? (
-            <TouchableOpacity onPress={() => setSearchText('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity
+            style={{ flex: 1, flexDirection: 'row', alignItems: 'center', minWidth: 0 }}
+            onPress={() =>
+              navigation.navigate('FilterScreen', {
+                initialFilters: { ...listingFilters },
+                filterReturnScreen: 'VideoReels',
+              })
+            }
+            activeOpacity={0.85}
+          >
+            <Icon name="search" size={normalize(20, width)} color="rgba(255,255,255,0.75)" />
+            <Text
+              style={[
+                styles.searchInput,
+                !listingFilters.search?.trim() ? { color: 'rgba(255,255,255,0.45)' } : null,
+              ]}
+              numberOfLines={1}
+            >
+              {listingFilters.search?.trim() ? listingFilters.search : 'Search by title…'}
+            </Text>
+          </TouchableOpacity>
+          {listingFilters.search?.trim() ? (
+            <TouchableOpacity
+              onPress={() => {
+                setListingFilters((prev) => {
+                  const next = normalizeSharedFilters({ ...prev, search: '' });
+                  saveSharedListingFilters(next);
+                  return next;
+                });
+              }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
               <Icon name="close" size={normalize(20, width)} color="rgba(255,255,255,0.75)" />
             </TouchableOpacity>
           ) : null}
         </View>
+
+        {reelsActiveFilterCount > 0 ? (
+          <View style={styles.filterBarContainer}>
+            <View style={styles.activeFiltersContainer}>
+              <Text style={styles.activeFiltersText}>Filters:</Text>
+              {listingFilters.search?.trim() ? (
+                <TouchableOpacity style={styles.filterPill} onPress={() => handleRemoveReelFilter('search')} activeOpacity={0.85}>
+                  <Text style={styles.filterPillText} numberOfLines={1}>
+                    Search: {listingFilters.search}
+                  </Text>
+                  <Icon name="close" size={normalize(10, width)} color="rgba(255,255,255,0.9)" />
+                </TouchableOpacity>
+              ) : null}
+              {listingFilters.category ? (
+                <TouchableOpacity style={styles.filterPill} onPress={() => handleRemoveReelFilter('category')} activeOpacity={0.85}>
+                  <Text style={styles.filterPillText} numberOfLines={1}>
+                    Category: {reelsCategoryDisplayName(listingFilters.category)}
+                  </Text>
+                  <Icon name="close" size={normalize(10, width)} color="rgba(255,255,255,0.9)" />
+                </TouchableOpacity>
+              ) : null}
+              {listingFilters.distance != null && Number(listingFilters.distance) !== 5 ? (
+                <TouchableOpacity style={styles.filterPill} onPress={() => handleRemoveReelFilter('distance')} activeOpacity={0.85}>
+                  <Text style={styles.filterPillText}>Radius: {listingFilters.distance}km</Text>
+                  <Icon name="close" size={normalize(10, width)} color="rgba(255,255,255,0.9)" />
+                </TouchableOpacity>
+              ) : null}
+              {listingFilters.listingType != null ? (
+                <TouchableOpacity style={styles.filterPill} onPress={() => handleRemoveReelFilter('listingType')} activeOpacity={0.85}>
+                  <Text style={styles.filterPillText} numberOfLines={1}>
+                    Type:{' '}
+                    {listingFilters.listingType
+                      ? listingFilters.listingType.charAt(0).toUpperCase() + listingFilters.listingType.slice(1)
+                      : 'All'}
+                  </Text>
+                  <Icon name="close" size={normalize(10, width)} color="rgba(255,255,255,0.9)" />
+                </TouchableOpacity>
+              ) : null}
+              {(listingFilters.priceRange?.[0] || listingFilters.priceRange?.[1]) ? (
+                <TouchableOpacity style={styles.filterPill} onPress={() => handleRemoveReelFilter('priceRange')} activeOpacity={0.85}>
+                  <Text style={styles.filterPillText} numberOfLines={2}>
+                    Price: {listingFilters.priceRange?.[0] ? `₹${listingFilters.priceRange[0]}` : 'Any'} -
+                    {listingFilters.priceRange?.[1] ? `₹${listingFilters.priceRange[1]}` : 'Any'}
+                  </Text>
+                  <Icon name="close" size={normalize(10, width)} color="rgba(255,255,255,0.9)" />
+                </TouchableOpacity>
+              ) : null}
+              {listingFilters.sortBy != null ? (
+                <TouchableOpacity style={styles.filterPill} onPress={() => handleRemoveReelFilter('sortBy')} activeOpacity={0.85}>
+                  <Text style={styles.filterPillText} numberOfLines={1}>
+                    Sort: {listingFilters.sortBy}
+                  </Text>
+                  <Icon name="close" size={normalize(10, width)} color="rgba(255,255,255,0.9)" />
+                </TouchableOpacity>
+              ) : null}
+              <TouchableOpacity style={styles.quickFilterButton} onPress={resetAllReelFilters} activeOpacity={0.85}>
+                <Icon name="refresh" size={normalize(16, width)} color="#FF9800" />
+                <Text style={styles.quickFilterText}>Reset All</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : null}
 
         <ScrollView
           horizontal
@@ -813,11 +1046,17 @@ const HomeVideoReels = ({ isActive, navigation, topInset = 0 }) => {
           contentContainerStyle={styles.chipScrollContent}
         >
           {REELS_CATEGORY_CHIPS.map((chip) => {
-            const selected = isChipSelected(selectedCategory, chip.id);
+            const selected = isChipSelected(listingFilters.category, chip.id);
             return (
               <TouchableOpacity
                 key={chip.id === null ? 'all' : String(chip.id)}
-                onPress={() => setSelectedCategory(chip.id)}
+                onPress={() => {
+                  setListingFilters((prev) => {
+                    const next = normalizeSharedFilters({ ...prev, category: chip.id });
+                    saveSharedListingFilters(next);
+                    return next;
+                  });
+                }}
                 style={[styles.chip, selected && styles.chipSelected]}
                 activeOpacity={0.85}
               >

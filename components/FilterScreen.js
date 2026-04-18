@@ -16,6 +16,7 @@ import Fontisto from 'react-native-vector-icons/Fontisto';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { buildFilterScreenStyles } from '../assets/css/FilterScreen.styles.js';
 import { useTheme } from '../context/ThemeContext';
+import { saveSharedListingFilters } from '../service/sharedListingFilters';
 
 // Subcategory data for categories with children
 const CATEGORY_SUBCATEGORIES = {
@@ -182,6 +183,7 @@ const FilterScreen = ({ navigation }) => {
     const scrollPadBottom = scrollBottomPadding + insets.bottom;
     const [loading, setLoading] = useState(false);
     const [showSubcategories, setShowSubcategories] = useState(false);
+    const filterReturnScreen = route.params?.filterReturnScreen ?? 'Home';
 
     // Initialize all filter states from route params or defaults
     const [filters, setFilters] = useState({
@@ -306,7 +308,7 @@ const FilterScreen = ({ navigation }) => {
     };
 
     // Clear all filters
-    const handleClearFilters = useCallback(() => {
+    const handleClearFilters = useCallback(async () => {
         setLoading(true);
         const clearedFilters = {
             search: '',
@@ -322,8 +324,10 @@ const FilterScreen = ({ navigation }) => {
         setFilters(clearedFilters);
         setMinPrice('');
         setMaxPrice('');
-        navigation.navigate('Home', { filters: clearedFilters });
-    }, [navigation]);
+        await saveSharedListingFilters(clearedFilters);
+        const target = filterReturnScreen === 'VideoReels' ? 'VideoReels' : 'Home';
+        navigation.navigate(target, { filters: clearedFilters });
+    }, [navigation, filterReturnScreen]);
 
     // Submit filters
     const handleSubmit = useCallback(async () => {
@@ -349,13 +353,15 @@ const FilterScreen = ({ navigation }) => {
                 }));
             }
 
-            navigation.navigate('Home', { filters: cleanFilters });
+            await saveSharedListingFilters(cleanFilters);
+            const target = filterReturnScreen === 'VideoReels' ? 'VideoReels' : 'Home';
+            navigation.navigate(target, { filters: cleanFilters });
         } catch (error) {
             console.error('Error applying filters:', error);
         } finally {
             setLoading(false);
         }
-    }, [filters, navigation]);
+    }, [filters, navigation, filterReturnScreen]);
 
     // Render category item
     const renderCategoryItem = (category) => {

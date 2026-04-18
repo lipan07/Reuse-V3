@@ -11,6 +11,7 @@ import { getNumColumns, normalize, normalizeVertical } from '../utils/responsive
 import { useTheme } from '../context/ThemeContext';
 import { useAdSettings } from '../context/AdSettingsContext';
 import { AD_SETTING_SLUGS } from '../constants/adSettingSlugs';
+import { saveSharedListingFilters, loadSharedListingFilters } from '../service/sharedListingFilters';
 
 import {
   TestIds,
@@ -60,6 +61,21 @@ const PLACEHOLDER_TEXTS = [
   'Find what you need...',
   'Browse categories & filters',
 ];
+
+/** Stable compare for shared listing filters (Home keeps search/category in separate state). */
+function listingFiltersSignature(f) {
+  if (!f || typeof f !== 'object') return '';
+  return JSON.stringify({
+    search: f.search ?? '',
+    category: f.category ?? null,
+    priceRange: Array.isArray(f.priceRange) ? f.priceRange : [],
+    sortBy: f.sortBy ?? null,
+    distance: f.distance ?? 5,
+    listingType: f.listingType ?? null,
+    latitude: f.latitude ?? null,
+    longitude: f.longitude ?? null,
+  });
+}
 
 /** One Native Advanced row for the home product grid */
 const HomeFeedNativeAd = ({ styles, isDarkMode }) => {
@@ -179,6 +195,16 @@ const Home = () => {
   const [activeFilters, setActiveFilters] = useState(
     normalizeFilters(route.params?.filters)
   );
+  const activeFiltersRef = useRef(activeFilters);
+  useEffect(() => {
+    activeFiltersRef.current = activeFilters;
+  }, [activeFilters]);
+  useEffect(() => {
+    searchRef.current = search;
+  }, [search]);
+  useEffect(() => {
+    selectedCategoryRef.current = selectedCategory;
+  }, [selectedCategory]);
 
   // State for storing user location and product distances
   const [userLocation, setUserLocation] = useState(null);
@@ -226,10 +252,14 @@ const Home = () => {
 
   useEffect(() => {
     if (route.params?.filters) {
-      setActiveFilters(normalizeFilters(route.params.filters));
-      setFilters(route.params.filters);
-      setSearch(route.params.filters.search || '');
-      setSelectedCategory(route.params.filters.category || null);
+      const incoming = route.params.filters;
+      setActiveFilters(normalizeFilters(incoming));
+      setFilters(incoming);
+      setSearch(incoming.search || '');
+      setSelectedCategory(incoming.category || null);
+      searchRef.current = incoming.search || '';
+      selectedCategoryRef.current = incoming.category || null;
+      saveSharedListingFilters(normalizeFilters(incoming));
     }
     if (route.params?.products) {
       setProducts(route.params.products);
@@ -237,28 +267,6 @@ const Home = () => {
       setHasInitialLoad(true); // Mark as loaded when products are passed from route
     }
   }, [route.params, normalizeFilters]);
-
-  useFocusEffect(
-    useCallback(() => {
-      console.log('Home Screen Focused');
-      const fetchInitialData = async () => {
-        // Only fetch data if:
-        // 1. No products passed from route params AND
-        // 2. Haven't done initial load yet AND
-        // 3. No existing products in state
-        if (!route.params?.products && !hasInitialLoad && products.length === 0) {
-          console.log('Fetching initial data...');
-          await fetchProducts(true, cleanParams(activeFilters));
-          setHasInitialLoad(true);
-        } else {
-          console.log('Preserving existing data, no fetch needed');
-        }
-      };
-
-      const timer = setTimeout(fetchInitialData, 100); // Small delay to avoid race conditions
-      return () => clearTimeout(timer);
-    }, [activeFilters, route.params?.products, hasInitialLoad, products.length])
-  );
 
   const fetchProducts = useCallback(async (reset = false, param = null) => {
     // Prevent multiple simultaneous requests
@@ -357,6 +365,55 @@ const Home = () => {
     }, {});
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      const run = async () => {
+        const stored = await loadSharedListingFilters();
+        if (cancelled) return;
+
+        const prevSig = listingFiltersSignature({
+          ...activeFiltersRef.current,
+          search: searchRef.current,
+          category: selectedCategoryRef.current,
+        });
+
+        if (stored && typeof stored === 'object') {
+          const merged = normalizeFilters(stored);
+          const nextSig = listingFiltersSignature({
+            ...merged,
+            search: stored.search ?? '',
+            category: stored.category ?? null,
+          });
+          if (nextSig !== prevSig) {
+            setActiveFilters(merged);
+            setFilters(stored);
+            setSearch(stored.search || '');
+            setSelectedCategory(stored.category ?? null);
+            searchRef.current = stored.search || '';
+            selectedCategoryRef.current = stored.category ?? null;
+            if (!route.params?.products) {
+              await fetchProducts(true, cleanParams(merged));
+            }
+            setHasInitialLoad(true);
+            return;
+          }
+        }
+
+        if (!route.params?.products && !hasInitialLoad && products.length === 0) {
+          await fetchProducts(true, cleanParams(activeFiltersRef.current));
+          setHasInitialLoad(true);
+        }
+      };
+
+      const timer = setTimeout(run, 100);
+      return () => {
+        cancelled = true;
+        clearTimeout(timer);
+      };
+    }, [fetchProducts, hasInitialLoad, normalizeFilters, route.params?.products, products.length])
+  );
+
   // Modified scroll handler for pagination
   const handleScrollEndReached = useCallback(() => {
     if (!isFocused) return;
@@ -403,9 +460,22 @@ const Home = () => {
         return;
       }
 
-      // No need to manually check location here
       if (!route.params?.products) {
-        fetchProducts(true); // Location will be added automatically if exists
+        let fetchParam = null;
+        if (!route.params?.filters) {
+          const stored = await loadSharedListingFilters();
+          if (stored && typeof stored === 'object') {
+            const merged = normalizeFilters(stored);
+            setActiveFilters(merged);
+            setFilters(stored);
+            setSearch(stored.search || '');
+            setSelectedCategory(stored.category ?? null);
+            searchRef.current = stored.search || '';
+            selectedCategoryRef.current = stored.category ?? null;
+            fetchParam = merged;
+          }
+        }
+        await fetchProducts(true, fetchParam ? cleanParams(fetchParam) : undefined);
         setHasInitialLoad(true);
       }
     };
@@ -428,6 +498,7 @@ const Home = () => {
     selectedCategoryRef.current = categoryId;
     setActiveFilters(newFilters);
     setHasInitialLoad(false); // Reset flag to allow fresh fetch
+    saveSharedListingFilters(normalizeFilters({ ...newFilters, search, category: categoryId }));
 
     // Fetch with new filters
     fetchProducts(true, cleanParams(newFilters));
@@ -436,10 +507,11 @@ const Home = () => {
   const handleSearchPress = async () => {
     const searchTerm = search.trim();
     // Update activeFilters with the current search term
-    setActiveFilters(prev => ({
-      ...prev,
-      search: searchTerm
-    }));
+    setActiveFilters(prev => {
+      const next = { ...prev, search: searchTerm };
+      saveSharedListingFilters(normalizeFilters({ ...next, search: searchTerm, category: selectedCategory }));
+      return next;
+    });
     setHasInitialLoad(false); // Reset flag to allow fresh fetch
 
     const params = {
@@ -464,10 +536,11 @@ const Home = () => {
   const clearSearch = () => {
     setSearch('');
     // Also clear the search in activeFilters
-    setActiveFilters(prev => ({
-      ...prev,
-      search: ''
-    }));
+    setActiveFilters(prev => {
+      const next = { ...prev, search: '' };
+      saveSharedListingFilters(normalizeFilters({ ...next, search: '', category: selectedCategory }));
+      return next;
+    });
     searchRef.current = '';
     setHasInitialLoad(false); // Reset flag to allow fresh fetch
     const param = selectedCategory ? { category: selectedCategory } : {};
@@ -803,6 +876,13 @@ const Home = () => {
 
     setActiveFilters(newFilters);
     setHasInitialLoad(false); // Reset flag to allow fresh fetch
+    {
+      let snapSearch = search;
+      let snapCat = selectedCategory;
+      if (filterType === 'search') snapSearch = '';
+      if (filterType === 'category') snapCat = null;
+      saveSharedListingFilters(normalizeFilters({ ...newFilters, search: snapSearch, category: snapCat }));
+    }
     fetchProducts(true, cleanParams(newFilters));
   };
 
@@ -895,6 +975,7 @@ const Home = () => {
               setSearch('');
               setSelectedCategory(null);
               setHasInitialLoad(false); // Reset flag to allow fresh fetch
+              saveSharedListingFilters(normalizeFilters({ ...resetFilters, search: '', category: null }));
               fetchProducts(true, cleanParams(resetFilters));
             }}
           >
